@@ -8,6 +8,7 @@ import type { MsrListsRepository } from "../../data/repositories/msr-lists-repos
 import { SettingsService } from "../../services/settings-service.ts";
 import { RemoteBridge } from "../../services/remote-bridge.ts";
 import { MSR_DEFAULT_LISTS } from "../../core/msrchoices.ts";
+import { norm as normHintKey } from "../../core/msrcategorize.ts";
 import { MlModelStore } from "../../data/ml-model-repository.ts";
 import type { MlModelRepository } from "../../data/ml-model-repository.ts";
 import { ClassificationCacheStore } from "../../data/classification-cache-repository.ts";
@@ -144,7 +145,7 @@ export function fillMsrLists(wiring: SettingsWiring, lists: Record<string, any>)
   const hints = (lists.hints as Record<string, string[]>) || {};
   for (const label of kwLabels(lists)) {
     const chip = wiring.kwChips[label];
-    if (chip) chip.setValues(hints[label] || []);
+    if (chip) chip.setValues(hints[normHintKey(label)] || []);
   }
 }
 
@@ -157,7 +158,7 @@ export function collectMsrLists(wiring: SettingsWiring): { version: number; list
   const hints: Record<string, string[]> = {};
   for (const label of kwLabels(lists)) {
     const chip = wiring.kwChips[label];
-    if (chip) hints[label] = chip.getValues();
+    if (chip) hints[normHintKey(label)] = chip.getValues();
   }
   lists.hints = hints;
   return { version: 2, lists };

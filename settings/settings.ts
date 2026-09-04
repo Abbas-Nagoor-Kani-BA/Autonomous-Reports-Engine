@@ -4,6 +4,7 @@ import { STORAGE } from "../lib/keys.ts";
 import { showToast } from "../lib/toast.ts";
 import { initTooltips } from "../lib/tooltip.ts";
 import { createSettings, fillMsrLists, collectMsrLists } from "../surfaces/settings/index.ts";
+import { norm as normHintKey } from "../core/msrcategorize.ts";
 import { normaliseSettings } from "../services/settings-service.ts";
 
 import type { SettingsDraft } from "../services/settings-service.ts";
@@ -87,7 +88,7 @@ $("msrResetBtn").addEventListener("click", async () => {
 $("kwResetBtn")?.addEventListener("click", async () => {
   const defaults = (page.settings.defaultMsrLists().hints || {}) as Record<string, string[]>;
   for (const [label, chip] of Object.entries(page.kwChips)) {
-    chip.setValues(defaults[label] || []);
+    chip.setValues(defaults[normHintKey(label)] || []);
   }
   showToast("Classifier keywords restored to defaults");
 });
