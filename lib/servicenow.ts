@@ -96,6 +96,18 @@ class ServiceNowClient {
           emit({ kind: "err", status: res.status });
           throw new Error(`HTTP ${res.status} on ${path}: ${body.slice(0, 300)}`);
         }
+        const contentType = (res.headers.get("content-type") || "").toLowerCase();
+        let loginPage = contentType.includes("text/html");
+        if (!loginPage && !contentType.includes("application/json")) {
+          const peek = (await res.clone().text().catch(() => "")).trimStart().slice(0, 20).toLowerCase();
+          loginPage = peek.startsWith("<!doctype") || peek.startsWith("<html");
+        }
+        if (loginPage) {
+          emit({ kind: "err", status: res.status });
+          throw new Error(
+            "Not logged in to ServiceNow (received the login page): refresh your ServiceNow browser tab and confirm you are logged in, then press Connect again"
+          );
+        }
         emit({ kind: "ok", status: res.status, via: res.snVia, hadToken: res.snHadToken, tokenSource: res.snTokenSource });
         return res;
       } catch (err) {
@@ -104,7 +116,7 @@ class ServiceNowClient {
           emit({ kind: "warn", status: 0, attempt: attempt + 1, netError: String((err as Error).message || err) });
           await this.#sleep(1500 * Math.pow(2, attempt));
         } else {
-          if (!(err instanceof Error) || !/^Auth error|^HTTP /.test(err.message)) emit({ kind: "err", status: 0 });
+          if (!(err instanceof Error) || !/^Auth error|^HTTP |^Not logged in to ServiceNow/.test(err.message)) emit({ kind: "err", status: 0 });
           throw err;
         }
       }

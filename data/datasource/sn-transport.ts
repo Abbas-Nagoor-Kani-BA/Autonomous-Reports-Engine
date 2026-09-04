@@ -15,6 +15,32 @@ export type Transport = (url: string, opts?: { attempt?: number }) => Promise<Fe
 
 const TOKEN_TTL_MS = 8 * 60 * 1000;
 const MAX_AUTH_RETRIES = 2;
+export const RELAY_TIMEOUT_MS = 15000;
+
+function sendMessageWithTimeout(tabId: number, message: unknown, timeoutMs: number): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error(`Relay to ServiceNow tab timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    Promise.resolve(chrome.tabs.sendMessage(tabId, message)).then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
 
 /**
  * Session-authenticated transport for ServiceNow.
@@ -30,7 +56,7 @@ const MAX_AUTH_RETRIES = 2;
  *    first-party and not blocked as third-party
  * 4. a direct fetch from the worker as a last resort
  */
-export function createSmartTransport(): Transport {
+export function createSmartTransport(relayTimeoutMs = RELAY_TIMEOUT_MS): Transport {
   let tokenCache: { value: string; source: string | null; at: number } | null = null;
 
   const resolveToken = async (
@@ -65,7 +91,7 @@ export function createSmartTransport(): Transport {
     const { value: token, source } = await resolveToken(origin, tab, attempt > 0);
 
     try {
-      const resp = await chrome.tabs.sendMessage(tab.id, { type: MSG.snFetch, url, token });
+      const resp = await sendMessageWithTimeout(tab.id, { type: MSG.snFetch, url, token }, relayTimeoutMs);
       if (resp && resp.ok) {
         if (resp.status === 401 && attempt < MAX_AUTH_RETRIES) {
           tokenCache = null;
