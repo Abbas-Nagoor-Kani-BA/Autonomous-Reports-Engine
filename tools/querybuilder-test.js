@@ -1,4 +1,4 @@
-import { buildEncodedQuery, encodeConditions } from "../core/querybuilder.ts";
+import { buildEncodedQuery, encodeConditions, hasQueryConstraint } from "../core/querybuilder.ts";
 
 let failures = 0;
 function check(name, actual, expected) {
@@ -90,6 +90,17 @@ check("queue IN list encoded", q, "assigned_toISEMPTY^state=2^assignment_group.n
 check("scope only",
   buildEncodedQuery({ conditions: [], groupNames: ["Solo"] }),
   "assignment_group.nameINSolo");
+
+console.log("== hasQueryConstraint ==");
+check("empty config is unconstrained", hasQueryConstraint({}), false);
+check("a real condition is constrained",
+  hasQueryConstraint({ conditions: [{ field: "number", oper: "startsWith", value: "INC" }] }), true);
+check("whitespace-only rawQuery is unconstrained", hasQueryConstraint({ rawQuery: "   " }), false);
+check("a rawQuery is constrained", hasQueryConstraint({ rawQuery: "priority=1" }), true);
+check("an incomplete condition row is unconstrained",
+  hasQueryConstraint({ conditions: [{ field: "number", oper: "", value: "" }] }), false);
+check("a top-level OR rawQuery still counts as constrained (never throws)",
+  hasQueryConstraint({ rawQuery: "priority=1^ORpriority=2" }), true);
 
 console.log(failures ? `QUERYBUILDER-TESTS-FAILED (${failures})` : "ALL-QUERYBUILDER-TESTS-PASS");
 process.exit(failures ? 1 : 0);

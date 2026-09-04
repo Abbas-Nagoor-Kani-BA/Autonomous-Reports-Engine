@@ -117,4 +117,18 @@ function buildEncodedQuery(cfg: QueryBuilderConfig): string {
   return parts.join("^");
 }
 
-export { encodeConditions, buildEncodedQuery };
+/**
+ * True when the config yields at least one query constraint, i.e. it will not
+ * pull the whole table. Mirrors buildEncodedQuery but never throws: a raw
+ * top-level ^OR throws there yet still represents a real constraint, so it
+ * counts as constrained here.
+ */
+function hasQueryConstraint(cfg: QueryBuilderConfig): boolean {
+  try {
+    return buildEncodedQuery(cfg) !== "";
+  } catch {
+    return true;
+  }
+}
+
+export { encodeConditions, buildEncodedQuery, hasQueryConstraint };

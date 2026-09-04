@@ -1,4 +1,5 @@
-import { buildEncodedQuery } from "../core/querybuilder.ts";
+import { buildEncodedQuery, hasQueryConstraint } from "../core/querybuilder.ts";
+import type { QueryBuilderConfig } from "../core/querybuilder.ts";
 import { snStateChoices, SN_PRIORITY_CHOICES, snTableLabel } from "../core/statechoices.ts";
 import { presetOptions, resolvePresetSets } from "../core/preset-controller.ts";
 import { FILTER_PRESET_REPO } from "../di/tokens.ts";
@@ -454,6 +455,14 @@ els.preview.addEventListener("click", async () => {
     const live = currentFilters();
     const saved = filterSets.getSets();
     const sets = saved.length ? saved.map((f) => ({ ...f, rawQuery: live.rawQuery })) : [live];
+    if (!sets.some((s) => hasQueryConstraint(s as QueryBuilderConfig))) {
+      const msg = "Add at least one condition before running \u2014 a pull with no conditions would fetch the entire table";
+      setBusy(false);
+      progressCard.setLabel(msg);
+      logger.log(msg, "error");
+      showToast(msg, "error");
+      return;
+    }
     let pullable = 0;
     let overLimit = 0;
     let lastQuery = "";
@@ -492,6 +501,13 @@ els.runBtn.addEventListener("click", async () => {
     const live = currentFilters();
     const saved = filterSets.getSets();
     const sets = saved.length ? saved.map((f) => ({ ...f, rawQuery: live.rawQuery })) : [live];
+    if (!sets.some((s) => hasQueryConstraint(s as QueryBuilderConfig))) {
+      const msg = "Add at least one condition before running \u2014 a pull with no conditions would fetch the entire table";
+      setBusy(false);
+      logger.log(msg, "error");
+      showToast(msg, "error");
+      return;
+    }
     await bridge.run({
       instanceUrl: requireInstance(),
       groups: configuredGroups(),
