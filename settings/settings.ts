@@ -12,7 +12,10 @@ import type { MlModelOption } from "../data/ml-model-repository.ts";
 
 const $ = (id: string): any => document.getElementById(id);
 
-const page = createSettings();
+const page = createSettings({
+  onSettingsChange: () => savePluginSettings(),
+  onMsrChange: () => saveMsrLists()
+});
 
 // Populate the model dropdown from the catalog (kept in sync with the worker's
 // supported set rather than hardcoded in HTML).
@@ -65,20 +68,57 @@ function fill(s: unknown): void {
   $("mlCacheEnabled").checked = merged.ml.cacheEnabled;
   if (ML_MODEL_CATALOG.some((m) => m.id === merged.ml.modelId)) $("mlModel").value = merged.ml.modelId;
 }
-async function save(): Promise<void> {
-  const settings = collect();
-  await page.settings.save(settings);
-  await page.msrLists.save(collectMsrLists(page));
-  const q = settings.defaults.queues.length;
-  const m = settings.defaults.teamMembers.length;
-  showToast(`Settings saved \u2014 ${q} queue${q === 1 ? "" : "s"}, ${m} member${m === 1 ? "" : "s"}`);
+let suspendSave = false;
+let savedTimer: ReturnType<typeof setTimeout> | null = null;
+function flashSaved(): void {
+  const el = $("saveStatus");
+  if (!el) return;
+  el.textContent = "Saved \u2713";
+  el.classList.add("text-good");
+  if (savedTimer) clearTimeout(savedTimer);
+  savedTimer = setTimeout(() => {
+    el.textContent = "";
+    el.classList.remove("text-good");
+  }, 1500);
 }
-$("saveBtn").addEventListener("click", () => save().catch((e) => showToast((e as Error).message, "error")));
+
+function debounce(fn: () => void, ms: number): () => void {
+  let t: ReturnType<typeof setTimeout> | null = null;
+  return () => {
+    if (t) clearTimeout(t);
+    t = setTimeout(fn, ms);
+  };
+}
+
+async function persistPluginSettings(): Promise<void> {
+  if (suspendSave) return;
+  await page.settings.save(collect());
+  flashSaved();
+}
+async function persistMsrLists(): Promise<void> {
+  if (suspendSave) return;
+  await page.msrLists.save(collectMsrLists(page));
+  flashSaved();
+}
+const savePluginSettings = debounce(() => persistPluginSettings().catch((e) => showToast((e as Error).message, "error")), 400);
+const saveMsrLists = debounce(() => persistMsrLists().catch((e) => showToast((e as Error).message, "error")), 400);
+
+for (const id of ["instanceUrl", "ticketType", "tablePageSize", "cacheTtlMinutes", "maxTicketsPerPull", "debugResponses"]) {
+  $(id).addEventListener("change", savePluginSettings);
+  $(id).addEventListener("input", savePluginSettings);
+}
+
 initTooltips();
 $("resetBtn").addEventListener("click", async () => {
+  const ok = confirm("Reset all settings to defaults? This clears queues, team members, pull parameters, classification options, MSR option lists and classifier keywords. Pulled data and saved filters are not affected.");
+  if (!ok) return;
+  suspendSave = true;
   fill(null);
+  fillMsrLists(page, page.settings.defaultMsrLists());
+  suspendSave = false;
   await page.settings.reset();
-  showToast("Settings reset to defaults");
+  await page.msrLists.clear();
+  showToast("All settings reset to defaults");
 });
 $("msrResetBtn").addEventListener("click", async () => {
   fillMsrLists(page, page.settings.defaultMsrLists());
@@ -90,9 +130,10 @@ $("kwResetBtn")?.addEventListener("click", async () => {
   for (const [label, chip] of Object.entries(page.kwChips)) {
     chip.setValues(defaults[normHintKey(label)] || []);
   }
+  await page.msrLists.save(collectMsrLists(page));
   showToast("Classifier keywords restored to defaults");
 });
-page.msrLists.load().then((stored) => fillMsrLists(page, page.settings.msrLists(stored)));
+page.msrLists.load().then((stored) => { suspendSave = true; fillMsrLists(page, page.settings.msrLists(stored)); suspendSave = false; });
 $("clearCacheBtn").addEventListener("click", async () => {
   try {
     await getDefaultDatabase().clearAll();
@@ -124,7 +165,7 @@ async function refreshMlStatus(): Promise<void> {
 $("mlModel").addEventListener("change", () => {
   // Persist the selection so the viewer/worker use this model, and refresh its
   // download status.
-  save().catch((e) => showToast((e as Error).message, "error"));
+  savePluginSettings();
   refreshMlStatus().catch(() => undefined);
 });
 
@@ -162,7 +203,7 @@ $("mlDownloadBtn").addEventListener("click", async () => {
 // checkbox).
 for (const id of ["mlMode", "mlCacheEnabled"]) {
   $(id).addEventListener("change", () => {
-    save().catch((e) => showToast((e as Error).message, "error"));
+    savePluginSettings();
   });
 }
 
@@ -177,7 +218,7 @@ $("mlCacheClearBtn").addEventListener("click", async () => {
 });
 
 refreshMlStatus().catch(() => undefined);
-page.settings.load().then(fill);
+page.settings.load().then((s) => { suspendSave = true; fill(s); suspendSave = false; });
 const CFG_KIND = "servicenow-ticket-analyzer-settings";
 const CFG_KEYS = [STORAGE.pluginSettings, STORAGE.exportColMap, STORAGE.ciSplit, STORAGE.viewerHiddenCols, STORAGE.snXlsxTemplate, STORAGE.msrLists];
 const CFG_LOCAL_KEY = STORAGE.snFilterList;
@@ -315,7 +356,11 @@ Current queues, filters, mapping and split groups will be overwritten.`
     if (Object.keys(updates).length) await chrome.storage.local.set(updates);
     if (localVal != null) importFilterList(localVal);
     page.bridge.notifyDataUpdated();
+    suspendSave = true;
     fill(updates.pluginSettings ?? null);
+    const importedMsr = updates[STORAGE.msrLists];
+    if (importedMsr !== undefined) fillMsrLists(page, page.settings.msrLists(importedMsr));
+    suspendSave = false;
     showToast("Settings imported");
   } catch (err) {
     showToast((err as Error).message, "error");

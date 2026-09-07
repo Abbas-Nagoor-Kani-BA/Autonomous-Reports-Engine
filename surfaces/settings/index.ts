@@ -52,10 +52,11 @@ export type SettingsWiring = {
   kwChips: Record<string, ChipList>;
   kwTiles: Record<string, HTMLElement>;
   kwStack: HTMLElement | null;
+  onMsrChange: (() => void) | null;
   msrFieldIds: { lists: [string, string][]; rootCause: [string, string][] };
 };
 
-export function createSettings(): SettingsWiring {
+export function createSettings(hooks?: { onSettingsChange?: () => void; onMsrChange?: () => void }): SettingsWiring {
   const container = registerCoreRepositories(new Container());
   container.registerClass(REMOTE_BRIDGE, RemoteBridge, { singleton: true });
 
@@ -65,15 +66,18 @@ export function createSettings(): SettingsWiring {
     return node;
   };
 
-  const chip = (id: string, collapsible = true): ChipList =>
-    new ChipList($(id), {}, { collapsible, placeholder: "One value per line — commas/semicolons also split" });
+  const onSettingsChange = hooks?.onSettingsChange;
+  const onMsrChange = hooks?.onMsrChange;
+
+  const chip = (id: string, change?: () => void, collapsible = true): ChipList =>
+    new ChipList($(id), { on: { change } }, { collapsible, placeholder: "One value per line — commas/semicolons also split" });
 
   const chips: Record<string, ChipList> = {
-    queues: chip("queuesChips"),
-    teamMembers: chip("teamMembersChips")
+    queues: chip("queuesChips", onSettingsChange),
+    teamMembers: chip("teamMembersChips", onSettingsChange)
   };
-  for (const [, id] of MSR_LIST_FIELDS) chips[id] = chip(id);
-  for (const [, id] of MSR_RC_FIELDS) chips[id] = chip(id);
+  for (const [, id] of MSR_LIST_FIELDS) chips[id] = chip(id, onMsrChange);
+  for (const [, id] of MSR_RC_FIELDS) chips[id] = chip(id, onMsrChange);
 
   return {
     container,
@@ -86,6 +90,7 @@ export function createSettings(): SettingsWiring {
     kwChips: {},
     kwTiles: {},
     kwStack: document.getElementById("kwStack"),
+    onMsrChange: onMsrChange || null,
     msrFieldIds: { lists: MSR_LIST_FIELDS, rootCause: MSR_RC_FIELDS }
   };
 }
@@ -120,7 +125,7 @@ export function rebuildKeywordChips(wiring: SettingsWiring, lists: Record<string
     tile.appendChild(body);
     stack.appendChild(tile);
     wiring.kwTiles[label] = tile;
-    wiring.kwChips[label] = new ChipList(body, {}, {
+    wiring.kwChips[label] = new ChipList(body, { on: { change: wiring.onMsrChange || undefined } }, {
       collapsible: true,
       placeholder: "One keyword per line — commas/semicolons also split"
     });

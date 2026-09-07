@@ -144,3 +144,14 @@ test("Escape in the textarea exits edit mode without saving", () => {
   assert.equal(root.querySelector(".chipEditor").hidden, true);
   assert.deepEqual(chip.getValues(), ["Alpha"], "typed text discarded on Escape");
 });
+
+test("chip list fires the change hook on commit (drives settings auto-save)", () => {
+  let fired = 0;
+  const root = document.createElement("div");
+  const chip = new ChipList(root, { on: { change: () => { fired++; } } }, {});
+  const input = root.querySelector(".chipInput");
+  input.value = "Alpha";
+  input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  assert.equal(chip.getValues().length, 1);
+  assert.ok(fired >= 1, "change hook fired when a value was committed");
+});
