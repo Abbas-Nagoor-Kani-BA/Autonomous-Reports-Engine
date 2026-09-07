@@ -271,6 +271,7 @@ function analyzeAll(
   const fallbackMembers = (queueCtx && queueCtx.fallbackMembers) || [];
   const tableName = (queueCtx && queueCtx.tableName) || "";
   const isIncident = tableName === "incident";
+  const stateField = tableName === "problem" ? "problem_state" : "state";
   const out: AnalyzedRow[] = [];
   let missingAudit = 0;
   for (const rec of records) {
@@ -289,7 +290,7 @@ function analyzeAll(
       snapshotGroupName,
       openedAtUtcRaw: rawValue(rec.opened_at)
     });
-    const stateLabel = fieldValue(rec.state).toLowerCase();
+    const stateLabel = fieldValue(rec[stateField]).toLowerCase();
     if (!isIncident) {
       t.suspendTimeUtcIso = null;
       t.resumeTimeUtcIso = null;
@@ -318,8 +319,8 @@ function analyzeAll(
       number: fieldValue(rec.number),
       requestItem: fieldValue((rec as Record<string, unknown>)["request_item.number"]),
       shortDescription: fieldValue(rec.short_description),
-      state: resolveStateLabel(rec.state, stateMap),
-      stateValue: rawValue(rec.state),
+      state: resolveStateLabel(rec[stateField], stateMap),
+      stateValue: rawValue(rec[stateField]),
       priority: fieldValue(rec.priority),
       priorityValue: rawValue(rec.priority),
       category: fieldValue(rec.category),
@@ -473,7 +474,7 @@ function extractEventsFromListHistory(payload: { entries?: unknown[] } | null | 
       if (!ch || typeof ch !== "object") continue;
       let fname = String(ch.field_name || "").trim();
       if (!fname) continue;
-      if (fname === "incident_state") fname = "state";
+      if (fname === "incident_state" || fname === "problem_state") fname = "state";
       (byTicket[docId] ||= []).push({
         field: fname,
         oldValue: String(ch.old_value ?? ch.sanitized_old_value ?? ""),

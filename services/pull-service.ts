@@ -61,6 +61,7 @@ export const DEFAULT_FIELDS = [
   "cmdb_ci",
   "sys_created_on",
   "incident_state",
+  "problem_state",
   "resolved_at",
   "close_code",
   "close_notes",

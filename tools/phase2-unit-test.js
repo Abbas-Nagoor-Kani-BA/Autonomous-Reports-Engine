@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { extractTimelines, analyzeAll } from "../core/phase2.ts";
+import { extractTimelines, analyzeAll, extractEventsFromListHistory } from "../core/phase2.ts";
 
 let failed = 0;
 function check(name, got, want) {
@@ -207,10 +207,10 @@ console.log("== analyzeAll: state resolves to a text label ==");
 (() => {
   const problemMap = { "103": "root cause analysis", "157": "Closed" };
   const ctx = { membersByQueue: {}, fallbackMembers: [], tableName: "problem" };
-  const recA = { sys_id: "p1", number: "PRB0001", state: { value: "103", display_value: "103" }, opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
+  const recA = { sys_id: "p1", number: "PRB0001", state: { value: "2", display_value: "2" }, problem_state: { value: "103", display_value: "103" }, opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
   const resA = analyzeAll([recA], {}, problemMap, ctx);
-  check("problem numeric display maps to label", resA.rows[0].state, "root cause analysis");
-  check("problem stateValue keeps the raw code", resA.rows[0].stateValue, "103");
+  check("problem reads problem_state, not state", resA.rows[0].state, "root cause analysis");
+  check("problem stateValue is the problem_state raw code", resA.rows[0].stateValue, "103");
 
   const incMap = { "7": "Closed" };
   const recB = { sys_id: "i1", number: "INC0001", state: { value: "7", display_value: "Closed" }, opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
@@ -220,6 +220,23 @@ console.log("== analyzeAll: state resolves to a text label ==");
   const recC = { sys_id: "s1", number: "INC0002", state: "In Progress", opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
   const resC = analyzeAll([recC], {}, {}, { ...ctx, tableName: "incident" });
   check("string state passes through", resC.rows[0].state, "In Progress");
+})();
+
+console.log("== extractEventsFromListHistory: problem_state is aliased to state ==");
+(() => {
+  const payload = {
+    entries: [
+      {
+        document_id: "p1",
+        sys_created_on: "2026-08-23 06:02:00",
+        entries: { changes: [{ field_name: "problem_state", old_value: "101", new_value: "103" }] }
+      }
+    ]
+  };
+  const byTicket = extractEventsFromListHistory(payload);
+  const ev = (byTicket.p1 || [])[0];
+  check("problem_state change becomes a state event", ev && ev.field, "state");
+  check("problem_state new value preserved", ev && ev.newValue, "103");
 })();
 
 console.log(`\nphase2: ${failed ? failed + " FAILED" : "all passed"}`);
