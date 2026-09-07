@@ -208,6 +208,13 @@ function rawValue(v: SnValue | unknown): string {
   return "";
 }
 
+function resolveStateLabel(state: SnValue | unknown, stateMap: Record<string, string>): string {
+  const display = fieldValue(state);
+  const raw = rawValue(state);
+  if (display && display !== raw) return display;
+  return stateMap[raw] || display || raw;
+}
+
 export type AnalyzedRow = {
   sysId: string | null;
   number: string;
@@ -311,7 +318,7 @@ function analyzeAll(
       number: fieldValue(rec.number),
       requestItem: fieldValue((rec as Record<string, unknown>)["request_item.number"]),
       shortDescription: fieldValue(rec.short_description),
-      state: fieldValue(rec.state),
+      state: resolveStateLabel(rec.state, stateMap),
       stateValue: rawValue(rec.state),
       priority: fieldValue(rec.priority),
       priorityValue: rawValue(rec.priority),

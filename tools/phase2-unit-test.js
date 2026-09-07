@@ -203,5 +203,24 @@ console.log("== analyzeAll: request_item.number maps to row.requestItem ==");
   check("sc_task with no request_item has empty requestItem", noRitm.requestItem, "");
 })();
 
+console.log("== analyzeAll: state resolves to a text label ==");
+(() => {
+  const problemMap = { "103": "root cause analysis", "157": "Closed" };
+  const ctx = { membersByQueue: {}, fallbackMembers: [], tableName: "problem" };
+  const recA = { sys_id: "p1", number: "PRB0001", state: { value: "103", display_value: "103" }, opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
+  const resA = analyzeAll([recA], {}, problemMap, ctx);
+  check("problem numeric display maps to label", resA.rows[0].state, "root cause analysis");
+  check("problem stateValue keeps the raw code", resA.rows[0].stateValue, "103");
+
+  const incMap = { "7": "Closed" };
+  const recB = { sys_id: "i1", number: "INC0001", state: { value: "7", display_value: "Closed" }, opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
+  const resB = analyzeAll([recB], {}, incMap, { ...ctx, tableName: "incident" });
+  check("existing text display value is untouched", resB.rows[0].state, "Closed");
+
+  const recC = { sys_id: "s1", number: "INC0002", state: "In Progress", opened_at: "2026-08-23 06:00:00", assignment_group: "X" };
+  const resC = analyzeAll([recC], {}, {}, { ...ctx, tableName: "incident" });
+  check("string state passes through", resC.rows[0].state, "In Progress");
+})();
+
 console.log(`\nphase2: ${failed ? failed + " FAILED" : "all passed"}`);
 process.exit(failed ? 1 : 0);
