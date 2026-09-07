@@ -4,27 +4,30 @@
   <meta charset="utf-8">
   <link href="../styles/output.css" rel="stylesheet">
 </head>
-<body class="m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]">
-  <header class="flex items-center justify-between mb-3">
-    <h1 class="text-[15px] m-0 text-accent">ServiceNow Ticket Analyzer</h1>
-    <span id="connState" class="badge">Not connected</span>
+<body class="panel m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]">
+  <header class="flex items-center justify-between mb-4">
+    <h1 class="text-[15px] m-0 text-accent font-semibold">ServiceNow Ticket Analyzer</h1>
+    <div class="flex items-center gap-2">
+      <span id="connState" class="badge">Not connected</span>
+      <button id="settingsBtn" type="button" class="iconBtn" data-tip="Open settings" aria-label="Settings">&#9881;</button>
+    </div>
   </header>
 
-  <section class="card">
-    <label class="block text-[11px] text-dim my-2.5 uppercase tracking-wider">Instance URL</label>
+  <section class="pnSection">
+    <h2 class="secTitle">Instance</h2>
+    <label class="pnLabel" for="instance">Instance URL</label>
     <div class="flex gap-2">
       <input id="instance" type="url" placeholder="https://yourcompany.service-now.com" class="input flex-1 min-w-0">
       <button id="connectBtn" class="btn">Connect</button>
-      <button id="settingsBtn" type="button" class="linklike" data-tip="Open settings">&#9881; Settings</button>
     </div>
   </section>
 
-  <section class="card">
-    <h2 class="text-xs m-0 mb-1.5 text-muted uppercase tracking-wider">Filters</h2>
+  <section class="pnSection">
+    <h2 class="secTitle">Filters</h2>
 
-    <div id="filterListCard" class="hidden bg-card2 border border-line rounded-lg px-2.5 pt-2.5 pb-1.5 mb-3">
-      <div class="flex items-center justify-between my-2.5">
-        <label class="block text-[11px] text-dim uppercase tracking-wider">Saved filter sets (Run pulls all of them)</label>
+    <div id="filterListCard" class="hidden bg-card2 rounded-lg px-2.5 pt-2.5 pb-1.5 mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <label class="pnLabel m-0">Saved filter sets · Run pulls all</label>
         <div class="relative">
           <button id="filterMenuBtn" type="button" class="linklike px-1" aria-haspopup="true" aria-expanded="false" data-tip="Preset options">&#8942;</button>
           <div id="filterMenu" class="hidden absolute right-0 z-10 mt-1 min-w-[180px] bg-card border border-line rounded-lg p-1.5 shadow-[0_8px_24px_rgba(17,17,27,.55)]">
@@ -37,7 +40,7 @@
       <button id="clearFilterListBtn" type="button" class="linklike">Clear all — run uses the live filters only</button>
     </div>
 
-    <label class="block text-[11px] text-dim my-2.5 uppercase tracking-wider">Ticket type</label>
+    <label class="pnLabel" for="ticketType">Ticket type</label>
     <select id="ticketType" class="select">
       <option value="incident">Incident</option>
       <option value="change_request">Change Request</option>
@@ -46,36 +49,38 @@
       <option value="sc_task">Catalog Task (SCTASK)</option>
     </select>
 
-    <label class="block text-[11px] text-dim my-2.5 uppercase tracking-wider">Conditions (AND / OR)</label>
+    <label class="pnLabel">Conditions</label>
     <div id="condRows"></div>
     <button id="addCondBtn" type="button" class="linklike">+ Add condition</button>
 
-    <button id="addFilterBtn" type="button" class="w-full mt-2.5 bg-line font-medium py-2.5 rounded cursor-pointer text-text hover:brightness-110">+ Add to filter list</button>
+    <button id="addFilterBtn" type="button" class="btn-ghost w-full mt-2.5">+ Add to filter list</button>
 
-    <label class="block text-[11px] text-dim mt-2.5 mb-1 uppercase tracking-wider">Load preset</label>
+    <label class="pnLabel" for="presetSelect">Load preset</label>
     <select id="presetSelect" class="select" data-tip="Load a filter preset — replaces the filter list. WSR is the built-in Weekly Status Report preset.">
       <option value="">Load preset&hellip;</option>
     </select>
 
-    <label class="flex items-center gap-2 mt-3 text-[11.5px] text-muted cursor-pointer select-none" data-tip="Also pull this week's change requests to fill the Weekly Summary sheet (last week implemented/failed, next week planned) plus P1/P2 incidents from last week">
+    <label class="flex items-center gap-2 mt-3 text-[12px] text-muted cursor-pointer select-none" data-tip="Also pull this week's change requests to fill the Weekly Summary sheet (last week implemented/failed, next week planned) plus P1/P2 incidents from last week">
       <input id="includeSummary" type="checkbox" class="accent-accent">
       <span>Pull change requests for Weekly Summary</span>
     </label>
 
     <details id="advancedBox" class="mt-2.5">
-      <summary class="text-xs text-dim cursor-pointer">Advanced — raw query override / generated query</summary>
+      <summary class="text-[12px] text-dim cursor-pointer">Advanced — raw query override / generated query</summary>
       <textarea id="rawQuery" placeholder="Optional: extra encoded query conditions, e.g. priority=1^category=network" class="textarea mt-2"></textarea>
-      <label class="block text-[11px] text-dim my-2.5 uppercase tracking-wider">Generated query</label>
+      <label class="pnLabel">Generated query</label>
       <pre id="generatedQuery" class="mono"></pre>
     </details>
   </section>
 
+  <div class="pnDivider"></div>
+
   <section class="flex gap-2 mb-2.5">
-    <button id="previewBtn" class="btn flex-1 py-2.5">Preview</button>
+    <button id="previewBtn" class="btn-ghost flex-1 py-2.5">Preview</button>
     <button id="runBtn" class="btn-primary flex-1 py-2.5">Run</button>
   </section>
   <section class="flex gap-2 mb-2.5">
-    <button id="viewBtn" class="w-full bg-line font-medium py-2.5 rounded cursor-pointer text-text hover:brightness-110">Open data view</button>
+    <button id="viewBtn" class="btn-ghost w-full py-2.5">Open data view</button>
   </section>
 
   <section id="progressWrap" class="hidden">

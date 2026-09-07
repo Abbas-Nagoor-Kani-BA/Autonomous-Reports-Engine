@@ -168,6 +168,31 @@
     @apply bg-transparent border-0 py-0 mt-1.5 text-[11px] font-medium text-accent cursor-pointer;
   }
 
+  .panel .pnSection { @apply mb-5; }
+  .panel .pnLabel { @apply block text-[12px] text-dim mt-3 mb-1; }
+  .panel .pnLabel:first-child { @apply mt-2; }
+  .panel .pnDivider { @apply h-px bg-line my-4; }
+  .panel .iconBtn {
+    @apply inline-flex items-center justify-center w-7 h-7 rounded-md bg-transparent border-0 text-dim text-[15px] cursor-pointer hover:text-accent hover:bg-card2;
+  }
+  .panel .secTitle { @apply mt-0 pt-0 border-t-0 mb-2; }
+  .panel .input,
+  .panel .select,
+  .panel .textarea {
+    @apply border-transparent bg-card2 focus:border-transparent focus:outline focus:outline-1 focus:outline-accent;
+  }
+  .crow { @apply flex flex-wrap items-center gap-1.5 mt-2; }
+  .cpill {
+    @apply flex-none min-w-0 max-w-full text-[12.5px] leading-none px-2 py-1 rounded-md bg-card2 text-text border border-transparent cursor-pointer;
+    @apply focus:outline focus:outline-1 focus:outline-accent hover:brightness-110;
+  }
+  .cpill.cfield { @apply font-medium; }
+  .cpill.cval { @apply cursor-text; }
+  .cpill.cpill-join {
+    @apply w-auto font-semibold text-[11px] uppercase tracking-wide text-accent bg-transparent px-1.5;
+  }
+  .crow .cdel:hover { @apply bg-card2 rounded; }
+
   .hidden { display: none !important; }
 
   .secTitle {

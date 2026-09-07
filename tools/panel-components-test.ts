@@ -191,17 +191,17 @@ test("changing the field resets operator and value, and rebuilds", () => {
   assert.equal($("condRows").querySelectorAll(".cval").length, 2, "between needs two dates");
 });
 
-test("the second row gets a join selector wired to state", () => {
+test("the join selector sits at the end of the preceding row and is wired to state", () => {
   const builder = makeBuilder();
   builder.addRow();
   builder.addRow();
 
   const rows = $("condRows").querySelectorAll(".crow");
-  assert.equal(rows[0].querySelector(".cjoin"), null, "first row has no join");
-  assert.ok(rows[1].querySelector(".cjoin"), "second row does");
+  assert.ok(rows[0].querySelector(".cjoin"), "the join to the next row sits at the end of the first row");
+  assert.equal(rows[1].querySelector(".cjoin"), null, "the last row has no trailing join");
 
-  rows[1].querySelector(".cjoin").value = "OR";
-  rows[1].querySelector(".cjoin").dispatchEvent(new win.Event("change"));
+  rows[0].querySelector(".cjoin").value = "OR";
+  rows[0].querySelector(".cjoin").dispatchEvent(new win.Event("change"));
 
   assert.equal(builder.conditions()[1].join, "OR");
 });
