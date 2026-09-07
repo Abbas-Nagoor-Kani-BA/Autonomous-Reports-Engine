@@ -79,7 +79,7 @@ export function createPanel(options: {
       repository: container.resolve(FILTER_LIST_REPO),
       card: $("filterListCard"),
       addButton: $("addFilterBtn"),
-      describe: (set) => describeFilterSet(set, options.condFields, options.choiceList),
+      describe: (set) => describeFilterSet(set, options.condFields),
       keyOf: filterKey
     }
   );
@@ -111,11 +111,11 @@ const COND_OP_LABELS: Record<string, string> = {
 
 export function describeFilterSet(
   set: FilterSet,
-  condFields: CondFieldDef[],
-  choiceList: (key: string) => { value: string | number; label: string }[]
+  condFields: CondFieldDef[]
 ): string {
+  const byTable = (key: string) => panelChoiceList(key, set.table);
   const bits = [snTableLabel(set.table)];
-  const summary = conditionsSummary(set.conditions, condFields, choiceList, set.table);
+  const summary = conditionsSummary(set.conditions, condFields, byTable, set.table);
   if (summary) bits.push(summary);
   return bits.join(" \xB7 ");
 }

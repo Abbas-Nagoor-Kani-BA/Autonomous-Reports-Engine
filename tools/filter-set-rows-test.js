@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { filterSetToRows } = await import("../surfaces/panel/index.ts");
+const { filterSetToRows, describeFilterSet } = await import("../surfaces/panel/index.ts");
 
 const COND_FIELDS = [
   { key: "assignedTo", label: "Assigned to", field: "assigned_to", type: "ref" },
@@ -73,4 +73,29 @@ test("filterSetToRows normalizes the first row's join to AND", () => {
 
 test("filterSetToRows tolerates a missing conditions array", () => {
   assert.deepEqual(filterSetToRows({ table: "incident", conditions: undefined }, COND_FIELDS), []);
+});
+
+test("describeFilterSet resolves a problem_state value to its label via the set's own table", () => {
+  const summary = describeFilterSet(
+    { table: "problem", conditions: [{ join: "AND", field: "problem_state", oper: "eq", value: "103", value2: "" }] },
+    COND_FIELDS
+  );
+  assert.match(summary, /root cause analysis/);
+  assert.doesNotMatch(summary, /\bis 103\b/);
+});
+
+test("describeFilterSet resolves a change_request state value independent of any live ticket type", () => {
+  const summary = describeFilterSet(
+    { table: "change_request", conditions: [{ join: "AND", field: "state", oper: "eq", value: "-3", value2: "" }] },
+    COND_FIELDS
+  );
+  assert.match(summary, /Authorize/);
+});
+
+test("describeFilterSet resolves an incident state value to its label", () => {
+  const summary = describeFilterSet(
+    { table: "incident", conditions: [{ join: "AND", field: "state", oper: "eq", value: "7", value2: "" }] },
+    COND_FIELDS
+  );
+  assert.match(summary, /Closed/);
 });

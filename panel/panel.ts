@@ -187,7 +187,7 @@ $("addFilterBtn").addEventListener("click", async () => {
     refreshGenerated();
     filterSets.flash();
     const total = filterSets.getSets().length;
-    logger.log(`Added filter ${total}: ${describeFilterSet(f, COND_FIELDS, (k) => choiceList(k))}`, "success");
+    logger.log(`Added filter ${total}: ${describeFilterSet(f, COND_FIELDS)}`, "success");
     showToast(`Filter ${total} added`);
   } catch (err) {
     logger.log((err as Error).message, "error");
@@ -357,7 +357,7 @@ async function editFilterSet(set: FilterSet, index: number): Promise<void> {
     conditions.setRows(filterSetToRows(set, COND_FIELDS));
     await filterSets.removeAt(index);
     refreshGenerated();
-    logger.log(`Editing filter: ${describeFilterSet(set, COND_FIELDS, (k) => choiceList(k))}`);
+    logger.log(`Editing filter: ${describeFilterSet(set, COND_FIELDS)}`);
     showToast("Filter loaded for editing");
   } catch (err) {
     logger.log((err as Error).message, "error");
