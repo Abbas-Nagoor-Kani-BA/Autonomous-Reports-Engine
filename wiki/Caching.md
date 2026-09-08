@@ -116,6 +116,59 @@ no-batching Phase 2. It is **not** affected by the query TTL setting.
 This separation is intentional: clearing data must never force a multi-hundred-MB
 model re-download or discard expensive classification work.
 
+## Storage tiers vs session-only state
+
+Not everything is persisted. There are three durability tiers:
+
+| Tier | Where | Lifetime | Examples |
+|---|---|---|---|
+| `chrome.storage.local` | key/value, per-extension | until changed / reset | see the key list below |
+| Persisted caches | IndexedDB (the three DBs above) | TTL / watermark / until cleared | query results, per-ticket timelines, classification outcomes, ML model files |
+| **Session-only (ephemeral)** | **in memory** | **reset on every page load** | viewer toggles below |
+
+### What `chrome.storage.local` holds
+
+All non-cache persistent state lives in `chrome.storage.local` (keys defined in
+`lib/keys.ts`, wrapped by `data/chrome-key-value-store.ts`). It is **not** only
+settings — it also holds the pulled dataset and viewer preferences:
+
+| Key | Contents |
+|---|---|
+| `pluginSettings` | instance URL, ticket type, queues, team members, pull params, classification mode/model, classifier keywords |
+| `msrLists` | MSR option lists |
+| `snFilterList`, `snFilterPresets` | saved filter list and presets |
+| `snXlsxTemplate` | the cached WSR Excel template |
+| `lastData` | the last pulled dataset (rows the viewer renders) |
+| `lastRun`, `snInstance`, `includeSummary` | last-run summary, last instance URL, Weekly Summary toggle |
+| `exportColMap`, `ciSplit` | export column mapping and CI split groups |
+| `viewerHiddenCols`, `viewerColWidths`, `viewerSel`, `viewerActionRail`, `calclensHighlights`, `viewerSummaryNarrative` | viewer preferences that survive reloads |
+
+`unlimitedStorage` is granted because `lastData` and `snXlsxTemplate` can be
+large. The [Backup and Transfer](Backup-and-Transfer) export bundles most of
+these keys into one JSON file.
+
+### Session-only state
+
+There is **no session storage mechanism** — the extension does not use
+`chrome.storage.session` or `sessionStorage`. "Session-only" means the state is
+held in memory by a single owner module and is intentionally **not persisted**:
+it always starts fresh when the viewer page loads. These are:
+
+- **Edit mode** — `surfaces/viewer/edit-mode-state.ts`; always starts OFF on
+  load, never saved.
+- **Calclens toggle** — `surfaces/viewer/calclens-state.ts`; a session toggle
+  (distinct from the persisted Calclens highlight set in
+  `calclens-highlights.ts`, stored under `calclensHighlights`).
+- **Search controls** — `surfaces/viewer/search-state.ts`; the column-scoped
+  search state is session-only.
+- **CI split preview** — `surfaces/viewer/split-filter.ts`; "view one CI group"
+  scopes the grid for the current session only and is not remembered (the split
+  *groups* under `ciSplit` are persisted; the active preview is not).
+
+The word "session" also appears in [Authentication Chain](Authentication-Chain),
+where it means the reused ServiceNow **login session** — a separate concept from
+this ephemeral UI state.
+
 ## Tests
 
 | Suite | Covers |

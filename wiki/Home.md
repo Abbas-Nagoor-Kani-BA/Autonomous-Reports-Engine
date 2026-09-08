@@ -23,18 +23,20 @@ flowchart LR
     PULL <-->|query + timeline cache| DB1[(snAnalyzerCache)]
     VIEW <-->|classification results| DB2[(snAnalyzerClassCache)]
     VIEW <-->|offline ML model| DB3[(snAnalyzerMlModel)]
+    VIEW <-->|settings, dataset, prefs| LOC[[chrome.storage.local]]
 
-    subgraph IDB[IndexedDB - local only]
+    subgraph IDB[IndexedDB - caches]
         DB1
         DB2
         DB3
     end
 ```
 
-The three IndexedDB caches make re-runs cheap: `snAnalyzerCache` reuses query
-results and per-ticket timelines, `snAnalyzerClassCache` reuses classification
-outcomes, and `snAnalyzerMlModel` holds the one-time ML model download. See
-[Caching](Caching).
+Storage is local only. `chrome.storage.local` keeps settings, the pulled dataset
+(`lastData`), and viewer preferences; the three IndexedDB caches make re-runs
+cheap — `snAnalyzerCache` reuses query results and per-ticket timelines,
+`snAnalyzerClassCache` reuses classification outcomes, and `snAnalyzerMlModel`
+holds the one-time ML model download. See [Caching](Caching).
 
 ## User Guide
 
@@ -79,4 +81,4 @@ Start here if you want to build, test, or extend the code.
 | Auth | Reuses your logged-in ServiceNow browser session (no API keys) |
 | Tables | incident, change_request, problem, sc_req_item, sc_task |
 | Output | Filled WSR (Weekly Status Report) `.xlsx` workbook, plus Copy for MSR (Monthly Status Report) |
-| Storage | Local only: settings in `chrome.storage.local`; three IndexedDB caches — `snAnalyzerCache` (query + timeline), `snAnalyzerClassCache` (classification results), `snAnalyzerMlModel` (downloaded ML model). See [Caching](Caching). |
+| Storage | Local only: `chrome.storage.local` holds settings, the pulled dataset, and viewer prefs; three IndexedDB caches — `snAnalyzerCache` (query + timeline), `snAnalyzerClassCache` (classification results), `snAnalyzerMlModel` (ML model). See [Caching](Caching). |
