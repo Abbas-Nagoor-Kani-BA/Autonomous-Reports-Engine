@@ -17,13 +17,14 @@ This wiki covers both **using** the extension and **developing** it.
 ```mermaid
 flowchart LR
     SN[(ServiceNow<br/>instance)] -->|session auth via open tab| PULL[Pull pipeline<br/>Phase 1 + Phase 2]
-    PULL --> VIEW[Data Viewer<br/>search / edit / classify]
+    PULL -->|write dataset| LOC[[chrome.storage.local<br/>lastData + settings + prefs]]
+    LOC -->|read dataset| VIEW[Data Viewer<br/>search / edit / classify]
+    VIEW -->|write edits| LOC
     VIEW --> EXPORT[Export WSR workbook<br/>+ Copy for MSR]
 
     PULL <-->|query + timeline cache| DB1[(snAnalyzerCache)]
     VIEW <-->|classification results| DB2[(snAnalyzerClassCache)]
     VIEW <-->|offline ML model| DB3[(snAnalyzerMlModel)]
-    VIEW <-->|settings, dataset, prefs| LOC[[chrome.storage.local]]
 
     subgraph IDB[IndexedDB - caches]
         DB1
@@ -32,11 +33,13 @@ flowchart LR
     end
 ```
 
-Storage is local only. `chrome.storage.local` keeps settings, the pulled dataset
-(`lastData`), and viewer preferences; the three IndexedDB caches make re-runs
-cheap — `snAnalyzerCache` reuses query results and per-ticket timelines,
-`snAnalyzerClassCache` reuses classification outcomes, and `snAnalyzerMlModel`
-holds the one-time ML model download. See [Caching](Caching).
+The Data Viewer never reads the pull pipeline (Phase 1 + Phase 2) directly: the
+pull **writes** the merged dataset to `chrome.storage.local` (`lastData`) and
+the viewer **reads** it from there (and writes edits back). The three IndexedDB
+caches make re-runs cheap — `snAnalyzerCache` reuses query results and
+per-ticket timelines, `snAnalyzerClassCache` reuses classification outcomes, and
+`snAnalyzerMlModel` holds the one-time ML model download. See
+[Caching](Caching) and [Data Viewer](Data-Viewer).
 
 ## User Guide
 
