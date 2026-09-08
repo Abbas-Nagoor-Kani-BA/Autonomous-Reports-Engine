@@ -33,10 +33,8 @@ let ciEditor: CiDialog | null = null;
 export function initDialogs(): void {
   iconize($("mapClose"), "x-circle", { mode: "icon", tip: "Close" });
   iconize($("mapReset"), "rotate-ccw");
-  iconize($("mapCancel"), "x-circle", { mode: "icon", tip: "Cancel" });
   iconize($("mapSave"), "check");
   iconize($("ciClose"), "x-circle", { mode: "icon", tip: "Close" });
-  iconize($("ciCancel"), "x-circle", { mode: "icon", tip: "Cancel" });
   iconize($("ciSave"), "check");
   iconize($("addGroupBtn"), "plus");
 
@@ -98,19 +96,14 @@ export function initDialogs(): void {
   $("mapSave").addEventListener("click", () => {
     void (mapEditor && mapEditor.save());
   });
-  $("mapCancel").addEventListener("click", () => mapModal && mapModal.close());
-  $("mapClose").addEventListener("click", () => mapModal && mapModal.close());
-  $("mapReset").addEventListener("click", async () => {
+  $("mapClose").addEventListener("click", () => mapModal && mapModal.close());  $("mapReset").addEventListener("click", async () => {
     if (!mapEditor) return;
     await mapEditor.reset(DEFAULT_EXPORT_MAP);
     setStatus("Mapping reset — exports use the template's default layout until saved again");
   });
 
-  // Close and cancel are plain dismissals; Save and Disable close themselves only
-  // after their own persistence succeeds.
-  for (const id of ["ciClose", "ciCancel"]) {
-    $(id).addEventListener("click", () => ciModal && ciModal.close());
-  }
+  // Close is a plain dismissal; Save closes itself only after persistence succeeds.
+  $("ciClose").addEventListener("click", () => ciModal && ciModal.close());
 
   document.addEventListener("keydown", e => {
     // Modals handle Escape themselves, innermost first. This only runs when none

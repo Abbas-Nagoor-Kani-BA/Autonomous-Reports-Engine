@@ -210,7 +210,7 @@ const SKELETON = `
     <div id="mapList"></div>
     <div class="mapFoot">
       <button id="mapReset">Reset</button><span class="spacer"></span>
-      <button id="mapCancel">Cancel</button><button id="mapSave" class="primary">Save</button>
+      <button id="mapSave" class="primary">Save</button>
     </div>
   </div>
 </div>
@@ -221,8 +221,7 @@ const SKELETON = `
     <p class="mapHint">An item matches every configuration item that contains it (anywhere in the name) — e.g. "Payment Gateway" also matches "Payment Gateway PRD / PreLive / DEV / TEST" and "Web Payment Gateway". Longest match wins; the rest go to Others.</p>
     <div id="groupBoard"></div>
     <button id="addGroupBtn">Add group</button>
-    <div class="mapFoot"><button id="ciSave" class="primary">Save</button>
-    <button id="ciCancel">Cancel</button></div>
+    <div class="mapFoot"><button id="ciSave" class="primary">Save</button></div>
   </div>
 </div>
 <div id="configModal" class="hidden">
@@ -255,7 +254,6 @@ const SKELETON = `
     </div>
     <div id="cfgSplitPreview" class="hidden"></div>
     <div class="mapFoot">
-      <button id="configCancel">Cancel</button>
       <span class="spacer"></span>
       <button id="configExport" class="primary">Export</button>
     </div>

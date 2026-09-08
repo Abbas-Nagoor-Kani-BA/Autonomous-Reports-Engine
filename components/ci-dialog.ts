@@ -29,7 +29,6 @@ export type CiDialogRefs = {
   enabled: HTMLInputElement;
   board: HTMLElement;
   save: HTMLElement;
-  cancel: HTMLElement;
   close: HTMLElement;
   addGroup: HTMLElement;
 };
@@ -78,7 +77,6 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
     this.refs.enabled = this.q<HTMLInputElement>("#ciEnabled");
     this.refs.board = this.q("#groupBoard");
     this.refs.save = this.q("#ciSave");
-    this.refs.cancel = this.q("#ciCancel");
     this.refs.close = this.q("#ciClose");
     this.refs.addGroup = this.q("#addGroupBtn");
 

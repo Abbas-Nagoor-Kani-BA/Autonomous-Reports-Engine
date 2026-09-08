@@ -35,7 +35,6 @@ export function initToolbar(): void {
   iconize($("copyMsrBtn"), "copy");
   iconize($("configExport"), "file-spreadsheet");
   iconize($("configClose"), "x-circle", { mode: "icon", tip: "Close" });
-  iconize($("configCancel"), "x-circle", { mode: "icon", tip: "Cancel" });
   iconize($("cfgTplBtn"), "file-text");
   iconize($("cfgTplClear"), "trash-2");
   iconize($("cfgCiBtn"), "building-2");
@@ -84,7 +83,6 @@ export function initToolbar(): void {
   $("cfgCiBtn").addEventListener("click", () => openCiDialog());
 
   $("configClose").addEventListener("click", closeConfigDialog);
-  $("configCancel").addEventListener("click", closeConfigDialog);
 
   $("configExport").addEventListener("click", runExport);
 

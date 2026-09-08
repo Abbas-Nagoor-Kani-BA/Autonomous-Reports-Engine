@@ -177,7 +177,6 @@ function mountCi() {
     <input type="checkbox" id="ciEnabled">
     <div id="groupBoard"></div>
     <button id="addGroupBtn"></button>
-    <button id="ciCancel"></button>
     <button id="ciClose"></button><button id="ciSave"></button>
   </div>`;
   const $ = (id: string) => win.document.getElementById(id) as HTMLElement;
