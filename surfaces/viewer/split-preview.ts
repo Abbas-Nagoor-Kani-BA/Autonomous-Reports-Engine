@@ -108,7 +108,7 @@ export function initSplitPreview(): void {
   });
   modal = new Modal($("splitPreviewModal"), {}, {});
   const btn = $("splitPreviewBtn") as HTMLButtonElement;
-  iconize(btn, "columns-3", { mode: "icon", tip: "Preview export split", label: "Preview export split" });
+  iconize(btn, "split");
   btn.addEventListener("click", () => openSplitPreview());
   const close = $("splitPreviewClose");
   if (close) close.addEventListener("click", () => modal.close());
