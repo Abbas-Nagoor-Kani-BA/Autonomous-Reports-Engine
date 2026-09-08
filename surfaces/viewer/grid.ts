@@ -44,9 +44,12 @@ let selHooks: SelHooks = {
 
 function setSelectionHooks(h: Partial<SelHooks>) { selHooks = { ...selHooks, ...h }; }
 
-let onCellFocus: (info: { sysId: string; key: string } | null) => void = () => {};
-function setOnCellFocus(fn: (info: { sysId: string; key: string } | null) => void) { onCellFocus = fn; }
-function reportCellFocus(info: { sysId: string; key: string } | null) { onCellFocus(info); }
+const cellFocusListeners: Array<(info: { sysId: string; key: string } | null) => void> = [];
+function setOnCellFocus(fn: (info: { sysId: string; key: string } | null) => void) { cellFocusListeners.push(fn); }
+function addCellFocusListener(fn: (info: { sysId: string; key: string } | null) => void) { cellFocusListeners.push(fn); }
+function reportCellFocus(info: { sysId: string; key: string } | null) {
+  for (const fn of cellFocusListeners) fn(info);
+}
 
 function load(d: ViewerData | null | undefined) {
   selHooks.clearUndo();
@@ -148,7 +151,7 @@ export function initGrid() {
       }
       render();
     },
-    onCellFocus: (info) => onCellFocus(info),
+    onCellFocus: (info) => reportCellFocus(info),
     onWidthsChange: (widths) => {
       setColWidths(widths);
       saveColWidths();
@@ -197,6 +200,10 @@ function resetColWidths() {
 
 function render() {
   if (grid) grid.render(gridState(currentRows()));
+}
+
+function updateGridRows(sysIds: string[]): void {
+  if (grid) grid.updateRows(sysIds);
 }
 
 function scheduleSave() {
@@ -449,6 +456,7 @@ export {
   currentRows,
   fmtInstant,
   render,
+  updateGridRows,
   scheduleSave,
   persistEdits,
   saveData,
@@ -462,5 +470,7 @@ export {
   resetColWidths,
   setSelectionHooks,
   setOnCellFocus,
-  reportCellFocus
+  addCellFocusListener,
+  reportCellFocus,
+  attentionCtx
 };

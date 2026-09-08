@@ -617,6 +617,40 @@
   #configModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
   #mapModal, #ciModal { @apply fixed inset-0 z-[19] bg-card2/60 flex items-center justify-center; }
   #ticketStatsModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
+  #columnEditorModal { @apply fixed inset-0 z-[19] bg-card2/60 flex items-center justify-center; }
+  .ce-card { @apply flex flex-col gap-2 bg-card border border-line rounded-lg p-3 w-[min(900px,94vw)] h-[min(680px,86vh)]; }
+  .ce-head { @apply flex items-center gap-2 pb-1 border-b border-line; }
+  .ce-title { @apply font-semibold text-[13px] text-text; }
+  .ce-dirty { @apply text-[11px] px-2 py-0.5 rounded-full bg-accent/20 text-accent font-semibold; }
+  .ce-find { @apply ml-auto w-[140px] bg-card2 border border-line rounded px-2 py-1 text-[12px] text-text; }
+  .ce-close { @apply bg-transparent border border-line rounded px-2 py-1 text-muted cursor-pointer hover:text-bad; }
+  .ce-body { @apply flex-1 min-h-0 flex gap-2; }
+  .ce-left { @apply w-1/2 min-w-0 overflow-auto bg-card2 border border-line rounded p-2; }
+  .ce-left .msrPickNotes { @apply w-full max-w-none max-h-none border-l-0 pl-0 overflow-visible; }
+  .ce-left .msrPickNotesHead { @apply bg-card2 top-0; }
+  .ce-right { @apply w-1/2 min-w-0 overflow-auto bg-card2 border border-line rounded p-1; }
+  .ce-row { @apply flex items-center gap-2 px-2 py-1 rounded; }
+  .ce-row-head { @apply text-[11px] text-muted uppercase tracking-wide sticky top-0 bg-card2; }
+  .ce-row.ce-focus { @apply bg-line; }
+  .ce-row.ce-flagged .ce-num { @apply text-peach font-semibold; }
+  .ce-num { @apply w-[92px] flex-shrink-0 tabular-nums text-[12px] text-muted truncate; }
+  .ce-val { @apply flex-1 min-w-0 text-[12px] text-text; }
+  .ce-input { @apply flex-1 min-w-0 bg-card border border-line rounded px-2 py-1 text-[12.5px] text-text; }
+  .ce-input.invalid { @apply border-bad; }
+  .ce-derived-note { @apply mt-2 text-[11.5px] text-peach; }
+  .ce-empty { @apply text-dim text-[12px] p-2; }
+  .tlCard { @apply bg-card2 border border-line rounded p-2 mb-1.5; }
+  .tlCard.tlMoment { @apply border-peach bg-peach/10; }
+  .tlCardHead { @apply flex items-center flex-wrap gap-1.5 mb-1 pb-1 border-b border-line/60; }
+  .tlCardTime { @apply text-[11px] font-semibold text-accent tabular-nums; }
+  .tlLine { @apply relative py-0.5 pl-2 border-l-2 border-line; }
+  .tlLine.fc { @apply border-accent/50; }
+  .tlLine.wn { @apply border-good/50; }
+  .tlLine.rn { @apply border-mauve/60; }
+  .tlLine.cm { @apply border-line2; }
+  .tlLine + .tlLine { @apply mt-0.5; }
+  .tlLineLabel { @apply text-[10.5px] font-semibold text-muted uppercase tracking-wide mr-1; }
+  .tlMomentChip { @apply text-[10px] font-semibold text-peach border border-peach/60 rounded-full px-1.5 py-0.5; }
   #splitPreviewModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
   #splitPreviewCard { @apply flex flex-col gap-2 bg-card border border-line rounded-lg p-3.5 w-[min(460px,92vw)] max-h-[84vh] overflow-auto; }
   .splitList { @apply flex flex-col gap-1 mt-1; }

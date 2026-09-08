@@ -10,6 +10,7 @@ import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, s
 import { setSelPoint } from "./selection.ts";
 import { getMsrLists } from "./store.ts";
 import { getCalclensMode, setCalclensMode } from "./calclens-state.ts";
+import { getEditMode } from "./edit-mode-state.ts";
 import {
   disabledCount,
   isHighlightEnabled,
@@ -71,6 +72,7 @@ export function initCalclens(): void {
 
   setOnCellFocus((info) => {
     if (!getCalclensMode()) return;
+    if (getEditMode()) { panel.close(); return; }
     const row = info ? findRowBySysId(info.sysId) : undefined;
     if (!info || !row) {
       panel.show(null);

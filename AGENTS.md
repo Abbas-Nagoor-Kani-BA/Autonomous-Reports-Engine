@@ -193,6 +193,9 @@ Regression suites (`npm test` runs all of them):
 | `remote-bridge-test.ts` | the remote bridge |
 | `ci-split-test.js`, `pick-exact-test.js`, `path-from-url-test.js`, `store-test.js`, `icons-test.ts` | assorted units |
 | `action-rail-test.ts` | draggable/foldable action rail (clamp helper + fold/drag persistence) |
+| `edit-mode-state-test.js` | edit-mode session toggle owner |
+| `column-editor-data-test.js` | pure column-values selector (entries + focused index) |
+| `column-editor-test.ts` | column editor component (right list, type-aware inputs, arrow nav, Calclens highlight, find filter) |
 | `panel-components-test.ts`, `data-grid-test.ts`, `search-picker-test.ts`, `modal-test.ts`, `map-dialog-test.ts`, `settings-chips-test.js` | components |
 | `viewer-dom-test.ts` | end-to-end viewer flow (happy-dom) |
 | `search-state-test.ts`, `search-match-test.ts` | column-scoped search: state owner + pure matcher (modes, case, all/single-column, displayed-value match) |

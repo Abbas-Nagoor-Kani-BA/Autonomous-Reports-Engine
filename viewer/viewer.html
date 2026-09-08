@@ -44,6 +44,7 @@
         <div class="menuHead sub"><button id="calclensHideAll" class="btn">Hide all</button></div>
         <div id="calclensHlList"></div>
       </div>
+      <button id="editModeBtn" class="btn" data-tip="Edit mode — click a cell to bulk-edit that column across the current view" aria-label="Edit column">Edit column</button>
       <button id="copyMsrBtn" class="btn" data-tip="Copy the current view as MSR 'BA AO' input columns (A–U) — paste onto rows whose formulas in V–AJ stay intact" aria-label="Copy for MSR"></button>
       <button id="colsBtn" class="btn" data-tip="Choose which columns are shown" aria-label="Columns"></button>
       <div id="colMenu" class="hidden">
@@ -118,6 +119,7 @@
       <div id="splitPreviewBody"></div>
     </div>
   </div>
+  <div id="columnEditorModal" class="hidden"></div>
   <div id="empty" class="hidden">No pulled data yet — run a pull from the side panel first.</div>
   <div id="calclensPanel"></div>
   <div id="mapModal" class="hidden">

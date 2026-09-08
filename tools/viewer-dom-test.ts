@@ -886,3 +886,222 @@ test("split preview icon session-filters the grid by CI group", { timeout: 8000 
 
   toolbar.setCiSplit({ enabled: false, groups: [] });
 });
+
+test("edit mode opens the column editor on cell select, listing that column across the view", { timeout: 8000 }, async () => {
+  const editState = await import("../surfaces/viewer/edit-mode-state.ts");
+  const modalEl = document.getElementById("columnEditorModal");
+  assert.ok(modalEl.classList.contains("hidden"), "editor starts closed");
+
+  // Turn edit mode on via the rail button.
+  document.getElementById("editModeBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert.equal(editState.getEditMode(), true, "edit mode on");
+
+  // Selecting a cell reports focus; the editor opens for that column.
+  grid.reportCellFocus({ sysId: "aaa", key: "assignedTo" });
+  await flush();
+  assert.ok(!modalEl.classList.contains("hidden"), "editor opens on cell select");
+
+  const lines = modalEl.querySelectorAll(".ce-right .ce-row:not(.ce-row-head)");
+  assert.equal(lines.length, 2, "lists both rows in the current view");
+  const nums = [...lines].map((l) => l.querySelector(".ce-num").textContent);
+  assert.deepEqual(nums, ["INC0001001", "INC0001002"]);
+  assert.match(modalEl.querySelector(".ce-title").textContent, /Assigned to/);
+
+  // Left pane shows the focused (clicked) row's activity.
+  assert.match(modalEl.querySelector(".ce-left").textContent, /INC0001001/);
+
+  // Close it, then verify toggling edit mode off also closes.
+  document.getElementById("editModeBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  assert.equal(editState.getEditMode(), false, "edit mode off");
+  await flush();
+});
+
+test("edit mode column editor respects the active search filter", { timeout: 8000 }, async () => {
+  const modalEl = document.getElementById("columnEditorModal");
+  const search = document.getElementById("search");
+  search.value = "First";
+  search.dispatchEvent(new window.Event("input", { bubbles: true }));
+  await flush();
+
+  document.getElementById("editModeBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  grid.reportCellFocus({ sysId: "aaa", key: "assignedTo" });
+  await flush();
+
+  const lines = modalEl.querySelectorAll(".ce-right .ce-row:not(.ce-row-head)");
+  assert.equal(lines.length, 1, "only the filtered row is listed");
+  assert.equal(lines[0].querySelector(".ce-num").textContent, "INC0001001");
+
+  // Editing commits back to the grid.
+  const input = lines[0].querySelector(".ce-input");
+  input.value = "Edited Owner";
+  input.dispatchEvent(new window.Event("change", { bubbles: true }));
+  await flush();
+  const row = grid.findRowBySysId("aaa");
+  assert.equal(row.assignedTo, "Edited Owner", "edit persisted to the row");
+
+  // Reset.
+  document.getElementById("editModeBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  search.value = "";
+  search.dispatchEvent(new window.Event("input", { bubbles: true }));
+  await flush();
+});
+
+test("clearing pulled data closes the column editor", { timeout: 8000 }, async () => {
+  const modalEl = document.getElementById("columnEditorModal");
+  document.getElementById("editModeBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  grid.reportCellFocus({ sysId: "aaa", key: "assignedTo" });
+  await flush();
+  assert.ok(!modalEl.classList.contains("hidden"), "editor open");
+
+  document.getElementById("clearBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flush();
+  assert.ok(modalEl.classList.contains("hidden"), "editor closed after clear");
+
+  // Restore data for any later tests.
+  grid.load(FIXTURE.lastData);
+  await flush();
+});
+
+test("buildTimeline merges notes and field changes newest-first and marks key moments", { timeout: 8000 }, async () => {
+  const activity = await import("../surfaces/viewer/activity.ts");
+  const row = {
+    number: "INC0009",
+    shortDescription: "Timeline test",
+    assignmentGroup: "APPSUP_TEST",
+    workNotes: "2026-08-01 09:20:00 - Jane Doe\nLooking into it\n\n2026-08-01 10:00:00 - Jane Doe\nRoot cause found",
+    closeNotes: "",
+    activity: [
+      { atEpoch: Date.parse("2026-08-01T09:00:00Z"), f: "assignment_group", o: "", n: "APPSUP_TEST" },
+      { atEpoch: Date.parse("2026-08-01T09:20:00Z"), f: "assigned_to", o: "", n: "Jane Doe" },
+      { atEpoch: Date.parse("2026-08-01T10:30:00Z"), f: "state", o: "In Progress", n: "On Hold" }
+    ],
+    assignTimeUtcIso: "2026-08-01T09:00:00Z",
+    acknTimeUtcIso: "2026-08-01T09:20:00Z",
+    suspendTimeUtcIso: "2026-08-01T10:30:00Z",
+    resumeTimeUtcIso: null
+  };
+  const tl = activity.buildTimeline(row);
+  // 3 field changes + 2 work notes = 5, newest first.
+  assert.equal(tl.length, 5);
+  const epochs = tl.map((t) => t.epoch);
+  for (let i = 1; i < epochs.length; i++) assert.ok(epochs[i] <= epochs[i - 1], "newest-first order");
+
+  // The assignment_group change carries the Assign time moment.
+  const asg = tl.find((t) => t.kind === "fc" && t.label === "Assignment group");
+  assert.ok(asg.moments.includes("Assign time"), "assign time marked on the group change");
+  // The state -> On Hold change carries Suspend time.
+  const hold = tl.find((t) => t.kind === "fc" && t.label === "State");
+  assert.ok(hold.moments.includes("Suspend time"), "suspend time marked on the On Hold change");
+  // Resume time is null -> not marked anywhere.
+  assert.ok(!tl.some((t) => t.moments.includes("Resume time")), "no resume marker when null");
+});
+
+test("buildTimeline interleaves notes and field changes across an instance offset", { timeout: 8000 }, async () => {
+  const activity = await import("../surfaces/viewer/activity.ts");
+  // Instance is UTC+1: openedAt display is one hour ahead of the raw UTC.
+  const row = {
+    number: "INC0010",
+    openedAt: "2026-08-01 11:00:00",
+    openedAtRaw: "2026-08-01 10:00:00",
+    workNotes: "2026-08-01 10:30:00 - Jane Doe\nMid note",
+    activity: [
+      { atEpoch: Date.parse("2026-08-01T09:00:00Z"), f: "state", o: "New", n: "In Progress" },
+      { atEpoch: Date.parse("2026-08-01T10:00:00Z"), f: "priority", o: "4", n: "3" }
+    ]
+  };
+  const tl = activity.buildTimeline(row);
+  // Wall-clock: state@10:00, note@10:30, priority@11:00 -> newest first is
+  // priority, note, state. The note must sit BETWEEN the two field changes,
+  // proving they share one clock rather than clustering separately.
+  const kinds = tl.map((t) => t.kind);
+  assert.deepEqual(kinds, ["fc", "wn", "fc"], "note interleaves between field changes");
+  assert.equal(tl[1].label, "Work note");
+});
+
+test("groupTimeline buckets same-timestamp events into one card and unions moments", async () => {
+  const activity = await import("../surfaces/viewer/activity.ts");
+  const row = {
+    number: "INC0011",
+    openedAt: "2026-08-01 10:00:00",
+    openedAtRaw: "2026-08-01 10:00:00",
+    workNotes: "2026-08-01 10:00:00 - Jane Doe\nAssigned and started",
+    activity: [
+      { atEpoch: Date.parse("2026-08-01T10:00:00Z"), f: "assignment_group", o: "", n: "APPSUP" },
+      { atEpoch: Date.parse("2026-08-01T10:00:30Z"), f: "assigned_to", o: "", n: "Jane Doe" },
+      { atEpoch: Date.parse("2026-08-01T11:00:00Z"), f: "state", o: "In Progress", n: "On Hold" }
+    ],
+    assignTimeUtcIso: "2026-08-01T10:00:00Z",
+    suspendTimeUtcIso: "2026-08-01T11:00:00Z"
+  };
+  const groups = activity.groupTimeline(activity.buildTimeline(row));
+  // 10:00 bucket: group change + assignee change (both fc) => one card of 2
+  // lines. The work note at 10:00 is a SEPARATE card. 11:00 On Hold => a card.
+  const fcCard = groups.find((g) => g.items.length > 1 && g.items.every((i) => i.kind === "fc"));
+  assert.ok(fcCard, "the two same-minute field changes grouped into one card");
+  assert.equal(fcCard.items.length, 2, "only the field changes grouped");
+  assert.ok(fcCard.moments.includes("Assign time"), "assign moment on the field-change card");
+  const wnCard = groups.find((g) => g.items.some((i) => i.kind === "wn"));
+  assert.equal(wnCard.items.length, 1, "the work note is its own standalone card");
+  const holdCard = groups.find((g) => g.items.some((i) => i.text.includes("On Hold")));
+  assert.ok(holdCard.moments.includes("Suspend time"), "suspend moment on the On Hold card");
+});
+
+test("buildTimeline splits a multi-entry note blob (dd-MM-yyyy) and interleaves each with field changes", { timeout: 8000 }, async () => {
+  const activity = await import("../surfaces/viewer/activity.ts");
+  const row = {
+    number: "INC2595727",
+    openedAt: "02-09-2026 00:48:23",
+    openedAtRaw: "2026-09-02 00:48:23",
+    // Three dated work notes in ONE blob, dd-MM-yyyy headings.
+    workNotes:
+      "03-09-2026 13:43:50 - Challa (Work notes)\nClosing the ticket\n\n" +
+      "02-09-2026 15:04:36 - Karthik (Work notes)\nAcknowledged\n\n" +
+      "02-09-2026 00:48:23 - BES (Work notes)\nTriggered",
+    activity: [
+      { atEpoch: Date.parse("2026-09-03T13:43:50Z"), f: "state", o: "In Progress", n: "Resolved" },
+      { atEpoch: Date.parse("2026-09-02T15:04:36Z"), f: "assigned_to", o: "", n: "Challa" },
+      { atEpoch: Date.parse("2026-09-02T00:48:23Z"), f: "assignment_group", o: "", n: "APPSUP" }
+    ],
+    assignTimeUtcIso: "2026-09-02T00:48:23Z",
+    acknTimeUtcIso: "2026-09-02T15:04:36Z"
+  };
+  const tl = activity.buildTimeline(row);
+  // 3 field changes + 3 split work notes = 6 dated items, none undated.
+  assert.equal(tl.length, 6);
+  assert.ok(tl.every((t) => Number.isFinite(t.epoch)), "every note got a parsed timestamp");
+  const wn = tl.filter((t) => t.kind === "wn");
+  assert.equal(wn.length, 3, "blob split into three work notes");
+
+  const groups = activity.groupTimeline(tl);
+  // The triggering work note is its OWN card (not merged with the group change).
+  const wnCard = groups.find((g) => g.items.some((i) => i.text === "Triggered"));
+  assert.equal(wnCard.items.length, 1, "work note stands alone");
+  assert.equal(wnCard.items[0].kind, "wn");
+  // The 00:48 assignment-group change is its own field-change card with the moment.
+  const fcCard = groups.find((g) => g.items.some((i) => i.kind === "fc" && i.label === "Assignment group"));
+  assert.ok(fcCard.items.every((i) => i.kind === "fc"), "field-change card has no notes");
+  assert.ok(fcCard.moments.includes("Assign time"));
+});
+
+test("groupTimeline never merges notes/comments even at the same timestamp", async () => {
+  const activity = await import("../surfaces/viewer/activity.ts");
+  const row = {
+    number: "INC0012",
+    openedAt: "2026-08-01 10:00:00",
+    openedAtRaw: "2026-08-01 10:00:00",
+    // A work note AND a customer comment at the exact same minute.
+    workNotes: "2026-08-01 10:00:00 - Jane\nWN one",
+    comments: "2026-08-01 10:00:00 - Bob\nCM one",
+    activity: [
+      { atEpoch: Date.parse("2026-08-01T10:00:00Z"), f: "state", o: "", n: "New" },
+      { atEpoch: Date.parse("2026-08-01T10:00:10Z"), f: "priority", o: "", n: "3" }
+    ]
+  };
+  const groups = activity.groupTimeline(activity.buildTimeline(row));
+  const noteCards = groups.filter((g) => g.items.some((i) => i.kind === "wn" || i.kind === "cm"));
+  assert.equal(noteCards.length, 2, "work note and comment are two separate cards");
+  assert.ok(noteCards.every((g) => g.items.length === 1), "each note/comment card holds exactly one item");
+  // The two field changes at ~10:00 still merge into one card.
+  const fc = groups.find((g) => g.items.length > 1 && g.items.every((i) => i.kind === "fc"));
+  assert.ok(fc, "the two field changes still group together");
+});

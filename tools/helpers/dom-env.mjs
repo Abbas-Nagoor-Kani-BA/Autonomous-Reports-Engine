@@ -156,6 +156,7 @@ const SKELETON = `
       <div class="menuHead sub"><button id="calclensHideAll">Hide all</button></div>
       <div id="calclensHlList"></div>
     </div>
+    <button id="editModeBtn" class="icon-btn">Edit column</button>
     <button id="copyMsrBtn" class="icon-btn">Copy for MSR</button>
     <button id="colsBtn" class="icon-btn">Columns</button>
     <div id="colMenu" class="hidden">
@@ -190,6 +191,7 @@ const SKELETON = `
     <div id="splitPreviewBody"></div>
   </div>
 </div>
+<div id="columnEditorModal" class="hidden"></div>
   <div id="wrap">
     <table id="tbl"><thead></thead><tbody></tbody></table>
   </div>

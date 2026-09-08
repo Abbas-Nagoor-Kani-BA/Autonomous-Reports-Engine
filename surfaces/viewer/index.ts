@@ -26,6 +26,7 @@ import { initInteractions } from "./interactions.ts";
 import { initCalclens } from "./calclens.ts";
 import { initTicketStats } from "./ticketstats.ts";
 import { initSplitPreview } from "./split-preview.ts";
+import { initColumnEditor } from "./column-editor.ts";
 import { initActionRail } from "./action-rail.ts";
 import { anyOverlayOpen } from "./selection.ts";
 import { initTooltips } from "../../lib/tooltip.ts";
@@ -49,6 +50,7 @@ async function boot() {
   initCalclens();
   initTicketStats();
   initSplitPreview();
+  initColumnEditor();
   initActionRail();
 
   initTooltips(() => anyOverlayOpen());

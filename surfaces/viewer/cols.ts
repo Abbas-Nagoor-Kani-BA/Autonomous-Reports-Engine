@@ -4,6 +4,7 @@ import { showToast } from "../../lib/toast.ts";
 import { iconize } from "../../lib/icons.ts";
 import { setHiddenCols } from "./store.ts";
 import { buildHead, load, render, resetColWidths } from "./grid.ts";
+import { closeColumnEditor } from "./column-editor.ts";
 import { $, COLUMNS, hideStore, setColumnVisible, setStatus } from "./core.ts";
 
 function updateColsBtn(): void {
@@ -28,6 +29,7 @@ export function initCols(): void {
   $("clearBtn").addEventListener("click", async () => {
     await removeValue(STORAGE.lastData);
     load(null);
+    closeColumnEditor();
     showToast("Pull data cleared");
   });
 
