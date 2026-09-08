@@ -8,28 +8,48 @@ dataset. Open it with **Open data view** in the panel.
 ## Where the data comes from
 
 The viewer reads its rows from **`chrome.storage.local`**, under the `lastData`
-key — **not** from the IndexedDB caches. The flow is:
+key — **not** from the IndexedDB caches. The full read/write flow:
 
 ```mermaid
-flowchart LR
-    PULL[Pull pipeline] -->|merge + persist dataset| LS[[chrome.storage.local · lastData]]
-    LS -->|load on open + on change| VIEW[Data Viewer]
-    VIEW -->|edits / classification saved back| LS
-    CACHE[(IndexedDB caches)] -.behind the pull, not read by viewer.-> PULL
+flowchart TD
+    SN[(ServiceNow)]
+
+    subgraph IDB[IndexedDB caches - read/written by the pull only]
+        QC[(snAnalyzerCache<br/>queries + timelines)]
+    end
+
+    subgraph LOCAL[chrome.storage.local]
+        LD[[lastData<br/>the dataset]]
+    end
+
+    SN -->|fetch on cache miss| PULL[Pull pipeline]
+    QC -->|read: reuse fresh entries| PULL
+    PULL -->|write: cache new results| QC
+    LD -->|read: previous dataset| PULL
+    PULL -->|write: merged dataset + broadcast DATA_UPDATED| LD
+
+    LD -->|read: on open and on change| VIEW[Data Viewer]
+    VIEW -->|write: edits + classification<br/>debounced, self-push guarded| LD
 ```
 
-- A **Run** merges the pulled + analysed rows into the dataset and writes it to
-  `lastData` (`services/pull-service.ts`), then broadcasts a change.
-- The viewer loads `lastData` on open and **live-reloads** when it changes
-  (`surfaces/viewer/store.ts` listens on `chrome.storage.onChanged`), so a pull
-  started elsewhere refreshes the grid.
-- Your **edits** and **classification results** are saved back to `lastData`
-  (debounced), so they survive reloads.
+- **Pull → cache:** the pull reads ServiceNow through cached repositories — it
+  reuses fresh entries from `snAnalyzerCache` (query + timeline stores) and
+  writes new results back. See [Caching](Caching).
+- **Pull → dataset:** the pull loads the previous dataset from `lastData`,
+  **merges** the new rows in, writes the result to `lastData`
+  (`DatasetStore.save`, `services/pull-service.ts`), and broadcasts
+  `DATA_UPDATED`.
+- **Viewer reads `lastData`:** on open (`hydrateStores`) and whenever it changes
+  (`wireViewer` → `chrome.storage.onChanged`), so a pull run from the panel
+  refreshes the grid live.
+- **Viewer writes `lastData`:** your edits and classification results are saved
+  back (debounced) via `saveData` / `persistEdits`. A `selfPush` guard makes the
+  viewer ignore its **own** writes, so saving does not trigger a reload loop.
 
-The IndexedDB caches (`snAnalyzerCache`, `snAnalyzerClassCache`,
-`snAnalyzerMlModel`) sit **behind the pull** to avoid re-fetching from
-ServiceNow and re-inferring classifications; the viewer itself never reads them.
-See [Caching](Caching) for the full storage picture.
+The classification and model caches (`snAnalyzerClassCache`,
+`snAnalyzerMlModel`) are used by the viewer's classifier, but the **grid rows**
+always come from `lastData`. The viewer never reads the pull's query/timeline
+cache directly.
 
 ## The grid
 
