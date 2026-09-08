@@ -19,7 +19,22 @@ flowchart LR
     SN[(ServiceNow<br/>instance)] -->|session auth via open tab| PULL[Pull pipeline<br/>Phase 1 + Phase 2]
     PULL --> VIEW[Data Viewer<br/>search / edit / classify]
     VIEW --> EXPORT[Export WSR workbook<br/>+ Copy for MSR]
+
+    PULL <-->|query + timeline cache| DB1[(snAnalyzerCache)]
+    VIEW <-->|classification results| DB2[(snAnalyzerClassCache)]
+    VIEW <-->|offline ML model| DB3[(snAnalyzerMlModel)]
+
+    subgraph IDB[IndexedDB - local only]
+        DB1
+        DB2
+        DB3
+    end
 ```
+
+The three IndexedDB caches make re-runs cheap: `snAnalyzerCache` reuses query
+results and per-ticket timelines, `snAnalyzerClassCache` reuses classification
+outcomes, and `snAnalyzerMlModel` holds the one-time ML model download. See
+[Caching](Caching).
 
 ## User Guide
 
