@@ -41,17 +41,30 @@ The preset menu (the `⋮` button on the filter list card) offers:
 
 ### WSR — the built-in Weekly Status Report preset
 
-**WSR** is a built-in preset that loads the standard Weekly Status Report filter
-list. Pair it with the **Pull change requests for Weekly Summary** checkbox to
-also gather:
+**WSR** is a built-in preset (reserved value `__wsr__`; users cannot create a
+preset named "WSR") that loads the standard Weekly Status Report filter list —
+one filter set per (table, state), with closed states scoped to **last week** by
+`closed_at`.
 
-- last week's **implemented** / **failed** change requests,
-- next week's **planned** change requests, and
-- last week's **P1/P2 incidents** (Key Incidents come from the pulled incident
-  rows).
+### The Weekly Summary sheet
 
-The change-request windows are pulled as two scoped requests (last week, next
-week) filtered by `start_date`; they need no timelines.
+Ticking **Pull change requests for Weekly Summary** adds data for the WSR
+workbook's Summary sheet. Weeks are **Monday–Sunday**, and the derivation
+(`core/summarydetails.ts`) buckets rows into:
+
+| Summary section | Source | Rule |
+|---|---|---|
+| **Key Incidents** | already-pulled incident rows | P1/P2 incidents resolved **last** week |
+| **Changes Implemented** | change_request | `start_date` in **last** week, not failed and not cancelled |
+| **Changes Failed** | change_request | `start_date` in **last** week with `review_status = fail` |
+| **Changes Planned** | change_request | `start_date` in **next** week |
+
+The change requests are pulled as **two scoped requests** (last week, next week)
+filtered by `start_date` — kept separate because OR-ing the queue scope across
+both windows makes the encoded query long enough for ServiceNow to reject with
+400. They need no timelines. Dates are emitted as Excel serial numbers to match
+the template's date cells; the rest of the Summary sheet is human-authored
+narrative.
 
 ## Closed-state date filtering
 

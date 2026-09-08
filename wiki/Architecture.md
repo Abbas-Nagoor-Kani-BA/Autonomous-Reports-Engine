@@ -65,6 +65,20 @@ cached template, patches only the target sheet's XML, and downloads via
 `URL.createObjectURL`; workers do not. Never move export building back into the
 background. See [Export Internals](Export-Internals).
 
+## Manifest and permissions
+
+The extension is Manifest V3 (`manifest.json`). Key entries:
+
+| Field | Value / purpose |
+|---|---|
+| `permissions` | `storage`, `unlimitedStorage` (large IndexedDB caches), `downloads` (WSR export), `sidePanel`, `cookies` (read `g_ck`), `scripting` (MAIN-world token read). |
+| `host_permissions` | `https://*.service-now.com/*`; plus `https://huggingface.co/*` and `https://cdn-lfs.huggingface.co/*` for the one-time ML model download (HF serves large model blobs from the `cdn-lfs` host). |
+| `content_security_policy` | `script-src 'self' 'wasm-unsafe-eval'` — `wasm-unsafe-eval` is required for the Transformers.js WebAssembly runtime. |
+| `content_scripts` | Injected into `https://*.service-now.com/*` at `document_idle` (`content/content.js`) — the request relay. See [Authentication Chain](Authentication-Chain). |
+| `background` | `platform/background.js`, `"type": "module"`. |
+| `side_panel` | `panel/panel.html`. |
+| `options_ui` | `settings/settings.html`, opened in a tab. |
+
 ---
 Related: [DI Container](DI-Container) · [Component Contract](Component-Contract) ·
 [Two-Phase Pipeline](Two-Phase-Pipeline) · [Caching](Caching)

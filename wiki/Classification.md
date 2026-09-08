@@ -59,6 +59,17 @@ Downloaded models are cached locally and kept independently, so switching models
 does not re-download a previously fetched one. See [Caching](Caching) for the
 model cache, and [Configuration](Configuration) for the download control.
 
+### How the model runs (off the UI thread)
+
+ML inference runs in a **Web Worker** (`worker/classifier-worker.ts` →
+`worker/ml-classify.ts`), driven from the viewer by
+`surfaces/viewer/worker-client.ts`. The worker loads the cached model files
+(verifying they match the selected model spec) and runs zero-shot NLI under
+Transformers.js WebAssembly — which is why the extension's CSP allows
+`wasm-unsafe-eval` (see [Architecture](Architecture)). Running off the main
+thread keeps a large dataset from freezing the UI; rows are processed in
+batches.
+
 ## Result cache
 
 With **Cache classification results** enabled, each note's outcome is stored so
