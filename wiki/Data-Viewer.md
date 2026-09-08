@@ -5,6 +5,32 @@ dataset. Open it with **Open data view** in the panel.
 
 ![The data view](images/placeholder.png)
 
+## Where the data comes from
+
+The viewer reads its rows from **`chrome.storage.local`**, under the `lastData`
+key — **not** from the IndexedDB caches. The flow is:
+
+```mermaid
+flowchart LR
+    PULL[Pull pipeline] -->|merge + persist dataset| LS[[chrome.storage.local · lastData]]
+    LS -->|load on open + on change| VIEW[Data Viewer]
+    VIEW -->|edits / classification saved back| LS
+    CACHE[(IndexedDB caches)] -.behind the pull, not read by viewer.-> PULL
+```
+
+- A **Run** merges the pulled + analysed rows into the dataset and writes it to
+  `lastData` (`services/pull-service.ts`), then broadcasts a change.
+- The viewer loads `lastData` on open and **live-reloads** when it changes
+  (`surfaces/viewer/store.ts` listens on `chrome.storage.onChanged`), so a pull
+  started elsewhere refreshes the grid.
+- Your **edits** and **classification results** are saved back to `lastData`
+  (debounced), so they survive reloads.
+
+The IndexedDB caches (`snAnalyzerCache`, `snAnalyzerClassCache`,
+`snAnalyzerMlModel`) sit **behind the pull** to avoid re-fetching from
+ServiceNow and re-inferring classifications; the viewer itself never reads them.
+See [Caching](Caching) for the full storage picture.
+
 ## The grid
 
 A sortable, scrollable grid of the pulled tickets plus derived columns (assign,
