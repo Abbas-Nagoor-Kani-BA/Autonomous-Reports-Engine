@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Assemble and list files without pushing to the wiki'
+        description: 'Assemble and list files WITHOUT pushing (opt-in preview)'
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write
