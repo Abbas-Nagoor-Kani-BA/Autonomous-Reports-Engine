@@ -1,9 +1,9 @@
 # Export Internals
 
-Export fills a **template MSR workbook** by patching only the target sheet's XML,
-never by regenerating the file. The technical rules here protect against two
-past incidents: a wrong-sheet fill that emptied a report, and Excel's repair
-dialog on deleted formula rows.
+The WSR (Weekly Status Report) export fills a **template workbook** by patching
+only the target sheet's XML, never by regenerating the file. The technical rules
+here protect against two past incidents: a wrong-sheet fill that emptied a
+report, and Excel's repair dialog on deleted formula rows.
 
 ## Why patch, not regenerate
 
@@ -20,7 +20,7 @@ cached template, patches the target sheet's XML with fflate zip surgery
 
 ```mermaid
 flowchart LR
-    T[(Cached MSR template)] --> UZ[Unzip in the viewer page - fflate]
+    T[(Cached WSR template)] --> UZ[Unzip in the viewer page - fflate]
     UZ --> SL[Resolve target sheet - strict lookup]
     SL --> PX[Patch only that sheet's XML cells]
     PX --> CC[Fix calcChain / calcPr if formula rows changed]
@@ -39,11 +39,15 @@ wrong place.
 If formula rows get deleted during patching, strip `xl/calcChain.xml` and set
 `fullCalcOnLoad="1"` on `<calcPr>`, or Excel raises its repair dialog on open.
 
-## Copy-for-MSR
+## Copy for MSR
 
-The Copy-for-MSR path serializes the current view's rows in MSR column order to
-the clipboard, bypassing the file entirely — useful for pasting into an existing
-sheet.
+The MSR (Monthly Status Report) sheet accumulates **historical data** across
+months and contains **formulas**, so it is never filled or overwritten. Instead,
+the **Copy for MSR** path serializes the current view's rows — **formatted** and
+in MSR column order — to the clipboard (`surfaces/viewer/clipboard.ts`, button
+label `"Copy for MSR"` in `surfaces/viewer/toolbar.ts`). The user pastes those
+rows into the existing MSR sheet, so its history and formulas stay intact. No
+file is written for this path.
 
 ## Tests
 

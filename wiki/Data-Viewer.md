@@ -48,9 +48,11 @@ A summary of the loaded dataset (counts and breakdowns) to sanity-check a pull.
 - **Calclens** explains how each derived value (including SLA timings) was
   computed and flags rows needing attention — see [Calclens](Calclens).
 
-## Export
+## Export and Copy for MSR
 
-Fill the MSR workbook or copy rows for pasting — see [Export](Export).
+Export the WSR (Weekly Status Report) workbook, or **Copy for MSR** to paste
+formatted rows into your Monthly Status Report sheet without overwriting its
+history — see [Export](Export).
 
 ---
 Related: [Calclens](Calclens) · [Classification](Classification) ·

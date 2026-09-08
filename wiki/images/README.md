@@ -25,6 +25,6 @@ capture and delete this note for each item as you complete it.
 | `viewer-ci-split.png` | [Data Viewer](Data-Viewer) | The CI split preview dialog. |
 | `calclens-panel.png` | [Calclens](Calclens) | The Calclens explanation panel for a row. |
 | `calclens-highlights-menu.png` | [Calclens](Calclens) | The highlight-toggle dropdown. |
-| `export-flow.gif` | [Export](Export) | Opening the export and downloading the workbook. |
+| `export-flow.gif` | [Export](Export) | Opening the export and downloading the WSR workbook. |
 
 Until a real capture exists, pages use `images/placeholder.png`.

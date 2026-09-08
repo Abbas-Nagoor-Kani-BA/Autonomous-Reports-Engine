@@ -53,7 +53,8 @@ See [Running a Pull](Running-a-Pull) and
    with [Calclens](Calclens).
 3. Root cause and solution type are filled from the closure notes — see
    [Classification](Classification).
-4. **Export** the MSR workbook or use **Copy-for-MSR** — see [Export](Export).
+4. **Export** the WSR (Weekly Status Report) workbook, or use **Copy for MSR**
+   to paste into your Monthly Status Report sheet — see [Export](Export).
 
 ---
 Related: [Installation](Installation) · [Running a Pull](Running-a-Pull) ·

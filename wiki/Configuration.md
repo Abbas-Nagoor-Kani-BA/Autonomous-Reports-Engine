@@ -54,10 +54,11 @@ See [Classification](Classification) for how the modes and cascade work, and
 
 ![Settings — MSR option lists card](images/placeholder.png)
 
-The allowed values for the MSR report dropdown columns (BA AO sheet). The data
-view restricts these columns to the lists here, and exports / Copy-for-MSR use
-exactly these labels. One value per chip. Lists include: Op Co, Domain, Type,
-Status, Resolution type, Duplicate incident, Queue names, Sub category, and Root
+The allowed values for the report dropdown columns (BA AO sheet). The data view
+restricts these columns to the lists here, and both the WSR export and **Copy
+for MSR** use exactly these labels. One value per chip. Lists include: Op Co,
+Domain, Type, Status, Resolution type, Duplicate incident, Queue names, Sub
+category, and Root
 cause category for Incident / RFS / P Ticket.
 
 - **Restore MSR defaults** resets to the original `msr.xlsx` values.

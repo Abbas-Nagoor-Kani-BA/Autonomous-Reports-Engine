@@ -2,8 +2,8 @@
 
 A Chrome (Manifest V3, side-panel) extension that pulls ServiceNow ticket
 timelines, analyzes SLA performance, classifies resolution notes, and exports a
-filled Excel (MSR) analysis workbook. It runs offline and reuses your existing
-ServiceNow browser session, so it needs no API keys.
+filled Excel **WSR (Weekly Status Report)** workbook. It runs offline and reuses
+your existing ServiceNow browser session, so it needs no API keys.
 
 This wiki covers both **using** the extension and **developing** it.
 
@@ -18,7 +18,7 @@ This wiki covers both **using** the extension and **developing** it.
 flowchart LR
     SN[(ServiceNow<br/>instance)] -->|session auth via open tab| PULL[Pull pipeline<br/>Phase 1 + Phase 2]
     PULL --> VIEW[Data Viewer<br/>search / edit / classify]
-    VIEW --> EXPORT[Excel MSR export<br/>+ Copy-for-MSR]
+    VIEW --> EXPORT[Export WSR workbook<br/>+ Copy for MSR]
 ```
 
 ## User Guide
@@ -33,7 +33,7 @@ Start here if you want to run pulls and produce reports.
 - [Data Viewer](Data-Viewer) — search, column editor, CI split, ticket stats.
 - [Calclens](Calclens) — how each derived value was computed.
 - [Classification](Classification) — root cause / solution type, heuristic and ML.
-- [Export](Export) — MSR workbook fill and Copy-for-MSR.
+- [Export](Export) — WSR workbook fill and Copy for MSR.
 - [Backup and Transfer](Backup-and-Transfer) — export/import settings.
 - [Troubleshooting and FAQ](Troubleshooting-and-FAQ) — common issues.
 
@@ -63,5 +63,5 @@ Start here if you want to build, test, or extend the code.
 | Platform | Chrome / Chromium, Manifest V3, side panel |
 | Auth | Reuses your logged-in ServiceNow browser session (no API keys) |
 | Tables | incident, change_request, problem, sc_req_item, sc_task |
-| Output | Filled MSR `.xlsx` workbook, plus Copy-for-MSR |
+| Output | Filled WSR (Weekly Status Report) `.xlsx` workbook, plus Copy for MSR (Monthly Status Report) |
 | Storage | Local only (`chrome.storage.local` + IndexedDB) |
