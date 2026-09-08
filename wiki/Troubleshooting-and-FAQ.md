@@ -16,10 +16,14 @@ ServiceNow rejects session-authenticated calls that are missing the
 fixes this, because the token lives as a page-context JS variable that the
 extension reads on a fresh page. See [Authentication Chain](Authentication-Chain).
 
-## The extension won't load from the repo root
+## The extension won't load / "manifest" or ".ts" errors
 
-Chrome cannot execute `.ts` files. Always load a **built** folder (`dist/` or
-`dev/`), never the repository root. See [Installation](Installation).
+Load the **unzipped release folder**, not the source. Download the extension zip
+from [Releases](https://github.com/Abbas-Nagoor-Kani-BA/Autonomous-Reports-Engine/releases),
+unzip it, and **Load unpacked** the unzipped folder. Chrome cannot execute the
+repository's `.ts` sources, so loading the repo root (or a source checkout) will
+not work. Developers building from source load the **built** folder (`dist/` or
+`dev/`). See [Installation](Installation).
 
 ## A filter set was skipped
 
