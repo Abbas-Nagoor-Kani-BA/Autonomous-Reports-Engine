@@ -220,7 +220,7 @@ const SKELETON = `
     <label class="ciToggle"><input type="checkbox" id="ciEnabled"></label>
     <p class="mapHint">An item matches every configuration item that contains it (anywhere in the name) — e.g. "Payment Gateway" also matches "Payment Gateway PRD / PreLive / DEV / TEST" and "Web Payment Gateway". Longest match wins; the rest go to Others.</p>
     <div id="groupBoard"></div>
-    <button id="addGroupBtn">+ Add group</button>
+    <button id="addGroupBtn">Add group</button>
     <div class="mapFoot"><button id="ciSave" class="primary">Save</button>
     <button id="ciDisable">Disable</button><button id="ciCancel">Cancel</button></div>
   </div>

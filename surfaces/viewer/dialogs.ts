@@ -7,6 +7,7 @@ import { MapDialog } from "../../components/map-dialog.ts";
 import { DEFAULT_EXPORT_MAP, EXPORT_FIELD_BY_ID, EXPORT_GROUPS } from "./exporter.ts";
 import { getCiSplit, setCiSplit, setSavedMapPresent, syncSplitRadio, updateCiBtn, updateExportDots, closeConfigDialog } from "./config-state.ts";
 import { clearSelection, hasSelection } from "./selection.ts";
+import { dataStore } from "./store.ts";
 
 /*
  * Composition root for the viewer's dialogs.
@@ -38,6 +39,7 @@ export function initDialogs(): void {
   iconize($("ciDisable"), "x-circle");
   iconize($("ciCancel"), "x-circle", { mode: "icon", tip: "Cancel" });
   iconize($("ciSave"), "check");
+  iconize($("addGroupBtn"), "plus");
 
   mapModal = new Modal($("mapModal"), {}, {
     // A cell editor inside the grid must keep its own Escape.
@@ -143,7 +145,18 @@ async function openMapDialog(): Promise<void> {
 }
 
 function openCiDialog(): void {
-  if (ciEditor) ciEditor.show(getCiSplit());
+  const rows = dataStore.getState().data?.rows ?? [];
+  const seen = new Set<string>();
+  const available: string[] = [];
+  for (const r of rows) {
+    const ci = String((r as { configItem?: unknown }).configItem ?? "").trim();
+    if (!ci) continue;
+    const k = ci.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    available.push(ci);
+  }
+  if (ciEditor) ciEditor.show(getCiSplit(), available);
   if (ciModal) ciModal.open();
 }
 
