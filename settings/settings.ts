@@ -71,6 +71,7 @@ function fill(s: unknown): void {
 let suspendSave = false;
 let savedTimer: ReturnType<typeof setTimeout> | null = null;
 function flashSaved(): void {
+  showToast("Settings saved");
   const el = $("saveStatus");
   if (!el) return;
   el.textContent = "Saved \u2713";
