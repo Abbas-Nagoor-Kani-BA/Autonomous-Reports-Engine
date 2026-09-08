@@ -177,25 +177,21 @@ function mountCi() {
     <input type="checkbox" id="ciEnabled">
     <div id="groupBoard"></div>
     <button id="addGroupBtn"></button>
-    <button id="ciDisable"></button><button id="ciCancel"></button>
+    <button id="ciCancel"></button>
     <button id="ciClose"></button><button id="ciSave"></button>
   </div>`;
   const $ = (id: string) => win.document.getElementById(id) as HTMLElement;
 
   const saved: any[] = [];
-  let disabled = 0;
   const statuses: { message: string; isError?: boolean }[] = [];
 
   const dialog = new CiDialog($("ciModal"), {}, {
     onSave: (v) => saved.push(v),
-    onDisable: () => {
-      disabled++;
-    },
     onClosed: () => {},
     status: (message, isError) => statuses.push({ message, isError })
   });
 
-  return { $, dialog, saved, statuses, disabled: () => disabled };
+  return { $, dialog, saved, statuses };
 }
 
 test("show seeds a draft without mutating the stored value", () => {
@@ -327,17 +323,6 @@ test("dropping into the same group is a no-op", () => {
   (dialog as any).dropOnGroup(0);
 
   assert.deepEqual((dialog as any).getState().groups[0].items, ["x"]);
-});
-
-test("disable clears the draft and reports it", async () => {
-  const { dialog, disabled, statuses } = mountCi();
-  dialog.show({ enabled: true, groups: [{ name: "A", items: ["x"] }] });
-
-  await (dialog as any).disable();
-  assert.equal(disabled(), 1);
-  assert.equal((dialog as any).getState().enabled, false);
-  assert.deepEqual((dialog as any).getState().groups, []);
-  assert.match(statuses.at(-1).message, /Split disabled/);
 });
 
 test("unassignedItems returns available minus grouped, deduped and sorted", () => {

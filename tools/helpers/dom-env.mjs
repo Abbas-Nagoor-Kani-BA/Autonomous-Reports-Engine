@@ -222,7 +222,7 @@ const SKELETON = `
     <div id="groupBoard"></div>
     <button id="addGroupBtn">Add group</button>
     <div class="mapFoot"><button id="ciSave" class="primary">Save</button>
-    <button id="ciDisable">Disable</button><button id="ciCancel">Cancel</button></div>
+    <button id="ciCancel">Cancel</button></div>
   </div>
 </div>
 <div id="configModal" class="hidden">

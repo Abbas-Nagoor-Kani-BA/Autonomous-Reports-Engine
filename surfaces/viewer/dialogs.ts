@@ -36,7 +36,6 @@ export function initDialogs(): void {
   iconize($("mapCancel"), "x-circle", { mode: "icon", tip: "Cancel" });
   iconize($("mapSave"), "check");
   iconize($("ciClose"), "x-circle", { mode: "icon", tip: "Close" });
-  iconize($("ciDisable"), "x-circle");
   iconize($("ciCancel"), "x-circle", { mode: "icon", tip: "Cancel" });
   iconize($("ciSave"), "check");
   iconize($("addGroupBtn"), "plus");
@@ -91,14 +90,6 @@ export function initDialogs(): void {
     onSave: async (value) => {
       setCiSplit(value);
       await chrome.storage.local.set({ [STORAGE.ciSplit]: getCiSplit() });
-      if (ciModal) ciModal.close();
-      updateCiBtn();
-    },
-    onDisable: async () => {
-      setCiSplit({ enabled: false, groups: [] });
-      try {
-        await chrome.storage.local.remove(STORAGE.ciSplit);
-      } catch { /* ignored */ }
       if (ciModal) ciModal.close();
       updateCiBtn();
     }

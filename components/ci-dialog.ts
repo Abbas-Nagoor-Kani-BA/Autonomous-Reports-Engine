@@ -21,7 +21,6 @@ export type CiDialogState = {
 
 export type CiDialogDeps = {
   onSave: (value: CiSplitValue) => Promise<void> | void;
-  onDisable: () => Promise<void> | void;
   onClosed: () => void;
   status: (message: string, isError?: boolean) => void;
 };
@@ -30,7 +29,6 @@ export type CiDialogRefs = {
   enabled: HTMLInputElement;
   board: HTMLElement;
   save: HTMLElement;
-  disable: HTMLElement;
   cancel: HTMLElement;
   close: HTMLElement;
   addGroup: HTMLElement;
@@ -80,7 +78,6 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
     this.refs.enabled = this.q<HTMLInputElement>("#ciEnabled");
     this.refs.board = this.q("#groupBoard");
     this.refs.save = this.q("#ciSave");
-    this.refs.disable = this.q("#ciDisable");
     this.refs.cancel = this.q("#ciCancel");
     this.refs.close = this.q("#ciClose");
     this.refs.addGroup = this.q("#addGroupBtn");
@@ -91,9 +88,6 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
 
     this.refs.save.addEventListener("click", () => {
       void this.commit();
-    });
-    this.refs.disable.addEventListener("click", () => {
-      void this.disable();
     });
   }
 
@@ -135,13 +129,6 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
         ? `Split enabled — one file per group (${groups.length} groups)`
         : "Split disabled — exports stay a single file"
     );
-    this.deps.onClosed();
-  }
-
-  protected async disable(): Promise<void> {
-    await this.deps.onDisable();
-    this.setState({ enabled: false, groups: [], available: [] });
-    this.deps.status("Split disabled — exports stay a single file");
     this.deps.onClosed();
   }
 
