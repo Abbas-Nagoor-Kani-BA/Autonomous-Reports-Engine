@@ -839,3 +839,50 @@ test("reset widths clears persisted widths and reverts the column", async () => 
   const col = document.querySelectorAll("#tbl colgroup col")[idx];
   assert.equal(col.style.width, "150px", "column reverted to default width");
 });
+
+test("split preview icon session-filters the grid by CI group", { timeout: 8000 }, async () => {
+  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const rows = grid.currentRows();
+  rows.forEach((r) => { r.configItem = ""; });
+  rows[0].configItem = "Payment Gateway PRD";
+  rows[1].configItem = "Identity Platform";
+  toolbar.setCiSplit({
+    enabled: true,
+    groups: [
+      { name: "Payments", items: ["Payment Gateway"] },
+      { name: "Identity", items: ["Identity Platform"] }
+    ]
+  });
+
+  const modalEl = document.getElementById("splitPreviewModal");
+  assert.ok(modalEl.classList.contains("hidden"), "preview starts closed");
+  document.getElementById("splitPreviewBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flush();
+  assert.ok(!modalEl.classList.contains("hidden"), "preview opens on icon click");
+
+  const bodyText = document.getElementById("splitPreviewBody").textContent;
+  assert.match(bodyText, /Payments/, "Payments bucket listed");
+  assert.match(bodyText, /Identity/, "Identity bucket listed");
+
+  const total = grid.currentRows().length;
+  const payRow = [...document.querySelectorAll("#splitPreviewBody .splitRow")]
+    .find((r) => r.querySelector(".splitName").textContent === "Payments");
+  assert.ok(payRow, "Payments row present");
+  payRow.querySelector(".splitView").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flush();
+
+  assert.ok(modalEl.classList.contains("hidden"), "preview closes after choosing a group");
+  assert.equal(grid.currentRows().length, 1, "grid filtered to the Payments group");
+  assert.equal(grid.currentRows()[0].configItem, "Payment Gateway PRD");
+
+  const chip = document.getElementById("splitChip");
+  assert.ok(!chip.classList.contains("hidden"), "filter chip is shown");
+  assert.match(chip.textContent, /Payments/, "chip names the active group");
+
+  document.getElementById("splitChipClear").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flush();
+  assert.ok(chip.classList.contains("hidden"), "chip hidden after clear");
+  assert.equal(grid.currentRows().length, total, "grid restored to all rows");
+
+  toolbar.setCiSplit({ enabled: false, groups: [] });
+});

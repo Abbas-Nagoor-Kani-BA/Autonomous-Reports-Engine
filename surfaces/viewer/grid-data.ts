@@ -4,6 +4,7 @@ import { dataStore } from "./store.ts";
 import { rowMatches } from "./search-match.ts";
 import type { DisplayValue } from "./search-match.ts";
 import { getSearchColumn, getSearchMode, isCaseSensitive } from "./search-state.ts";
+import { applySplitFilter } from "./split-filter.ts";
 
 function st() { return dataStore.getState(); }
 
@@ -29,6 +30,7 @@ function currentRows(): ViewerRow[] {
     const opts = { column: getSearchColumn(), mode: getSearchMode(), caseSensitive: isCaseSensitive() };
     rows = rows.filter((r) => rowMatches(r, q, opts, displayValue, COLUMNS));
   }
+  rows = applySplitFilter(rows);
   if (sortKey) {
     rows.sort((a, b) => {
       const va = a[sortKey], vb = b[sortKey];

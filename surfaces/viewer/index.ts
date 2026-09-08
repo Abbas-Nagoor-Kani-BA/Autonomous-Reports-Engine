@@ -25,6 +25,7 @@ import { initToolbar, loadTplInfo } from "./toolbar.ts";
 import { initInteractions } from "./interactions.ts";
 import { initCalclens } from "./calclens.ts";
 import { initTicketStats } from "./ticketstats.ts";
+import { initSplitPreview } from "./split-preview.ts";
 import { initActionRail } from "./action-rail.ts";
 import { anyOverlayOpen } from "./selection.ts";
 import { initTooltips } from "../../lib/tooltip.ts";
@@ -47,6 +48,7 @@ async function boot() {
   initInteractions();
   initCalclens();
   initTicketStats();
+  initSplitPreview();
   initActionRail();
 
   initTooltips(() => anyOverlayOpen());

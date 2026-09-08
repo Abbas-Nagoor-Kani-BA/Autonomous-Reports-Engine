@@ -165,6 +165,7 @@ const SKELETON = `
       <div id="colList"></div>
     </div>
     <button id="clearBtn" class="icon-btn">Clear</button>
+    <button id="splitPreviewBtn" class="icon-btn">Split preview</button>
     <div id="exportCluster">
       <button id="exportBtn" class="icon-btn primary">Export</button>
     </div>
@@ -175,11 +176,18 @@ const SKELETON = `
   <button id="tabTickets" class="tab on" role="tab" aria-selected="true"><span class="g">☰</span> Tickets</button>
   <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
   <button id="ticketStatsBtn" class="btn icon-btn" data-tip="Ticket stats" aria-label="Ticket stats"></button>
+  <span id="splitChip" class="splitChip hidden"><span class="splitChipLabel"></span><button id="splitChipClear">✕</button></span>
 </div>
 <div id="ticketStatsModal" class="hidden">
   <div id="ticketStatsCard">
     <div class="mapHead"><span>Ticket stats</span><button id="ticketStatsClose" class="btn">✕</button></div>
     <div id="ticketStatsBody"></div>
+  </div>
+</div>
+<div id="splitPreviewModal" class="hidden">
+  <div id="splitPreviewCard">
+    <div class="mapHead"><span>Export split preview</span><button id="splitPreviewClose" class="btn">✕</button></div>
+    <div id="splitPreviewBody"></div>
   </div>
 </div>
   <div id="wrap">

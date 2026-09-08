@@ -617,6 +617,17 @@
   #configModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
   #mapModal, #ciModal { @apply fixed inset-0 z-[19] bg-card2/60 flex items-center justify-center; }
   #ticketStatsModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
+  #splitPreviewModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
+  #splitPreviewCard { @apply flex flex-col gap-2 bg-card border border-line rounded-lg p-3.5 w-[min(460px,92vw)] max-h-[84vh] overflow-auto; }
+  .splitList { @apply flex flex-col gap-1 mt-1; }
+  .splitRow { @apply flex items-center gap-2 px-2 py-1.5 rounded bg-card2 border border-line; }
+  .splitRow.active { @apply border-accent; }
+  .splitRow.splitAll { @apply bg-bg; }
+  .splitName { @apply flex-1 min-w-0 truncate text-[12.5px] text-text; }
+  .splitCount { @apply tabular-nums text-accent font-semibold text-[12.5px]; }
+  .splitView { @apply text-[11px] px-2 py-0.5 font-normal; }
+  .splitChip { @apply inline-flex items-center gap-1.5 bg-accent/20 text-accent border border-accent/50 rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold; }
+  .splitChipClear { @apply bg-transparent border-0 text-accent cursor-pointer px-0.5 hover:text-bad; }
   #ticketStatsCard { @apply flex flex-col gap-2 bg-card border border-line rounded-lg p-3.5 w-[min(480px,92vw)] max-h-[84vh] overflow-auto; }
   .stats-section { @apply flex flex-col gap-1; }
   .stats-h { @apply text-[12px] text-accent m-0 uppercase tracking-wider; }
@@ -660,10 +671,13 @@
   #ciEnabled { @apply accent-accent; }
   .ciToggle { @apply flex items-center gap-2 cursor-pointer text-[13px]; }
   #groupBoard { @apply flex gap-2.5 overflow-x-auto p-0.5 min-h-[150px]; }
-  #groupBoard { @apply flex flex-col gap-2.5 overflow-y-auto p-0.5 max-h-[64vh]; }
-  .ciGroupGrid { @apply grid grid-cols-2 gap-2.5; }
+  #groupBoard { @apply flex flex-col gap-2.5 p-0.5; }
+  .ciGroupGrid { @apply flex gap-2.5 overflow-x-auto pb-1; }
+  .ciGroupGrid .ciGroupCard { @apply flex-none w-[240px]; }
   .ciGroupCard { @apply flex flex-col gap-1.5 bg-card2 border border-line rounded-lg p-2; }
-  .ciUngrouped { @apply bg-bg border-dashed; }
+  .ciUngrouped { @apply bg-bg border-dashed flex-none; }
+  .ciUngrouped .ciItems { @apply flex-row flex-nowrap overflow-x-auto overflow-y-hidden max-h-none min-h-0 items-center py-1; }
+  .ciUngrouped .ciChip { @apply flex-none max-w-[200px]; }
   .ciUngroupedTitle { @apply flex items-center gap-1.5 flex-1 text-mauve font-bold text-[13px] px-1 py-0.5; }
   .ciHeadIcon { @apply w-4 h-4; }
   .ciEmptyHint { @apply text-dim text-[11.5px] italic px-1 py-1; }

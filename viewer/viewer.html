@@ -53,6 +53,7 @@
         <div id="colList"></div>
       </div>
       <button id="clearBtn" class="btn" data-tip="Clear pulled data" aria-label="Clear"></button>
+      <button id="splitPreviewBtn" class="btn" data-tip="Preview export split" aria-label="Preview export split"></button>
       <div id="exportCluster">
         <button id="exportBtn" class="btn-primary exportBtn" data-tip="Configure export settings and export the current view" aria-label="Export"></button>
       </div>
@@ -62,6 +63,7 @@
     <button id="tabTickets" class="tab on" role="tab" aria-selected="true"><span class="g">☰</span> Tickets</button>
     <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
     <button id="tabSummaryDetails" class="tab" role="tab" aria-selected="false"><span class="g">◫</span> Weekly Summary</button>
+    <span id="splitChip" class="splitChip hidden ml-auto"><span class="splitChipLabel"></span><button id="splitChipClear" class="splitChipClear" data-tip="Clear split filter" aria-label="Clear split filter">✕</button></span>
     <button id="ticketStatsBtn" class="btn icon-btn ml-auto" data-tip="Ticket stats — state breakdown and SLA met/breached for the current view" aria-label="Ticket stats"></button>
   </div>
   <div id="wrap">
@@ -107,6 +109,13 @@
     <div id="ticketStatsCard">
       <div class="mapHead"><span>Ticket stats</span><button id="ticketStatsClose" class="btn" data-tip="Close">✕</button></div>
       <div id="ticketStatsBody"></div>
+    </div>
+  </div>
+  <div id="splitPreviewModal" class="hidden">
+    <div id="splitPreviewCard">
+      <div class="mapHead"><span>Export split preview</span><button id="splitPreviewClose" class="btn" data-tip="Close">✕</button></div>
+      <p class="mapHint">How the current view splits by CI group. Choose a group to view just its tickets in the grid (session only).</p>
+      <div id="splitPreviewBody"></div>
     </div>
   </div>
   <div id="empty" class="hidden">No pulled data yet — run a pull from the side panel first.</div>
