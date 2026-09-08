@@ -220,7 +220,9 @@ $("mlCacheClearBtn").addEventListener("click", async () => {
 
 refreshMlStatus().catch(() => undefined);
 page.settings.load().then((s) => { suspendSave = true; fill(s); suspendSave = false; });
-const CFG_KIND = "servicenow-ticket-analyzer-settings";
+const CFG_KIND = "autonomous-reports-engine-settings";
+const CFG_KIND_LEGACY = "servicenow-ticket-analyzer-settings";
+const ACCEPTED_CFG_KINDS = [CFG_KIND, CFG_KIND_LEGACY];
 const CFG_KEYS = [STORAGE.pluginSettings, STORAGE.exportColMap, STORAGE.ciSplit, STORAGE.viewerHiddenCols, STORAGE.snXlsxTemplate, STORAGE.msrLists];
 const CFG_LOCAL_KEY = STORAGE.snFilterList;
 function validateCfgKey(key: string, v: unknown): void {
@@ -308,7 +310,7 @@ $("exportCfgBtn").addEventListener("click", async () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `snow-analyzer-settings-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 16).replace(/[-:T]/g, "")}.json`;
+    a.download = `autonomous-reports-engine-settings-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 16).replace(/[-:T]/g, "")}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -333,7 +335,12 @@ $("cfgFile").addEventListener("change", async (e: Event) => {
     }
     const p = parsed as { kind?: unknown; settings?: unknown };
     if (!p || !p.settings || typeof p.settings !== "object") {
-      throw new Error("This file is not a ServiceNow Analyzer settings export");
+      throw new Error("This file is not an Autonomous Reports Engine settings export");
+    }
+    // Accept exports from this app (current name) and from the previous name
+    // (servicenow-ticket-analyzer). A missing kind is tolerated for older files.
+    if (p.kind !== undefined && p.kind !== null && !ACCEPTED_CFG_KINDS.includes(String(p.kind))) {
+      throw new Error("This file is not an Autonomous Reports Engine settings export");
     }
     const updates: Record<string, unknown> = {};
     for (const key of CFG_KEYS) {
