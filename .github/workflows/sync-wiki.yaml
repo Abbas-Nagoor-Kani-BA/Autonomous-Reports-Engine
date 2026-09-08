@@ -1,0 +1,100 @@
+name: Sync Wiki
+
+# Publishes the in-repo wiki/ folder to the GitHub Wiki (<repo>.wiki.git).
+#
+# The wiki lives in a SEPARATE git repository. It must be initialised once by
+# creating any page in the Wiki tab of the repo before this workflow can push.
+#
+# Trigger: pushes to main that touch wiki/**, plus a manual run. The manual run
+# supports a dry-run that assembles the file set and prints it WITHOUT pushing,
+# so the sync can be verified safely.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wiki/**'
+      - '.github/workflows/sync-wiki.yaml'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Assemble and list files without pushing to the wiki'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-wiki
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Assemble wiki content
+        id: assemble
+        run: |
+          set -euo pipefail
+          staging="$(mktemp -d)"
+          echo "staging=$staging" >> "$GITHUB_OUTPUT"
+
+          # Copy every Markdown page and the images/ folder. Exclude the
+          # images/README.md capture checklist (internal, not a wiki page).
+          rsync -a \
+            --include='*/' \
+            --include='*.md' \
+            --include='images/***' \
+            --exclude='images/README.md' \
+            --exclude='*' \
+            wiki/ "$staging/"
+
+          echo "Files to publish:"
+          find "$staging" -type f | sed "s#$staging/#  #" | sort
+
+          count="$(find "$staging" -type f | wc -l | tr -d ' ')"
+          echo "Total: $count file(s)"
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No wiki files assembled — refusing to publish an empty wiki."
+            exit 1
+          fi
+
+      - name: Dry run — stop before publishing
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: 'echo "Dry run: assembled files listed above. Not pushing to the wiki."'
+
+      - name: Publish to wiki
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STAGING: ${{ steps.assemble.outputs.staging }}
+        run: |
+          set -euo pipefail
+          wiki_url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
+
+          tmp="$(mktemp -d)"
+          if ! git clone --depth 1 "$wiki_url" "$tmp" 2>/dev/null; then
+            echo "::error::Could not clone the wiki repository."
+            echo "Create the wiki once from the repo's Wiki tab (add any page), then re-run."
+            exit 1
+          fi
+
+          # Replace tracked content with the staged files (keep .git).
+          find "$tmp" -mindepth 1 -maxdepth 1 -not -name '.git' -exec rm -rf {} +
+          cp -a "$STAGING"/. "$tmp"/
+
+          cd "$tmp"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Wiki already up to date; nothing to publish."
+            exit 0
+          fi
+          git commit -m "Sync wiki from ${GITHUB_SHA::7}"
+          git push origin HEAD
+          echo "Wiki published."
