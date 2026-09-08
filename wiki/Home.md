@@ -64,4 +64,4 @@ Start here if you want to build, test, or extend the code.
 | Auth | Reuses your logged-in ServiceNow browser session (no API keys) |
 | Tables | incident, change_request, problem, sc_req_item, sc_task |
 | Output | Filled WSR (Weekly Status Report) `.xlsx` workbook, plus Copy for MSR (Monthly Status Report) |
-| Storage | Local only (`chrome.storage.local` + IndexedDB) |
+| Storage | Local only: settings in `chrome.storage.local`; three IndexedDB caches — `snAnalyzerCache` (query + timeline), `snAnalyzerClassCache` (classification results), `snAnalyzerMlModel` (downloaded ML model). See [Caching](Caching). |
