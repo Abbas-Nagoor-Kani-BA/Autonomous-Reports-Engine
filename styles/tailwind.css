@@ -751,6 +751,11 @@
     @apply bg-accent text-card2 border-accent;
   }
 
+  #editModeBtn { @apply border border-line; }
+  #editModeBtn.edit-on {
+    @apply bg-accent text-card2 border-accent;
+  }
+
   #calclensPanel { @apply fixed top-0 right-0 h-full w-[380px] z-40; }
   #calclensPanel.calclens-drawer {
     @apply flex flex-col bg-card2 border-l border-line shadow-2xl translate-x-full transition-transform duration-200;

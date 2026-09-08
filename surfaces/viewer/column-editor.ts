@@ -63,6 +63,13 @@ export function initColumnEditor(): void {
   btn.textContent = "Edit column";
   iconize(btn, "square-pen");
 
+  const reflect = (on: boolean): void => {
+    btn.classList.toggle("edit-on", on);
+    btn.setAttribute("data-tip", on
+      ? "Edit mode ON — click a cell to bulk-edit that column. Click to turn off."
+      : "Edit mode OFF — turn on, then click a cell to bulk-edit that column across the current view.");
+  };
+
   const host = $("columnEditorModal");
   if (host) {
     editor = new ColumnEditor(host, {}, {
@@ -97,11 +104,11 @@ export function initColumnEditor(): void {
   btn.addEventListener("click", () => {
     const next = !getEditMode();
     setEditMode(next);
-    btn.classList.toggle("edit-on", next);
+    reflect(next);
     if (!next && editor) editor.close();
   });
 
-  btn.classList.toggle("edit-on", getEditMode());
+  reflect(getEditMode());
 
   addCellFocusListener((info) => {
     if (!getEditMode() || !info) return;
