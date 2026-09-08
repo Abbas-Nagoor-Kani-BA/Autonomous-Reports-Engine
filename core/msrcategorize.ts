@@ -15,6 +15,8 @@
  */
 
 import { DEFAULT_HINTS } from "./msrchoices.ts";
+import { findLabeledValue } from "./aiextract.ts";
+import type { SectionKey } from "./aiextract.ts";
 
 export type MsrScore = {
   /** Best-matching candidate label, or null when nothing clears the bar. */
@@ -71,6 +73,25 @@ function tokens(s: string): string[] {
   return n ? n.split(" ") : [];
 }
 
+/** Words that negate a following cue. `norm`/`tokens` strip apostrophes, so the
+ *  contracted forms appear as "isnt"/"wasnt"/"cant" etc. after tokenising. */
+const NEGATORS = new Set([
+  "no", "not", "never", "without", "none", "cannot", "cant", "dont", "doesnt",
+  "didnt", "wont", "isnt", "wasnt", "arent", "werent", "neither", "nor"
+]);
+
+const NEG_WINDOW = 3;
+
+/** True when any of the up-to-NEG_WINDOW tokens before index `i` is a negator. */
+function negatedAt(textTokens: string[], i: number): boolean {
+  for (let k = 1; k <= NEG_WINDOW; k++) {
+    const idx = i - k;
+    if (idx < 0) break;
+    if (NEGATORS.has(textTokens[idx])) return true;
+  }
+  return false;
+}
+
 /**
  * Bounded edit distance that bails out early: used to accept a hint token when
  * the note only has it misspelled. The tolerated distance grows with the
@@ -101,7 +122,8 @@ function within(a: string, b: string): boolean {
   return prev[n] <= max;
 }
 
-/** Non-zero only when `phrase` (a full hint, possibly multi-token) is present. */
+/** Non-zero only when `phrase` (a full hint, possibly multi-token) is present
+ *  AND not negated by a preceding word. */
 function phraseScore(textTokens: string[], phrase: string): number {
   const words = tokens(phrase);
   if (!words.length) return 0;
@@ -113,7 +135,7 @@ function phraseScore(textTokens: string[], phrase: string): number {
         break;
       }
     }
-    if (ok) return 1;
+    if (ok && !negatedAt(textTokens, i)) return 1;
   }
   return 0;
 }
@@ -125,6 +147,35 @@ function docTokens(label: string, hints: string[]): string[] {
   const out = tokens(label);
   for (const hint of hints) out.push(...tokens(hint));
   return out;
+}
+
+/** Specificity of a matched pattern: word count first, then character length,
+ *  packed so word count dominates. Longer / multi-word patterns are stronger. */
+function patternSpecificity(matched: string): number {
+  const words = norm(matched).split(" ").filter(Boolean).length;
+  return words * 1000 + matched.length;
+}
+
+/** Runs one regex over the body counting only NON-negated matches, and tracks
+ *  the highest specificity among them. Returns {count, spec}. */
+function regexMatchInfo(re: RegExp, body: string): { count: number; spec: number } {
+  const g = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
+  let count = 0;
+  let spec = 0;
+  let m: RegExpExecArray | null;
+  while ((m = g.exec(body)) !== null) {
+    if (m.index === g.lastIndex) g.lastIndex++;
+    const before = tokens(body.slice(0, m.index));
+    if (NEGATORS.has(before[before.length - 1]) ||
+        NEGATORS.has(before[before.length - 2]) ||
+        NEGATORS.has(before[before.length - 3])) {
+      continue;
+    }
+    count++;
+    const s = patternSpecificity(m[0]);
+    if (s > spec) spec = s;
+  }
+  return { count, spec };
 }
 
 function vectorMagnitude(v: Map<string, number>): number {
@@ -198,6 +249,11 @@ export function classifyMsr(
   const body = String(text ?? "").trim();
   const textTokens = tokens(body);
 
+  // Cosine sees the note with negated tokens removed, so a negated cue cannot
+  // lift the wrong label's similarity. Regex/keyword do their own negation check
+  // against the full text.
+  const cosineTokens = textTokens.filter((_t, i) => !negatedAt(textTokens, i));
+
   const hintsByLabel = new Map<string, string[]>();
   const docs: string[][] = [];
   const regexByLabel = new Map<string, RegExp[]>();
@@ -207,24 +263,33 @@ export function classifyMsr(
     docs.push(docTokens(label, hints));
     regexByLabel.set(label, o.useRegex ? regexPairs(label, o.regex) : []);
   }
-  const cos = cosineScores(textTokens, docs);
+  const cos = cosineScores(cosineTokens, docs);
 
   const hits: Record<string, number> = {};
   const regexHits: Record<string, number> = {};
-  candidateLabels.forEach((label, i) => {
+  const regexSpec: Record<string, number> = {};
+  candidateLabels.forEach((label) => {
     let h = 0;
     for (const hint of hintsByLabel.get(label)!) h += phraseScore(textTokens, hint);
     hits[label] = h;
     let rh = 0;
-    for (const re of regexByLabel.get(label)!) if (re.test(body)) rh++;
+    let rs = 0;
+    for (const re of regexByLabel.get(label)!) {
+      const info = regexMatchInfo(re, body);
+      if (info.count > 0) {
+        rh += info.count;
+        if (info.spec > rs) rs = info.spec;
+      }
+    }
     regexHits[label] = rh;
+    regexSpec[label] = rs;
   });
 
   // Combined scores (kept for the confidence formula / diagnostics).
   const scores: Record<string, number> = {};
   candidateLabels.forEach((label, i) => { scores[label] = hits[label] + o.cosineWeight * cos[i]; });
 
-  const winner = pickCascade(regexHits, hits, cos, candidateLabels);
+  const winner = pickCascade(regexHits, regexSpec, hits, cos, candidateLabels);
 
   const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [bestLabel, bestScore] = ranked[0] ?? [null, 0];
@@ -248,12 +313,24 @@ export function classifyMsr(
 /** Decides the winning label by stage priority. */
 function pickCascade(
   regexHits: Record<string, number>,
+  regexSpec: Record<string, number>,
   hits: Record<string, number>,
   cos: number[],
   candidateLabels: string[]
 ): string | null {
-  const rc = Object.entries(regexHits).sort((a, b) => b[1] - a[1]);
-  if (rc[0] && rc[0][1] >= 1 && (!rc[1] || rc[0][1] > rc[1][1])) return rc[0][0];
+  // Regex stage: among labels with >=1 non-negated match, rank by most-specific
+  // matched pattern, then hit count, then candidate order. A winner needs a
+  // strict lead on (specificity, count) over the runner-up; a genuine tie falls
+  // through to the keyword/cosine stages rather than guessing.
+  const withHits = candidateLabels
+    .map((label, idx) => ({ label, idx, count: regexHits[label] || 0, spec: regexSpec[label] || 0 }))
+    .filter((e) => e.count >= 1)
+    .sort((a, b) => (b.spec - a.spec) || (b.count - a.count) || (a.idx - b.idx));
+  if (withHits.length) {
+    const top = withHits[0];
+    const next = withHits[1];
+    if (!next || top.spec > next.spec || top.count > next.count) return top.label;
+  }
 
   const kh = Object.entries(hits).sort((a, b) => b[1] - a[1]);
   if (kh[0] && kh[0][1] >= KEYWORD_MIN_HITS && (!kh[1] || kh[0][1] > kh[1][1])) return kh[0][0];
@@ -333,3 +410,27 @@ const BUILTIN_REGEX: Record<string, RegExp[]> = {
 };
 
 export { norm, tokens };
+
+/**
+ * Categorises one field with a label-directed cascade:
+ *   A) if a labeled section (e.g. "Root Cause Category:" / "Resolution Type:")
+ *      is present, categorise JUST its value — the cleanest signal;
+ *   B) otherwise (or when the labeled value yields no category), categorise the
+ *      whole note.
+ * The explicit label always wins when its value resolves to a category.
+ */
+export function categorizeField(
+  notes: unknown,
+  labelKeys: SectionKey[],
+  candidateLabels: string[],
+  hints?: Record<string, string[]>
+): MsrScore {
+  const body = String(notes ?? "");
+  const opts: ClassifyMsrOptions = { hints: hints || {} };
+  const labeled = findLabeledValue(body, labelKeys);
+  if (labeled.trim()) {
+    const a = classifyMsr(labeled, candidateLabels, opts);
+    if (a.label) return a;
+  }
+  return classifyMsr(body, candidateLabels, opts);
+}

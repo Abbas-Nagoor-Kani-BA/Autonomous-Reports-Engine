@@ -1,4 +1,4 @@
-import { classifyMsr } from "../core/msrcategorize.ts";
+import { categorizeField } from "../core/msrcategorize.ts";
 import type { MsrScore } from "../core/msrcategorize.ts";import { msrType, rootCauseFor } from "../core/msrchoices.ts";
 import type { MsrListSet } from "../core/msrchoices.ts";
 import { ClassificationCacheStore } from "../data/classification-cache-repository.ts";
@@ -74,8 +74,8 @@ export type ClassifyServiceDeps = {
 
 /** Deterministic compute: root cause -> per-type list, solution type -> resolution. */
 export const deterministicClassify: ClassifyFn = (input) => {
-  const rootCause = classifyMsr(input.notes, input.rootCauseLabels, { hints: input.hints });
-  const solutionType = classifyMsr(input.notes, input.resolutionLabels, { hints: input.hints });
+  const rootCause = categorizeField(input.notes, ["rootCauseCategory"], input.rootCauseLabels, input.hints);
+  const solutionType = categorizeField(input.notes, ["resolutionType"], input.resolutionLabels, input.hints);
   return {
     solutionType: {
       value: solutionType.label,

@@ -18,7 +18,7 @@ import { dataStore, hydrateStores, wireViewer } from "./store.ts";
 import { syncMsrLists } from "./core.ts";
 import { initSummary } from "./summary.ts";
 import { initSummaryDetails } from "./summary-details.ts";
-import { initGrid, load } from "./grid.ts";
+import { initGrid, load, reclassify } from "./grid.ts";
 import { initCols } from "./cols.ts";
 import { initDialogs } from "./dialogs.ts";
 import { initToolbar, loadTplInfo } from "./toolbar.ts";
@@ -55,7 +55,7 @@ async function boot() {
 
   initTooltips(() => anyOverlayOpen());
   await hydrateStores();
-  wireViewer({ onData: load, onLists: syncMsrLists });
+  wireViewer({ onData: load, onLists: syncMsrLists, onSettings: reclassify });
   loadTplInfo();
   const data = dataStore.getState().data;
   if (data) load(data);

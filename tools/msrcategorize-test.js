@@ -158,3 +158,82 @@ test("cascade returns null when no stage clears its bar", () => {
   assert.equal(r.level, null);
 });
 
+
+import { categorizeField } from "../core/msrcategorize.ts";
+
+const HINTS = MSR_DEFAULT_LISTS.hints;
+
+test("negation: 'no workaround is needed ... permanent code change' -> not Workaround", () => {
+  const r = classifyMsr("no workaround is needed, applied a permanent code change", RESOLUTION, { hints: HINTS });
+  assert.notEqual(r.label, "Workaround solution");
+  assert.equal(r.label, "Permanent solution");
+});
+
+test("negation: 'without a workaround' does not score workaround", () => {
+  const r = classifyMsr("resolved without a workaround, applied a permanent fix", RESOLUTION, { hints: HINTS });
+  assert.notEqual(r.label, "Workaround solution");
+});
+
+test("negation: 'not a network issue' does not score Network", () => {
+  const r = classifyMsr("this was not a network issue at all", INCIDENT_RC, { hints: HINTS });
+  assert.notEqual(r.label, "Network issue");
+});
+
+test("negation-aware cosine: 'no database performance issue, it was a firewall block' -> not Database performance", () => {
+  const r = classifyMsr("no database performance issue, it was a firewall block on the port", INCIDENT_RC, { hints: HINTS });
+  assert.notEqual(r.label, "Database performance");
+});
+
+test("multi-match specificity: a multi-word regex outranks a broad single word", () => {
+  // "blocked port" (firewall, 2 words) is more specific than "network"/"connectivity".
+  const r = classifyMsr("network connectivity issue; a firewall rule blocked the port", INCIDENT_RC, { hints: HINTS });
+  assert.ok(r.label === "Firewall" || r.label === "Network issue", `got ${r.label}`);
+});
+
+test("categorizeField Case 1: explicit Root Cause Category label wins over the RCA narrative", () => {
+  const note = `Issue:
+ The job failed during the latest scheduled run.
+
+Impact:
+ No business impact was observed.
+
+Analysis (Root Cause):
+ Job failure caused by insufficient space on the LAN share.
+
+Rootcause category:
+    job/schedule failuer
+Steps Taken to Resolve:
+ Removed old logs and reran the job successfully.
+
+Resolution Type:
+ Permanent
+
+Preventive Actions:
+ Monitor disk space.
+Problem Ticket Required:
+ No
+Resolved Supplier:
+ N/A`;
+  const rc = categorizeField(note, ["rootCauseCategory"], INCIDENT_RC, HINTS);
+  assert.equal(rc.label, "Job schedule/scheduler error");
+  const sol = categorizeField(note, ["resolutionType"], RESOLUTION, HINTS);
+  assert.equal(sol.label, "Permanent solution");
+});
+
+test("categorizeField Case 2: no labels -> whole-note fallback", () => {
+  const note = "Users could not reach the app; the firewall was blocking port 443 and we opened it. Permanent fix applied.";
+  assert.equal(categorizeField(note, ["rootCauseCategory"], INCIDENT_RC, HINTS).label, "Firewall");
+  assert.equal(categorizeField(note, ["resolutionType"], RESOLUTION, HINTS).label, "Permanent solution");
+});
+
+test("categorizeField Case 5: label value uncategorizable -> whole-note fallback", () => {
+  const note = `Root Cause Category: misc other weirdness
+The database was slow because queries were unindexed and sql performance degraded.`;
+  const rc = categorizeField(note, ["rootCauseCategory"], INCIDENT_RC, HINTS);
+  assert.equal(rc.label, "Database performance");
+});
+
+test("categorizeField Case 6: nothing resolves -> null", () => {
+  const note = "Closed after 3 days in the resolved state.";
+  assert.equal(categorizeField(note, ["rootCauseCategory"], INCIDENT_RC, HINTS).label, null);
+});

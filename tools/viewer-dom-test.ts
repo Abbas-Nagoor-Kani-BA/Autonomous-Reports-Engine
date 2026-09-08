@@ -434,6 +434,44 @@ test("classifyRows degrades to the scorer with a notice when the ML model is mis
   assert.equal(typeof run.changed, "number", "the degrade pass still completes");
 });
 
+test("switching classification mode re-runs on already-loaded data (mode is in the run guard)", { timeout: 8000 }, async () => {
+  // A closed incident with a categorizable note; heuristic mode fills the
+  // category deterministically.
+  const row = grid.findRowBySysId("aaa");
+  row.state = "Closed";
+  row.closeNotes = "Root Cause Category: firewall blocked the port\nResolution Type: Permanent";
+  row.rootCause = "";
+  row.solutionType = "";
+  row.notesHash = "";
+  row.__classFp = "";
+
+  await chrome.storage.local.set({
+    pluginSettings: {
+      defaults: { ticketType: "incident", queues: ["APPSUP_TEST"], teamMembers: ["John Doe"] },
+      ml: { mode: "heuristic", modelId: "mobilebert", cacheEnabled: false }
+    }
+  });
+  grid.reclassify();
+  await flush();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(row.rootCause, "Firewall", "heuristic run categorised the root cause from the label");
+  assert.equal(row.solutionType, "Permanent solution", "heuristic run categorised the solution type");
+
+  // Switching to ML mode must NOT be skipped by the run guard: it re-runs and,
+  // with no model downloaded, degrades to the scorer (fp/mode changed).
+  const fpBefore = row.__classFp;
+  await chrome.storage.local.set({
+    pluginSettings: {
+      defaults: { ticketType: "incident", queues: ["APPSUP_TEST"], teamMembers: ["John Doe"] },
+      ml: { mode: "ml", modelId: "mobilebert", cacheEnabled: false }
+    }
+  });
+  grid.reclassify();
+  await flush();
+  await new Promise((r) => setTimeout(r, 50));
+  assert.notEqual(row.__classFp, fpBefore, "the run context (fp incl. mode) changed, so it re-ran");
+});
+
 test("single-cell selection + arrow navigation focuses the selected cell", { timeout: 8000 }, async () => {
   const calState = await import("../surfaces/viewer/calclens-state.ts");
   const selModule = await import("../surfaces/viewer/selection.ts");

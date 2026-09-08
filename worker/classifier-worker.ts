@@ -111,7 +111,7 @@ async function classifyBatch(
 ): Promise<{ rowOut: ChunkResult["results"][number]; unclassifiable: boolean }[]> {
   const out: { rowOut: ChunkResult["results"][number]; unclassifiable: boolean }[] = [];
   for (const input of inputs) {
-    const r = await classifyCached(input, useMl, cache, modelId);
+    const r = await classifyCached(input, useMl, cache, modelId, mode);
     const number = String(input.row.number ?? input.row.sysId ?? "");
     out.push({
       rowOut: {
@@ -141,13 +141,13 @@ async function classifyBatch(
 }
 
 /** The cache key for one input row (notes + both label lists + model id). */
-function keyFor(input: ClassifyRowInput, modelId: string): CacheKeyInput {
+function keyFor(input: ClassifyRowInput, modelId: string, mode: ClassifyMode): CacheKeyInput {
   return {
     notes: input.notes,
     rootCauseLabels: input.rootCauseLabels,
     resolutionLabels: input.resolutionLabels,
     hints: input.hints,
-    modelId
+    modelId: `${modelId}::${mode}`
   };
 }
 
@@ -159,9 +159,10 @@ async function classifyCached(
   input: ClassifyRowInput,
   useMl: PickFn | null,
   cache: ClassificationCacheStore | null,
-  modelId: string
+  modelId: string,
+  mode: ClassifyMode
 ): Promise<{ solutionType: { value: string | null; confidence: number; source: "ml" | "heuristic" | "regex" | "keyword" | "cosine" }; rootCause: { value: string | null; confidence: number; source: "ml" | "heuristic" | "regex" | "keyword" | "cosine" } }> {
-  const key = keyFor(input, modelId);
+  const key = keyFor(input, modelId, mode);
   if (cache) {
     const hit = await cache.get(key);
     // Only trust cached entries that carry per-cell raw picks (ml + det). Older

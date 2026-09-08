@@ -316,6 +316,18 @@ async function currentModelId(): Promise<string> {
   }
 }
 
+/** The classification mode selected in Settings; part of the run guard so a
+ *  mode switch (heuristic/ml/hybrid) re-runs on already-loaded data. */
+async function currentMode(): Promise<string> {
+  try {
+    const st = await chrome.storage.local.get(STORAGE.pluginSettings);
+    const mode = (st?.[STORAGE.pluginSettings] as any)?.ml?.mode;
+    return mode === "ml" ? "ml" : mode === "heuristic" ? "heuristic" : "hybrid";
+  } catch {
+    return "hybrid";
+  }
+}
+
 async function currentModelLabel(): Promise<string> {
   try {
     const st = await chrome.storage.local.get(STORAGE.pluginSettings);
@@ -416,10 +428,12 @@ async function classifyGrid(): Promise<void> {
   // Settings DOES re-run classification on the already-loaded rows with the new
   // model (the run guard includes the model id).
   const modelId = await currentModelId();
+  const mode = await currentMode();
   // The run guard must also account for the MSR label lists: editing them while
   // keeping the same model would otherwise skip re-classification and leave the
-  // previous run's (now stale) values on screen.
-  const runKey = `${fingerprint}::${modelId}::${classificationListsFp(getMsrLists())}`;
+  // previous run's (now stale) values on screen. The mode (heuristic/ml/hybrid)
+  // is part of the key too, so switching mode re-runs on already-loaded data.
+  const runKey = `${fingerprint}::${modelId}::${mode}::${classificationListsFp(getMsrLists())}`;
   if (classifying || lastClassifiedFingerprint === runKey) return;
   // A brand-new dataset, a model switch, or a list edit: reset the previous run's
   // bar before starting.
@@ -450,6 +464,13 @@ async function classifyGrid(): Promise<void> {
   }
 }
 
+/** Re-run classification on the already-loaded data (e.g. after the user
+ *  switches classification mode/model in Settings). classifyGrid's run guard
+ *  now includes the mode, so a mode switch actually re-runs. */
+function reclassify(): void {
+  if (st().data) classifyGrid();
+}
+
 export {
   load,
   buildHead,
@@ -467,6 +488,7 @@ export {
   findRowBySysId,
   displayedValue,
   autoParse,
+  reclassify,
   resetColWidths,
   setSelectionHooks,
   setOnCellFocus,

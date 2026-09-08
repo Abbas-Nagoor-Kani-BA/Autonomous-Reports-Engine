@@ -92,6 +92,9 @@ export async function saveSel() {
 export type ViewerHandlers = {
   onData(data: ViewerData | null): void;
   onLists(lists: unknown): void;
+  /** Plugin settings changed (e.g. classification mode/model) — re-run derived
+   *  work like classification on the already-loaded data. */
+  onSettings?(): void;
 };
 
 export function wireViewer(handlers: ViewerHandlers) {
@@ -104,5 +107,8 @@ export function wireViewer(handlers: ViewerHandlers) {
     setMsrLists(lists);
     handlers.onLists(lists);
   });
-  return () => { unData(); unLists(); };
+  const unSettings = onStorageChange([STORAGE.pluginSettings], () => {
+    handlers.onSettings?.();
+  });
+  return () => { unData(); unLists(); unSettings(); };
 }

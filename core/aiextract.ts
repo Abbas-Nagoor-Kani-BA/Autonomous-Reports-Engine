@@ -1,13 +1,6 @@
 const SOLUTION_PERMANENT = "Permanent solution";
 const SOLUTION_WORKAROUND = "Workaround solution";
 
-function tidyRootCause(v: unknown): string {
-  let s = String(v ?? "").replace(/\s+/g, " ").trim();
-  s = s.replace(/^root\s*ca?us?e\s*(is)?\s*[::-]?\s*/i, "").replace(/[\s.;]+$/, "");
-  if (!s || /^(unknown|n\/?a|none|not specified|not mentioned|not provided)$/i.test(s)) return "";
-  return s.slice(0, 600);
-}
-
 /* ------------------------------------------------------------------ */
 /* Fuzzy section-label matching                                        */
 /* ------------------------------------------------------------------ */
@@ -41,20 +34,11 @@ function editDistanceWithin(a: string, b: string, max: number): boolean {
 // Known section headers. Variants include common typos and rewordings;
 // matching itself is fuzzy (distance 1-2 depending on label length).
 type SectionLabel = { key: SectionKey; variants: string[] };
-type SectionKey =
-  | "rootCause" | "resolutionType" | "impact" | "steps" | "preventive"
-  | "problemTicket" | "resolvedBy" | "closure" | "issue";
+type SectionKey = "rootCauseCategory" | "resolutionType";
 
 const SECTION_LABELS: SectionLabel[] = [
-  { key: "rootCause", variants: ["analysis root cause", "analysis rca", "rca analysis", "root cause analysis", "root cause summary", "root cause", "rootcause", "root caus", "rca"] },
-  { key: "resolutionType", variants: ["resolution type", "resoultion type", "resolution types", "solution type", "resolved type", "resolution status"] },
-  { key: "impact", variants: ["impact", "business impact", "customer impact"] },
-  { key: "steps", variants: ["steps taken to resolve", "steps taken", "resolution steps", "actions taken", "action taken", "troubleshooting steps"] },
-  { key: "preventive", variants: ["preventive actions", "preventive action", "preventative actions", "preventative action", "prevention"] },
-  { key: "problemTicket", variants: ["problem ticket required", "problem ticket"] },
-  { key: "resolvedBy", variants: ["resolved by supplier", "resolved by"] },
-  { key: "closure", variants: ["closure", "closure notes"] },
-  { key: "issue", variants: ["issue", "issue summary", "description"] }
+  { key: "rootCauseCategory", variants: ["root cause category", "rootcause category", "rca category", "root cause cat"] },
+  { key: "resolutionType", variants: ["resolution type", "resoultion type", "resolution types", "solution type", "resolved type", "resolution status"] }
 ];
 
 function maxDistFor(variant: string): number {
@@ -106,7 +90,11 @@ function captureFrom(lines: string[], startIdx: number): string {
   if (first.trim()) kept.push(first.trim());
   for (let j = startIdx + 1; j < lines.length; j++) {
     if (lineSectionKey(lines[j])) break;
-    kept.push(stripPrefix(lines[j]));
+    // A blank line ends the section value: labels are followed by their value
+    // then a blank line before the next section. This keeps the captured value
+    // from running into later sections whose headers we no longer track.
+    if (kept.length && !lines[j].trim()) break;
+    if (lines[j].trim()) kept.push(stripPrefix(lines[j]));
   }
   return kept.join(" ").trim();
 }
@@ -191,28 +179,22 @@ function extractHeuristic(notes: unknown): ExtractResult {
     }
   }
 
-  // --- Root cause ----------------------------------------------------
-  // Preferred: "Analysis (Root Cause):"-style section (fuzzy-matched),
-  // capturing the full multi-line analysis.
-  const rcIdx = findLine(lines, ["rootCause"]);
-  if (rcIdx >= 0) {
-    const rc = tidyRootCause(captureFrom(lines, rcIdx));
-    if (rc) {
-      out.rootCause = rc;
-      out.confidence.rootCause = "high";
-    }
-  }
-
-  // Fallbacks: single-line "root cause: ..." or "root cause was ..." sentences.
-  if (!out.rootCause) {
-    const rm = text.match(/(?:root\s*cause|rca)\s*[:\-]\s*([^\n]+)/i)
-      || text.match(/\broot\s*cause\s+(?:was|is)\s+([^\n.!]+)/i);
-    if (rm) {
-      out.rootCause = tidyRootCause(rm[1]);
-      out.confidence.rootCause = out.rootCause ? "medium" : "";
-    }
-  }
+  // Root cause is intentionally NOT extracted here as a narrative. The
+  // root-cause CATEGORY is derived by the categorizer (categorizeField ->
+  // classifyMsr) from the "Root Cause Category" label or the whole note.
   return out;
 }
 
-export { extractHeuristic };
+/** Returns the value of the first matching labeled section, or "" when none of
+ *  the given section labels is present. Used by the categorizer's label-directed
+ *  stage (e.g. "Root Cause Category:" / "Resolution Type:"). */
+function findLabeledValue(notes: unknown, keys: SectionKey[]): string {
+  const text = String(notes ?? "");
+  if (!text.trim()) return "";
+  const lines = text.split(/\r?\n/);
+  const idx = findLine(lines, keys);
+  return idx >= 0 ? captureFrom(lines, idx) : "";
+}
+
+export { extractHeuristic, findLabeledValue };
+export type { SectionKey };

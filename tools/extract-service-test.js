@@ -13,21 +13,21 @@ const svc = new ExtractService();
 
 console.log("== ExtractService.applyExtraction (per-row apply loop) ==");
 
-check("stats over 3 rows with 2 filled",
+check("stats over 3 rows: only solutionType fills (rootCause is the classifier's job)",
   svc.applyExtraction([
     { closeNotes: "root cause: Expired SAML certificate" },
     { closeNotes: "Replaced cert. permanent solution applied." },
     { closeNotes: "" }
   ]),
-  { total: 3, withNotes: 2, filled: 2 });
+  { total: 3, withNotes: 2, filled: 1 });
 
-check("rows already fully resolved are skipped",
+check("rows already resolved are skipped",
   svc.applyExtraction([
     { closeNotes: "root cause: bad cert", solutionType: "Permanent solution", rootCause: "bad cert" }
   ]),
   { total: 1, withNotes: 1, filled: 0 });
 
-check("fills only the missing field, keeps existing value",
+check("fills only solutionType, never touches rootCause",
   (() => {
     const row = { closeNotes: "resolution type: Workaround", rootCause: "full disk" };
     const out = svc.applyExtraction([row]);
@@ -35,11 +35,20 @@ check("fills only the missing field, keeps existing value",
   })(),
   true);
 
-check("medium-confidence root cause fills and flags parseReview",
+check("RCA analysis narrative is NOT written into rootCause (left for the classifier)",
   (() => {
-    const row = { closeNotes: "The system went down because the cache directory filled up completely; the root cause: corrupted cache files" };
+    const row = { closeNotes: "Analysis (Root Cause): the cache directory filled up completely and corrupted the files" };
+    const out = svc.applyExtraction([row]);
+    // No resolution keyword -> nothing filled; rootCause must stay empty, never the prose.
+    return !row.rootCause && out.filled === 0;
+  })(),
+  true);
+
+check("solutionType still flags parseReview on medium confidence",
+  (() => {
+    const row = { closeNotes: "We applied a temporary fix until the vendor patch is released." };
     svc.applyExtraction([row]);
-    return String(row.rootCause) === "corrupted cache files" && row.parseReview === true;
+    return String(row.solutionType) === "Workaround solution" && !row.rootCause && row.parseReview === true;
   })(),
   true);
 
@@ -61,9 +70,9 @@ check("numeric closeNotes never crash (hardened)", (() => {
   return JSON.stringify(out) === JSON.stringify({ total: 1, withNotes: 1, filled: 0 });
 })(), true);
 
-console.log("== heuristic still pure (unchanged) ==");
+console.log("== heuristic pure (solution type only; no rootCause narrative) ==");
 check("extractHeuristic direct call",
-  extractHeuristic("root cause: Expired SAML certificate"),
-  { solutionType: "", rootCause: "Expired SAML certificate", confidence: { solutionType: "", rootCause: "high" } });
+  extractHeuristic("Resolution Type: Permanent\nAnalysis (Root Cause): Expired SAML certificate"),
+  { solutionType: "Permanent solution", rootCause: "", confidence: { solutionType: "high", rootCause: "" } });
 
 process.exit(failed ? 1 : 0);

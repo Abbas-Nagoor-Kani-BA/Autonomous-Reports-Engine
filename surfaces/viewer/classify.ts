@@ -3,7 +3,7 @@ import { STORAGE } from "../../lib/keys.ts";
 import { MlModelStore, specForModelId } from "../../data/ml-model-repository.ts";
 import { dataStore, getMsrLists } from "./store.ts";
 import { msrType, rootCauseFor, normResolution, isClassifyEligible } from "../../core/msrchoices.ts";
-import { classifyMsr } from "../../core/msrcategorize.ts";
+import { categorizeField } from "../../core/msrcategorize.ts";
 
 /*
  * Data-View MSR classifier runner.
@@ -161,8 +161,8 @@ export function classificationListsFp(lists: unknown): string {
 }
 
 /** The classification context (model + label lists) that produced a row's value. */
-function runFp(modelId: string): string {
-  return `${modelId}::${classificationListsFp(getMsrLists())}`;
+function runFp(modelId: string, mode: string): string {
+  return `${modelId}::${mode}::${classificationListsFp(getMsrLists())}`;
 }
 
 /** A row already carries BOTH real MSR categories AND its note text is unchanged
@@ -226,8 +226,8 @@ function deterministicPass(
       continue;
     }
 
-    const result = classifyMsr(input.notes, input.rootCauseLabels, { hints: getMsrLists().hints });
-    const solution = classifyMsr(input.notes, input.resolutionLabels, { hints: getMsrLists().hints });
+    const result = categorizeField(input.notes, ["rootCauseCategory"], input.rootCauseLabels, getMsrLists().hints);
+    const solution = categorizeField(input.notes, ["resolutionType"], input.resolutionLabels, getMsrLists().hints);
 
     let toRootCause = result.label ?? row.rootCause ?? null;
     let toSolution = solution.label ?? row.solutionType ?? null;
@@ -403,7 +403,7 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
 
   const withNotes = classifiableRows(rows).length;
   const preDone = total - withNotes; // note-less or non-eligible rows: not classifiable
-  const fp = runFp(modelId);
+  const fp = runFp(modelId, mode);
   const changedSysIds: string[] = [];
   let changed = 0;
   const stats = makeStats(total);
