@@ -32,19 +32,19 @@ Two important habits keep it honest:
 
 ```mermaid
 flowchart TD
-    NOTE[Closure note] --> SEC{Explicit section?<br/>Root Cause Category: / Resolution Type:}
-    SEC -->|found and it resolves| VAL[Use the section's value]
-    SEC -->|none| WHOLE[Use the whole note]
-    VAL --> NORM[Normalize text<br/>lowercase, split into tokens]
+    NOTE["Closure note"] --> SEC{"Explicit section?<br/>(Root Cause Category /<br/>Resolution Type)"}
+    SEC -->|"found + resolves"| VAL["Use the section value"]
+    SEC -->|"none"| WHOLE["Use the whole note"]
+    VAL --> NORM["Normalize:<br/>lowercase + tokenize"]
     WHOLE --> NORM
-    NORM --> S1{Stage 1 · Regex<br/>exact phrase, most specific wins}
-    S1 -->|clear winner| DONE[label + confidence + source]
-    S1 -->|no| S2{Stage 2 · Keyword<br/>fuzzy hits >= 2, beats runner-up}
-    S2 -->|clear winner| DONE
-    S2 -->|no| S3{Stage 3 · Cosine<br/>TF-IDF similarity >= 0.15, margin >= 0.05}
-    S3 -->|clear winner| DONE
-    S3 -->|no| BLANK[Leave blank]
-    BLANK -.->|hybrid / ml mode| ML[AI model fills the blank]
+    NORM --> S1{"Stage 1: Regex<br/>exact phrase<br/>most specific wins"}
+    S1 -->|"clear winner"| DONE["label + confidence<br/>+ source"]
+    S1 -->|"no"| S2{"Stage 2: Keyword<br/>fuzzy hits &ge; 2<br/>beats runner-up"}
+    S2 -->|"clear winner"| DONE
+    S2 -->|"no"| S3{"Stage 3: Cosine<br/>TF-IDF &ge; 0.15<br/>margin &ge; 0.05"}
+    S3 -->|"clear winner"| DONE
+    S3 -->|"no"| BLANK["Leave blank"]
+    BLANK -.->|"hybrid / ml mode"| ML["AI model fills<br/>the blank"]
     ML --> DONE
 ```
 
@@ -89,11 +89,11 @@ note.
 **Example (typo header still works)**
 
 ```
-Resoultion Type - workaround applied, monitoring
+Resoultion Type: workaround applied, monitoring
 ```
 
-→ the misspelled header is matched by edit distance; value =
-`workaround applied, monitoring`.
+→ the misspelled header ("Resoultion") is matched by edit distance, and the
+value after the colon is captured = `workaround applied, monitoring`.
 
 ## Step 2 — Normalize the text
 
@@ -140,11 +140,11 @@ Rules:
 **Example**
 
 ```
-"Firewall rule blocked the port to the payment gateway."
+"Firewall change left a port blocked to the payment gateway."
 ```
 
-→ matches `firewall` and `blocked port` → Firewall wins at Stage 1, source
-`regex`.
+→ matches `firewall` (1 word) and the more specific `port blocked` (2 words),
+both non-negated → Firewall wins at Stage 1, source `regex`.
 
 **Negation example**
 
@@ -169,21 +169,26 @@ grows with word length:
 
 So `"permanant"` matches `"permanent"`, and `"workarround"` matches
 `"workaround"`, but short words never cross-match. A label wins Stage 2 only
-with **at least 2 hits** and a strict lead over the runner-up. Negation is
-honoured here too (3-token window).
+with **at least 2 hint phrases present** and a strict lead over the runner-up.
+Negation is honoured here too (3-token window).
 
-**Example**
+> Each hint phrase counts once (present or not), so "2 hits" means two
+> *different* hint phrases were found. Strong phrases (like "network",
+> "workaround") are usually in Stage 1's regex list, so Stage 2 mainly decides
+> cases that regex does not cover — secondary synonyms or misspellings.
+
+**Example** (no exact regex phrase, but two keyword hints)
 
 ```
-"Server was slow, high CPU and a memory leak until reboot."
+"Raised with Amadeus; SITA confirmed the fault was on their side."
 ```
 
-- *Server performance* hints hit: "server slow" (fuzzy), "high cpu", "memory
-  leak" → 3 hits.
-- *Workaround solution* hint hit: "reboot" → 1 hit.
+- *External-3rd party* hint phrases present: "amadeus" and "sita" → 2 hits.
+- No `External-3rd party` regex phrase (third party / 3rd party / external /
+  vendor / supplier) appears, so Stage 1 was inconclusive.
 
-→ Server performance wins the root-cause field at Stage 2 (≥ 2 hits, clear
-lead), source `keyword`.
+→ External-3rd party wins the root-cause field at Stage 2 (2 hits, clear lead),
+source `keyword`.
 
 ### Stage 3 — TF-IDF cosine (word similarity)
 
@@ -236,10 +241,10 @@ The decision rule is simple and **always deterministic-first**
 
 ```mermaid
 flowchart LR
-    D{Deterministic produced a label?} -->|yes| USE_D[Use it - source regex/keyword/cosine]
-    D -->|no| M{AI produced a label?}
-    M -->|yes| USE_M[Use it - source ml]
-    M -->|no| BLANK[Leave blank]
+    D{"Deterministic<br/>produced a label?"} -->|"yes"| USE_D["Use it<br/>(regex / keyword / cosine)"]
+    D -->|"no"| M{"AI produced<br/>a label?"}
+    M -->|"yes"| USE_M["Use it<br/>(source: ml)"]
+    M -->|"no"| BLANK["Leave blank"]
 ```
 
 - If the deterministic cascade produced a label, it **wins outright** — the AI
@@ -260,44 +265,52 @@ Renewed the expired TLS certificate on the load balancer.
 
 - Section extraction gives root-cause input `Certificate expiry`, solution input
   `Permanent solution`.
-- Stage 1 regex matches both exactly → **Root cause = Certificate expiry**
-  (`regex`), **Solution type = Permanent solution** (`regex`). High confidence.
+- Stage 1 regex matches both exactly (`certificate expiry`, `permanent`) →
+  **Root cause = Certificate expiry** (`regex`), **Solution type = Permanent
+  solution** (`regex`). High confidence.
 
-**Example B — no section, keyword decides**
+**Example B — no section, regex decides**
 
 ```
-Users could not access the app. Access was denied due to a permission
-problem. Granted the correct role and confirmed working.
+User reported access denied opening the app. Reset the role membership and confirmed working.
 ```
 
-- No header → whole note is used.
-- Root cause: *User access issue* hints hit ("access denied", "permission
-  denied"/"access problem") → ≥ 2 hits → **User access issue** (`keyword`).
-- Solution type: "confirmed working" → *Verification only* (`regex`/`keyword`).
+- No header → the whole note is used.
+- Root cause: the contiguous phrase "access denied" matches the *User access
+  issue* regex → **User access issue** (`regex`).
+- Solution type: "confirmed working" matches the *Verification only* regex →
+  **Verification only** (`regex`).
+
+*(Note the contiguity rule: "access denied" matches, but "access was denied"
+would not — the words must be adjacent. That is why this note is phrased with
+the exact phrase.)*
 
 **Example C — negation avoids a wrong label**
 
 ```
-Investigated a suspected network issue, but it was not a network problem.
-The job scheduler had failed overnight; restarted the batch job.
+This was not a network issue. A firewall rule was blocking traffic; unblocked it permanently.
 ```
 
-- "network" appears but is negated ("not a network problem") → ignored.
-- *Job schedule/scheduler error* hints hit ("job failed", "scheduler", "batch
-  job") → **Job schedule/scheduler error** (`keyword`).
-- "restarted the batch job" → *Workaround solution* (`regex`: `restart`).
+- The only "network" is negated ("not a network issue", within 3 words) → the
+  *Network issue* match is ignored.
+- "firewall" matches the *Firewall* regex (not negated) → **Firewall**
+  (`regex`).
+- "permanently" matches the *Permanent solution* regex (`permanent`) →
+  **Permanent solution** (`regex`).
 
 **Example D — deterministic blank, AI fills it (hybrid/ml)**
 
 ```
-The kiosk near gate 12 kept freezing; swapped the faulty unit and it's fine now.
+The kiosk near gate 12 kept freezing all morning; replaced the faulty unit.
 ```
 
-- No exact phrase and few known hints → deterministic root cause may stay
-  **blank** (below confidence).
+- Root cause: no *Hardware* regex phrase matches ("kiosk"/"unit" are not curated
+  patterns) and only the single hint "kiosk" is present (1 hit, below the
+  2-hit keyword bar), so the deterministic root cause stays **blank**.
 - In Hybrid/ML mode the AI evaluates the note against the root-cause list and
-  may return **Hardware** (kiosk/faulty unit) → filled with source `ml`.
-- "swapped the faulty unit" → *Permanent solution* deterministically.
+  can return **Hardware** → filled with source `ml`.
+- Solution type: "replaced" matches the *Permanent solution* regex → **Permanent
+  solution** (`regex`), decided deterministically regardless of mode.
 
 ## Tuning the classifier
 

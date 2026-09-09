@@ -11,18 +11,18 @@ local machine-learning model can fill what the scorer leaves blank.
 
 ```mermaid
 flowchart TD
-    N[Closure note] --> L{Explicit<br/>Root Cause Category: /<br/>Resolution Type: section?}
-    L -->|Yes, and it resolves| S[Categorize the section value]
-    L -->|No, or no category| W[Categorize the whole note]
+    N["Closure note"] --> L{"Explicit section?<br/>(Root Cause Category /<br/>Resolution Type)"}
+    L -->|"yes + resolves"| S["Categorize the<br/>section value"]
+    L -->|"no / no category"| W["Categorize the<br/>whole note"]
     S --> D
-    W --> D[Deterministic scorer<br/>three-stage cascade]
-    D --> R{1 · regex<br/>clear winner?}
-    R -->|yes| OUT[label + confidence + level]
-    R -->|no| K{2 · keyword hits >= 2<br/>and beats runner-up?}
-    K -->|yes| OUT
-    K -->|no| C{3 · TF-IDF cosine<br/>>= 0.15, margin >= 0.05?}
-    C -->|yes| OUT
-    C -->|no| NULL[null — leave blank<br/>ML may fill it in hybrid/ml]
+    W --> D["Deterministic scorer<br/>three-stage cascade"]
+    D --> R{"1: regex<br/>clear winner?"}
+    R -->|"yes"| OUT["label + confidence<br/>+ level"]
+    R -->|"no"| K{"2: keyword hits &ge; 2<br/>beats runner-up?"}
+    K -->|"yes"| OUT
+    K -->|"no"| C{"3: TF-IDF cosine<br/>&ge; 0.15, margin &ge; 0.05?"}
+    C -->|"yes"| OUT
+    C -->|"no"| NULL["null: leave blank<br/>(ML may fill in hybrid/ml)"]
 ```
 
 **Label-directed:** if the note has an explicit `Root Cause Category:` or
