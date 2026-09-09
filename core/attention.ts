@@ -9,6 +9,7 @@
 
 import { snStateMap } from "./statechoices.ts";
 import type { Report } from "./report.ts";
+import { buildReport } from "./report.ts";
 
 export type AttentionRuleId =
   | "multiAssignWithinTeam"
@@ -189,8 +190,10 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
   }
   if (reopened) out.push(flag("reopened", "Reopened", "A closed/resolved ticket went back to an active state", "state"));
 
-  // 4. SLA breach.
-  const breach = (opts.report as Record<string, any> | undefined)?.slaBreach;
+  // 4. SLA breach — compute the report if not already provided by the caller.
+  // buildReport caches its result on row.__report so repeated calls are free.
+  const report: Report = (opts.report as Report | undefined) ?? buildReport(row as Parameters<typeof buildReport>[0]);
+  const breach = report.slaBreach;
   if (breach) out.push(flag("slaBreach", "SLA breached", `Breach code: ${String(breach)}`, ["rep:responseSLA", "rep:resolutionSLA"]));
 
   // 5. Long single On Hold span.

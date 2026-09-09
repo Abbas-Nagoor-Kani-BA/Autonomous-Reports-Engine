@@ -125,6 +125,25 @@ test("SLA breach from the report is flagged", () => {
   assert.ok(ids(flags).includes("slaBreach"));
 });
 
+test("SLA breach detected from row data without passing opts.report", () => {
+  // A P1 incident resolved after >4h (well past the 4h max target) should fire.
+  // assignTime = 09:00, resolvedAt = 18:00 same day = 9h elapsed, P1 max is 4h.
+  const row = baseRow({
+    number: "INC0001001",
+    priority: "1 - Critical",
+    state: "Closed",
+    createdOn: "01-01-2026 08:00:00",
+    assignTimeUtcIso: "2026-01-01T09:00:00Z",
+    resolvedAt: "01-01-2026 18:00:00",
+    resolvedAtRaw: "2026-01-01 18:00:00",
+    openedAt: "01-01-2026 08:00:00",
+    openedAtRaw: "2026-01-01 08:00:00"
+  });
+  const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
+  assert.ok(ids(flags).includes("slaBreach"),
+    "slaBreach should fire when breach is derivable from row data alone");
+});
+
 test("long single On Hold span is flagged", () => {
   const start = Date.UTC(2026, 0, 1, 0, 0, 0);
   const row = baseRow({
