@@ -53,6 +53,7 @@ Start here if you want to run pulls and produce reports.
 - [Data Viewer](Data-Viewer) — search, column editor, CI split, ticket stats.
 - [Calclens](Calclens) — how each derived value was computed.
 - [Classification](Classification) — root cause / solution type, heuristic and ML.
+- [Classification Algorithm](Classification-Algorithm) — how the scorer decides, step by step.
 - [Export](Export) — WSR workbook fill and Copy for MSR.
 - [Backup and Transfer](Backup-and-Transfer) — export/import settings.
 - [Troubleshooting and FAQ](Troubleshooting-and-FAQ) — common issues.

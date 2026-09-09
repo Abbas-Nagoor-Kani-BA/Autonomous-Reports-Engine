@@ -9,6 +9,7 @@
 - [Data Viewer](Data-Viewer)
 - [Calclens](Calclens)
 - [Classification](Classification)
+- [Classification Algorithm](Classification-Algorithm)
 - [Export](Export)
 - [Backup and Transfer](Backup-and-Transfer)
 - [Troubleshooting and FAQ](Troubleshooting-and-FAQ)

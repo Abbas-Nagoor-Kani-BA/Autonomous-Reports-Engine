@@ -4,6 +4,9 @@ The MSR **Root cause category** and **Solution type** columns are filled from
 each ticket's closure notes. A built-in offline scorer always runs; an optional
 local machine-learning model can fill what the scorer leaves blank.
 
+> For a step-by-step explanation of the scoring algorithm (with examples), see
+> **[Classification Algorithm](Classification-Algorithm)**.
+
 ## The label-directed cascade
 
 ```mermaid
@@ -121,5 +124,6 @@ Classified values populate MSR dropdown columns constrained to your
 keywords** in [Configuration](Configuration).
 
 ---
-Related: [Configuration](Configuration) · [Caching](Caching) ·
+Related: [Classification Algorithm](Classification-Algorithm) ·
+[Configuration](Configuration) · [Caching](Caching) ·
 [Data Viewer](Data-Viewer) · [Export](Export)
