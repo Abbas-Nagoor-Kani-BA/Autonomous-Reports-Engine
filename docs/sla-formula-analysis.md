@@ -481,3 +481,95 @@ No business-hours calculation is applied, and the suspend window is not subtract
 Note: MSR wraps MetMin/Max in `IFNA(..., "")` so a missing priority produces a blank cell
 rather than a `#N/A` error. The app achieves the same behaviour by returning `""` from
 `metSLA` when `slaPriority` returns 0.
+
+---
+
+## Timeline extraction — ordering contract
+
+Documents how `core/phase2.ts` resolves the four timeline timestamps from the activity feed,
+and the ordering rules they must satisfy.
+
+### Ordering contract
+
+```
+assignTime ≤ acknTime
+assignTime < suspendTime < resumeTime
+```
+
+`ack` may equal `assign` (same-second assignment and acknowledgement). All other
+boundaries are strict. A timestamp that violates the contract is discarded, not
+clamped.
+
+### Stay-based resolution algorithm
+
+The event loop builds a list of **queue stays** as the ticket moves in and out of
+the target queue:
+
+```
+queueStays = [
+  { entryEpoch: T1, exitEpoch: T2, memberAcks: [...] },
+  { entryEpoch: T3, exitEpoch: null, memberAcks: [...] }   ← current stay
+]
+```
+
+Each stay records: when the ticket entered the queue, when it left (null if still
+in queue), and every `assigned_to` event that arrived while it was in the queue.
+
+**Step 1 — resolve assignTime and acknTime (walk stays newest → oldest):**
+
+Iterate stays from most recent to oldest. Find the first stay that contains at
+least one member ack (`ack >= stay.entryEpoch`). Set:
+
+- `assignTime = that stay's entryEpoch`
+- `acknTime = earliest ack in that stay`
+
+If no stay has an ack: `assignTime = latest stay's entry`, `acknTime = null`.
+
+This means the ack is always credited against its own stay's queue-entry time,
+giving a meaningful ResponseSLA even when a ticket bounces between queues.
+
+**Step 2 — resolve suspendTime and resumeTime:**
+
+All On Hold transitions that fired while in the queue are collected into `allHolds`
+during the loop. After Step 1 has fixed `assignTime`:
+
+- Filter holds to those where `suspendEpoch > assignTime`.
+- Take the **first** (earliest) qualifying hold → `suspendTime`.
+- `resumeTime` = the last resume event recorded across all qualifying holds.
+
+A hold before `assignTime` is discarded. A resume from a later stay (after the
+ticket left and returned) is accepted as long as it followed a qualifying suspend.
+
+**Step 3 — enforceOrderingContract (defensive backstop):**
+
+After all resolution steps, a final pass verifies the contract. Any remaining
+violation (e.g. from malformed feed data) silently nulls the offending timestamp
+rather than producing a negative SLA value.
+
+### Validated scenarios
+
+| Scenario | Events | assignTime | acknTime | suspendTime | resumeTime |
+|---|---|---|---|---|---|
+| S-A | Leave→return, no new ack | prior stay entry | prior ack ✓ | — | — |
+| S-B | Two stays, ack in latest | latest entry | latest ack ✓ | — | — |
+| S-C | Three stays, ack only in first | first entry | first ack ✓ | — | — |
+| S-D | Held first stay, re-enters, no new hold | first entry (ack there) | first ack | hold in first stay | resume in first stay |
+| S-E | Held both stays, ack only in first | first entry | first ack | first hold | last resume across all stays |
+| S-E2 | No hold in stay1, hold in stay2, ack in stay1 | first entry | first ack | hold in stay2 (> assignTime) | resume in stay2 |
+| S-F | No ack ever | latest entry | null | any hold > assignTime | last resume |
+| S-G | Hold before assignTime | latest entry | null | null (dropped) | null |
+
+### Key property: suspend does not reset on re-entry
+
+The ticket does not need to be held during the *same* stay as the ack. Any hold
+that occurs after `assignTime` (across any subsequent stay) is a valid suspend. The
+ordering contract (`suspend > assignTime`) is the only gate.
+
+### Why ack can predate assignTime in the output
+
+When Option B walks back to a prior stay, `assignTime` = prior stay entry and
+`acknTime` = ack within that stay. The `assignTime` value in the output represents
+the *chosen stay's* entry — it is always ≤ `acknTime`. However, if a later
+re-entry exists in the data, the displayed `assignTime` may be earlier than
+`lastQueueEntryEpoch`. This is intentional: the SLA clock starts from the stay
+where work was actually acknowledged.

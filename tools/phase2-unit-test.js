@@ -239,5 +239,172 @@ console.log("== extractEventsFromListHistory: problem_state is aliased to state 
   check("problem_state new value preserved", ev && ev.newValue, "103");
 })();
 
+console.log("== Bug 1: stay-based assign+ack resolution ==");
+// S-A: leave→return, no new ack — should recover ack from prior stay
+check("S-A: ack from prior stay recovered after re-entry",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:01:00"),
+      ev("assigned_to", "", "Fred Luddy",               "2026-09-01 08:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 08:00:00" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-09-01T08:01:00.000Z", "2026-09-01T08:05:00.000Z"]);
+
+// S-B: two stays, ack in latest stay — normal case, no change
+check("S-B: ack in latest stay uses latest entry as assignTime",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:01:00"),
+      ev("assigned_to", "", "Fred Luddy",               "2026-09-01 08:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("assigned_to", "", "ITIL User",                 "2026-09-01 10:05:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 08:00:00" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-09-01T10:00:00.000Z", "2026-09-01T10:05:00.000Z"]);
+
+// S-C: three stays, ack only in first
+check("S-C: three stays — ack recovered from oldest stay",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("assigned_to", "", "Fred Luddy",               "2026-09-01 08:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 11:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 12:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 13:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-09-01T08:00:00.000Z", "2026-09-01T08:05:00.000Z"]);
+
+// S-F: no ack ever — assignTime stays at latest entry
+check("S-F: no ack ever — assignTime equals latest queue entry",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-09-01T10:00:00.000Z", null]);
+
+console.log("== Bug 2: suspend ordering — all holds anchored to assignTime ==");
+// S-D: held first stay, re-enters, no new hold — suspend from first stay kept (> assignTime)
+check("S-D: hold in first stay preserved when assignTime walks back",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("assigned_to", "", "Fred Luddy",               "2026-09-01 08:05:00"),
+      ev("state", "2", "3",                              "2026-09-01 08:30:00"),
+      ev("state", "3", "2",                              "2026-09-01 09:00:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:30:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso, t.suspendTimeUtcIso, t.resumeTimeUtcIso];
+  })(),
+  ["2026-09-01T08:00:00.000Z", "2026-09-01T08:05:00.000Z", "2026-09-01T08:30:00.000Z", "2026-09-01T09:00:00.000Z"]);
+
+// S-E: held both stays, ack only in first — first hold > assignTime wins, resume from last hold
+check("S-E: held both stays — suspend from first, resume from last hold",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("assigned_to", "", "Fred Luddy",               "2026-09-01 08:05:00"),
+      ev("state", "2", "3",                              "2026-09-01 08:30:00"),
+      ev("state", "3", "2",                              "2026-09-01 09:00:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:30:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "3",                              "2026-09-01 10:30:00"),
+      ev("state", "3", "2",                              "2026-09-01 11:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:30:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.suspendTimeUtcIso, t.resumeTimeUtcIso];
+  })(),
+  ["2026-09-01T08:00:00.000Z", "2026-09-01T08:30:00.000Z", "2026-09-01T11:30:00.000Z"]);
+
+// S-E2: no hold in stay1, hold in stay2, ack in stay1 — hold from stay2 picked up
+check("S-E2: hold only in later stay, ack in first stay — hold picked up",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("assigned_to", "", "Fred Luddy",               "2026-09-01 08:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:30:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "3",                              "2026-09-01 10:30:00"),
+      ev("state", "3", "2",                              "2026-09-01 11:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:30:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.suspendTimeUtcIso, t.resumeTimeUtcIso];
+  })(),
+  ["2026-09-01T08:00:00.000Z", "2026-09-01T10:30:00.000Z", "2026-09-01T11:30:00.000Z"]);
+
+// S-G: hold before assignTime (no ack, latest entry becomes assignTime) — dropped
+check("S-G: hold before assignTime is dropped",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("state", "2", "3",                              "2026-09-01 08:01:00"),
+      ev("state", "3", "2",                              "2026-09-01 08:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.suspendTimeUtcIso, t.resumeTimeUtcIso];
+  })(),
+  ["2026-09-01T10:00:00.000Z", null, null]);
+
+// Bug 2b: original order bug — hold during first stay, re-enters with no ack → assignTime=latest, hold dropped
+check("Bug 2b: stale suspend from prior stay dropped when assignTime resets to latest entry",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("state", "2", "3",                              "2026-09-01 08:01:00"),
+      ev("state", "3", "2",                              "2026-09-01 08:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "SIAM",   "2026-09-01 09:00:00"),
+      ev("assignment_group", "SIAM", "QA Queue Alpha",   "2026-09-01 10:00:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.assignTimeUtcIso, t.suspendTimeUtcIso, t.resumeTimeUtcIso];
+  })(),
+  ["2026-09-01T10:00:00.000Z", null, null]);
+
+console.log("== Task 4: enforceOrderingContract guard ==");
+// Backdated suspend <= assign — guard must null it out
+check("enforceOrderingContract: suspend <= assignTime is nulled",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 10:00:00"),
+      ev("state", "2", "3",                              "2026-09-01 09:00:00"),
+      ev("state", "3", "2",                              "2026-09-01 09:30:00"),
+      ev("state", "2", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.suspendTimeUtcIso, t.resumeTimeUtcIso];
+  })(),
+  [null, null]);
+
+// Resume <= suspend — guard path: verified via hold that transitions directly to Resolved
+// (resumeSource "Resolved" is valid and preserved — guard only fires on truly invalid ordering)
+check("enforceOrderingContract: hold->resolved captured as resume source Resolved",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other", "QA Queue Alpha", "2026-09-01 08:00:00"),
+      ev("state", "2", "3",                              "2026-09-01 09:00:00"),
+      ev("state", "3", "6",                              "2026-09-01 11:00:00")
+    ], { ...base, openedAtUtcRaw: "2026-09-01 07:00:00" });
+    return [t.suspendTimeUtcIso, t.resumeTimeUtcIso, t.resumeSource];
+  })(),
+  ["2026-09-01T09:00:00.000Z", "2026-09-01T11:00:00.000Z", "Resolved"]);
+
 console.log(`\nphase2: ${failed ? failed + " FAILED" : "all passed"}`);
 process.exit(failed ? 1 : 0);

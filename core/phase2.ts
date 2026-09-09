@@ -92,36 +92,75 @@ function createResult(): Timeline {
   };
 }
 
-function applyBornInQueueFallback(events: Event[], result: Timeline, ctx: ExtractCtx): string | null {
+function applyBornInQueueFallback(events: Event[], result: Timeline, ctx: ExtractCtx): { group: string | null; stays: QueueStay[] } {
   const inQueue = (g: unknown) => g != null && nameKey(g) === nameKey(ctx.queueName);
   const hasGroupEvent = events.some(e => e.field === "assignment_group");
-  if (hasGroupEvent || !inQueue(ctx.snapshotGroupName)) return null;
+  if (hasGroupEvent || !inQueue(ctx.snapshotGroupName)) return { group: null, stays: [] };
   const bornEpoch = utcRawToEpochMs(ctx.openedAtUtcRaw);
-  if (!Number.isFinite(bornEpoch)) return null;
+  if (!Number.isFinite(bornEpoch)) return { group: null, stays: [] };
   result.assignTimeUtcIso = epochMsToUtcIso(bornEpoch);
   result.lastQueueEntryEpoch = bornEpoch;
-  return ctx.snapshotGroupName;
+  return {
+    group: ctx.snapshotGroupName,
+    stays: [{ entryEpoch: bornEpoch, exitEpoch: null, memberAcks: [] }]
+  };
 }
+
+type QueueStay = {
+  entryEpoch: number;
+  exitEpoch: number | null;
+  memberAcks: number[];
+};
+
+type HoldRecord = {
+  suspendEpoch: number;
+  resumeEpoch: number | null;
+  resumeSource: string | null;
+};
 
 type LoopState = {
   currentGroup: string | null;
   memberSet: Set<string>;
-  memberAssignments: number[];
-  suspendEpoch: number | null;
+  queueStays: QueueStay[];
+  allHolds: HoldRecord[];
+  lastSuspendEpoch: number | null;
 };
+
+function lastOpenStay(arr: QueueStay[]): QueueStay | undefined {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i].exitEpoch === null) return arr[i];
+  }
+  return undefined;
+}
+
+function lastOpenHold(arr: HoldRecord[]): HoldRecord | undefined {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i].resumeEpoch === null) return arr[i];
+  }
+  return undefined;
+}
 
 function handleGroupEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState: LoopState): void {
   const inQueue = (g: unknown) => g != null && nameKey(g) === nameKey(ctx.queueName);
-  if (inQueue(e.newValue)) {
+  const wasInQueue = inQueue(e.oldValue);
+  const nowInQueue = inQueue(e.newValue);
+
+  if (nowInQueue) {
     result.assignTimeUtcIso = epochMsToUtcIso(e.atEpoch);
     result.lastQueueEntryEpoch = e.atEpoch;
+    loopState.queueStays.push({ entryEpoch: e.atEpoch, exitEpoch: null, memberAcks: [] });
+  } else if (wasInQueue) {
+    const openStay = lastOpenStay(loopState.queueStays);
+    if (openStay) openStay.exitEpoch = e.atEpoch;
+    loopState.lastSuspendEpoch = null;
   }
   loopState.currentGroup = e.newValue;
 }
 
 function handleAssignmentEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState: LoopState): void {
   if (loopState.memberSet.has(nameKey(e.newValue))) {
-    loopState.memberAssignments.push(e.atEpoch);
+    const openStay = lastOpenStay(loopState.queueStays);
+    if (openStay) openStay.memberAcks.push(e.atEpoch);
   }
 }
 
@@ -134,29 +173,73 @@ function handleStateEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState
 
   if (toLabel === "on hold" && fromLabel !== "on hold") {
     result.onHoldCount++;
-    if (!result.suspendTimeUtcIso) {
-      result.suspendTimeUtcIso = epochMsToUtcIso(e.atEpoch);
-      loopState.suspendEpoch = e.atEpoch;
-    }
+    loopState.allHolds.push({ suspendEpoch: e.atEpoch, resumeEpoch: null, resumeSource: null });
+    loopState.lastSuspendEpoch = e.atEpoch;
   }
 
-  if (loopState.suspendEpoch && e.atEpoch >= loopState.suspendEpoch) {
-    if (toLabel === "in progress") {
-      result.resumeTimeUtcIso = epochMsToUtcIso(e.atEpoch);
-      result.resumeSource = "In Progress";
-    } else if (toLabel === "resolved") {
-      result.resumeTimeUtcIso = epochMsToUtcIso(e.atEpoch);
-      result.resumeSource = "Resolved";
+  if (loopState.lastSuspendEpoch !== null && e.atEpoch > loopState.lastSuspendEpoch) {
+    if (toLabel === "in progress" || toLabel === "resolved") {
+      const openHold = lastOpenHold(loopState.allHolds);
+      if (openHold) {
+        openHold.resumeEpoch = e.atEpoch;
+        openHold.resumeSource = toLabel === "in progress" ? "In Progress" : "Resolved";
+      } else {
+        const lastHold = loopState.allHolds[loopState.allHolds.length - 1];
+        if (lastHold) {
+          lastHold.resumeEpoch = e.atEpoch;
+          lastHold.resumeSource = toLabel === "in progress" ? "In Progress" : "Resolved";
+        }
+      }
     }
   }
 }
 
-function resolveAcknTime(result: Timeline, memberAssignments: number[]): void {
-  if (result.lastQueueEntryEpoch === null) return;
-  const entryEpoch: number = result.lastQueueEntryEpoch;
-  const valid = memberAssignments.filter(atEpoch => atEpoch >= entryEpoch);
-  if (valid.length) {
-    result.acknTimeUtcIso = epochMsToUtcIso(Math.min(...valid));
+function resolveAssignAndAckTime(result: Timeline, queueStays: QueueStay[]): void {
+  for (let i = queueStays.length - 1; i >= 0; i--) {
+    const stay = queueStays[i];
+    const validAcks = stay.memberAcks.filter(a => a >= stay.entryEpoch).sort((a, b) => a - b);
+    if (validAcks.length > 0) {
+      result.assignTimeUtcIso = epochMsToUtcIso(stay.entryEpoch);
+      result.lastQueueEntryEpoch = stay.entryEpoch;
+      result.acknTimeUtcIso = epochMsToUtcIso(validAcks[0]);
+      return;
+    }
+  }
+}
+
+function resolveSuspendResume(result: Timeline, allHolds: HoldRecord[]): void {
+  const assignEpoch = result.assignTimeUtcIso ? parseUtc(result.assignTimeUtcIso) : null;
+  if (assignEpoch === null || !Number.isFinite(assignEpoch)) return;
+
+  const valid = allHolds
+    .filter(h => h.suspendEpoch > assignEpoch)
+    .sort((a, b) => a.suspendEpoch - b.suspendEpoch);
+  if (valid.length === 0) return;
+
+  result.suspendTimeUtcIso = epochMsToUtcIso(valid[0].suspendEpoch);
+
+  let lastResume: HoldRecord | null = null;
+  for (const h of valid) {
+    if (h.resumeEpoch !== null) lastResume = h;
+  }
+  if (lastResume) {
+    result.resumeTimeUtcIso = epochMsToUtcIso(lastResume.resumeEpoch as number);
+    result.resumeSource = lastResume.resumeSource;
+  }
+}
+
+function enforceOrderingContract(result: Timeline): void {
+  const assignEpoch = result.assignTimeUtcIso ? parseUtc(result.assignTimeUtcIso) : null;
+  const suspendEpoch = result.suspendTimeUtcIso ? parseUtc(result.suspendTimeUtcIso) : null;
+  const resumeEpoch = result.resumeTimeUtcIso ? parseUtc(result.resumeTimeUtcIso) : null;
+
+  if (assignEpoch !== null && suspendEpoch !== null && suspendEpoch <= assignEpoch) {
+    result.suspendTimeUtcIso = null;
+    result.resumeTimeUtcIso = null;
+    result.resumeSource = null;
+  } else if (suspendEpoch !== null && resumeEpoch !== null && resumeEpoch <= suspendEpoch) {
+    result.resumeTimeUtcIso = null;
+    result.resumeSource = null;
   }
 }
 
@@ -174,11 +257,13 @@ function extractTimelines(auditRows: AuditRowLike[] | null | undefined, ctx: Ext
   const result = createResult();
   const memberSet = new Set((ctx.memberNames || []).map(nameKey));
 
+  const fallback = applyBornInQueueFallback(events, result, ctx);
   const loopState: LoopState = {
-    currentGroup: applyBornInQueueFallback(events, result, ctx),
+    currentGroup: fallback.group,
     memberSet,
-    memberAssignments: [],
-    suspendEpoch: null
+    queueStays: fallback.stays,
+    allHolds: [],
+    lastSuspendEpoch: null
   };
 
   for (const e of events) {
@@ -187,8 +272,10 @@ function extractTimelines(auditRows: AuditRowLike[] | null | undefined, ctx: Ext
     else if (e.field === "state") handleStateEvent(e, result, ctx, loopState);
   }
 
-  resolveAcknTime(result, loopState.memberAssignments);
+  resolveAssignAndAckTime(result, loopState.queueStays);
+  resolveSuspendResume(result, loopState.allHolds);
   clampAssignTime(result, ctx);
+  enforceOrderingContract(result);
   return result;
 }
 
