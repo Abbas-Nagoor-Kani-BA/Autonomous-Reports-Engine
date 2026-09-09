@@ -239,7 +239,8 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
 
   function ep(iso: string): number {
     if (!iso) return NaN;
-    return Date.parse(iso.replace(" ", "T"));
+    const s = iso.replace(" ", "T");
+    return Date.parse(/(Z|[+-]\d\d:?\d\d)$/.test(s) ? s : s + "Z");
   }
 
   const tOpened   = ep(openedIso);
