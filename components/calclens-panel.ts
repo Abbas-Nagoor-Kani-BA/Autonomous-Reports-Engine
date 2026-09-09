@@ -259,6 +259,10 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
   /** Pending derived-time edit: set when the user picks a timeline row or types
    *  in the date input, persisted only on exit / moving to the next cell. */
   private timeDraft: { row: Record<string, any>; key: string; cls: string; original: unknown; iso: string } | null = null;
+  /** Set true while pickTimeline updates the input value to suppress the input
+   *  event handler, which would otherwise overwrite timeDraft.iso with a
+   *  machine-local-time ISO (parseLocalInput) instead of the correct UTC atIso. */
+  private suppressInputEvent = false;
 
   /** The derived-time date input, placed right under the summary line. Only the
    *  Save button commits — typing or clicking a timeline row just stages a draft. */
@@ -290,6 +294,7 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
       this.repatch();
     };
     input.addEventListener("input", () => {
+      if (this.suppressInputEvent) return;
       const v = input.value.trim();
       if (!v) {
         if (this.timeDraft) { this.timeDraft.iso = ""; }
@@ -334,7 +339,11 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
     if (d.row !== edit.row) return;
     d.cls = edit.cls;
     d.iso = ev.atIso;
-    if (this.timeInput) this.timeInput.value = ev.atLabel;
+    if (this.timeInput) {
+      this.suppressInputEvent = true;
+      this.timeInput.value = ev.atLabel;
+      this.suppressInputEvent = false;
+    }
     if (this.timeListEl) this.paintTimeline(this.tlEvents, this.tlPickable);
   }
 
