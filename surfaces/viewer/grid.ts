@@ -474,6 +474,10 @@ function reclassify(): void {
   if (st().data) classifyGrid();
 }
 
+function getSnOffsetMs(): number {
+  return st().snOffsetMs;
+}
+
 export {
   load,
   buildHead,
@@ -497,5 +501,6 @@ export {
   setOnCellFocus,
   addCellFocusListener,
   reportCellFocus,
-  attentionCtx
+  attentionCtx,
+  getSnOffsetMs
 };

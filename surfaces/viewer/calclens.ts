@@ -6,8 +6,8 @@
  * grid body is always read-only; the drawer also edits the derivation columns.
  */
 import { $, columnOptionList, visibleCols } from "./core.ts";
-import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus, attentionCtx } from "./grid.ts";
-import { currentRows } from "./grid-data.ts";
+import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus, attentionCtx, getSnOffsetMs } from "./grid.ts";
+import { currentRows, parseInstanceInput } from "./grid-data.ts";
 import { setSelPoint, getSelFocus } from "./selection.ts";
 import { getMsrLists } from "./store.ts";
 import { getCalclensMode, setCalclensMode } from "./calclens-state.ts";
@@ -48,7 +48,15 @@ export function initCalclens(): void {
   panel = new CalclensPanel(host, {}, {
     optionsFor: (key, row) => columnOptionList(key, row),
     displayFor: (key, row, cls) => (cls === "inst" ? fmtInstant(String(row[key] ?? ""), row) : String(row[key] ?? "")),
-    parseValue: (v) => parseLocalInput(v),
+    parseValue: (v) => {
+      // Parse the typed value as instance-clock time (not machine-local time).
+      // fmtInstant displays UTC+instanceOffset; the inverse is parse-as-UTC then
+      // subtract instanceOffset.  We derive the offset from the currently
+      // focused row's openedAt/openedAtRaw pair (same source fmtInstant uses).
+      const focus = getSelFocus();
+      const row = focus ? findRowBySysId(focus.sysId) : null;
+      return parseInstanceInput(v, row, getSnOffsetMs());
+    },
     activityFor: (row) => activityPaneEl(row),
     onCommit: (key, value, row) => {
       row[key] = value;
