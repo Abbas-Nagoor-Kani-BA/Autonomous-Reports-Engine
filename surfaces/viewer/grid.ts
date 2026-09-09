@@ -11,7 +11,7 @@ import type { ViewerData, ViewerRow } from "./core.ts";
 import type { InstantFn } from "./core.ts";
 import { DataGrid } from "../../components/data-grid.ts";
 import type { DataGridState } from "../../components/data-grid.ts";
-import { currentRows, hasDataRows, parseLocalInput } from "./grid-data.ts";
+import { currentRows, hasDataRows, parseLocalInput, setAttentionCtxResolver } from "./grid-data.ts";
 import { dataStore, getColWidths, getMsrLists, saveColWidths, setColWidths, setSelfPush } from "./store.ts";
 import { attachSummaryToData, renderSummary, setRowsProvider } from "./summary.ts";
 import { ExtractService } from "../../services/extract-service.ts";
@@ -124,6 +124,9 @@ function attentionCtx(): { teamMembers: string[]; groupScope: string[] } {
 
 export function initGrid() {
   setRowsProvider(() => currentRows());
+  // Inject the attention context resolver so grid-data can call computeAttention
+  // without importing chrome.* directly (same pattern as setDisplayValueResolver).
+  setAttentionCtxResolver(() => attentionCtx());
   // Load persisted Calclens highlight toggles, then re-render so any disabled
   // rule stops painting its mark without waiting for the next state change.
   loadHighlightPrefs().then(() => render()).catch(() => undefined);

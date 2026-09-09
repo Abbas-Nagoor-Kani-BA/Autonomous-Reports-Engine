@@ -156,6 +156,7 @@ const SKELETON = `
       <div class="menuHead sub"><button id="calclensHideAll">Hide all</button></div>
       <div id="calclensHlList"></div>
     </div>
+    <button id="calclensFilterBtn" class="icon-btn">Flagged only</button>
     <button id="editModeBtn" class="icon-btn">Edit column</button>
     <button id="copyMsrBtn" class="icon-btn">Copy for MSR</button>
     <button id="colsBtn" class="icon-btn">Columns</button>
@@ -178,6 +179,7 @@ const SKELETON = `
   <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
   <button id="ticketStatsBtn" class="btn icon-btn" data-tip="Ticket stats" aria-label="Ticket stats"></button>
   <span id="splitChip" class="splitChip hidden"><span class="splitChipLabel"></span><button id="splitChipClear">✕</button></span>
+  <span id="attentionChip" class="splitChip hidden"><span id="attentionChipLabel" class="splitChipLabel"></span><button id="attentionChipClear">✕</button></span>
 </div>
 <div id="ticketStatsModal" class="hidden">
   <div id="ticketStatsCard">

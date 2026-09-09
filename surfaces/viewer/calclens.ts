@@ -7,6 +7,7 @@
  */
 import { $, columnOptionList, visibleCols } from "./core.ts";
 import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus } from "./grid.ts";
+import { currentRows } from "./grid-data.ts";
 import { setSelPoint } from "./selection.ts";
 import { getMsrLists } from "./store.ts";
 import { getCalclensMode, setCalclensMode } from "./calclens-state.ts";
@@ -18,6 +19,7 @@ import {
   setAll,
   setHighlightEnabled
 } from "./calclens-highlights.ts";
+import { getAttentionFilterActive, setAttentionFilterActive } from "./attention-filter.ts";
 import { ATTENTION_RULES } from "../../core/attention.ts";
 import { explainCell } from "../../core/calclens.ts";
 import { CalclensPanel } from "../../components/calclens-panel.ts";
@@ -38,6 +40,10 @@ export function initCalclens(): void {
   iconize(btn, "info");
   $("calclensMenuBtn").textContent = "Highlights";
   iconize($("calclensMenuBtn"), "list");
+
+  const filterBtn = $("calclensFilterBtn");
+  filterBtn.textContent = "Flagged only";
+  iconize(filterBtn, "filter");
 
   panel = new CalclensPanel(host, {}, {
     optionsFor: (key, row) => columnOptionList(key, row),
@@ -67,7 +73,14 @@ export function initCalclens(): void {
     setCalclensMode(next);
     btn.classList.toggle("calclens-on", next);
     render();
-    if (!next) panel.close();
+    if (!next) {
+      panel.close();
+      // Clear the attention filter when Calclens is turned off so the grid
+      // always returns to full view when Calclens is inactive.
+      setAttentionFilterActive(false);
+      render();
+      updateFilterBtn();
+    }
   });
 
   setOnCellFocus((info) => {
@@ -86,10 +99,30 @@ export function initCalclens(): void {
     }
   });
 
+  // Filter button: toggle the attention filter. Requires Calclens mode to be ON
+  // (the filter uses the same attention context and should only run in that mode).
+  filterBtn.addEventListener("click", () => {
+    if (!getCalclensMode()) {
+      showToast("Turn Calclens on first");
+      return;
+    }
+    setAttentionFilterActive(!getAttentionFilterActive());
+    render();
+    updateFilterBtn();
+  });
+
+  // Dismiss the attention filter from the tab-bar chip.
+  $("attentionChipClear").addEventListener("click", () => {
+    setAttentionFilterActive(false);
+    render();
+    updateFilterBtn();
+  });
+
   // Reflect the persisted mode on boot.
   btn.classList.toggle("calclens-on", getCalclensMode());
 
   initCalclensHighlights();
+  updateFilterBtn();
 }
 
 /** Update the Calclens button to show how many highlights are hidden (badge + tooltip). */
@@ -101,6 +134,36 @@ function updateCalclensBtn(): void {
   btn.setAttribute("data-tip", hidden > 0
     ? `Calclens — inspect how each value was derived (${hidden} highlight${hidden === 1 ? "" : "s"} hidden)`
     : "Calclens — inspect how each value was derived and edit the derivation columns");
+}
+
+/**
+ * Sync the "Flagged only" filter button and the tab-bar chip to the current
+ * filter state. Called after every toggle of the filter, highlights, or
+ * Calclens mode.
+ */
+function updateFilterBtn(): void {
+  const filterBtn = $("calclensFilterBtn");
+  const active = getAttentionFilterActive();
+  filterBtn.classList.toggle("calclens-filter-on", active);
+  if (active) {
+    const shown = currentRows().length;
+    filterBtn.setAttribute("data-tip",
+      `Showing ${shown} flagged ticket${shown === 1 ? "" : "s"} — click to clear filter`);
+  } else {
+    filterBtn.setAttribute("data-tip",
+      "Show only tickets with attention flags (Calclens must be on)");
+  }
+
+  // Tab-bar chip mirrors the filter state.
+  const chip = $("attentionChip");
+  const chipLabel = $("attentionChipLabel");
+  if (active) {
+    const shown = currentRows().length;
+    chipLabel.textContent = `⚑ ${shown} flagged`;
+    chip.classList.remove("hidden");
+  } else {
+    chip.classList.add("hidden");
+  }
 }
 
 /** Rebuilds the highlight-toggle checkbox list from the canonical rules. */
@@ -116,6 +179,7 @@ function buildCalclensHlList(): void {
       setHighlightEnabled(id, cb.checked);
       render();
       updateCalclensBtn();
+      updateFilterBtn();
     });
     const span = document.createElement("span");
     span.textContent = label;
@@ -149,12 +213,14 @@ function initCalclensHighlights(): void {
     buildCalclensHlList();
     render();
     updateCalclensBtn();
+    updateFilterBtn();
   });
   $("calclensHideAll").addEventListener("click", () => {
     setAll(false);
     buildCalclensHlList();
     render();
     updateCalclensBtn();
+    updateFilterBtn();
   });
 
   document.addEventListener("click", (e: Event) => {

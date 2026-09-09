@@ -5,6 +5,7 @@ import { rowMatches } from "./search-match.ts";
 import type { DisplayValue } from "./search-match.ts";
 import { getSearchColumn, getSearchMode, isCaseSensitive } from "./search-state.ts";
 import { applySplitFilter } from "./split-filter.ts";
+import { applyAttentionFilter, getAttentionFilterActive } from "./attention-filter.ts";
 
 function st() { return dataStore.getState(); }
 
@@ -22,6 +23,17 @@ function setDisplayValueResolver(fn: DisplayValue): void {
   if (typeof fn === "function") displayValue = fn;
 }
 
+// Resolver for the attention filter's teamMembers/groupScope. Injected by
+// grid.ts initGrid() so this module stays free of chrome.* imports (same
+// pattern as setDisplayValueResolver above).
+type AttentionCtxResolver = () => { teamMembers: string[]; groupScope: string[] };
+let attentionCtxResolver: AttentionCtxResolver = () => ({ teamMembers: [], groupScope: [] });
+
+/** Inject the attention context resolver (grid.ts attentionCtx-bound). */
+function setAttentionCtxResolver(fn: AttentionCtxResolver): void {
+  if (typeof fn === "function") attentionCtxResolver = fn;
+}
+
 function currentRows(): ViewerRow[] {
   const { data, sortKey, sortDir } = st();
   let rows = data ? [...data.rows] : [];
@@ -31,6 +43,7 @@ function currentRows(): ViewerRow[] {
     rows = rows.filter((r) => rowMatches(r, q, opts, displayValue, COLUMNS));
   }
   rows = applySplitFilter(rows);
+  if (getAttentionFilterActive()) rows = applyAttentionFilter(rows, attentionCtxResolver());
   if (sortKey) {
     rows.sort((a, b) => {
       const va = a[sortKey], vb = b[sortKey];
@@ -64,4 +77,4 @@ function parseLocalInput(text: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-export { currentRows, hasDataRows, parseLocalInput, setDisplayValueResolver };
+export { currentRows, hasDataRows, parseLocalInput, setDisplayValueResolver, setAttentionCtxResolver };
