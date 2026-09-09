@@ -47,9 +47,9 @@ test("defaults to all highlights enabled", async () => {
   reset();
   await loadHighlightPrefs();
   assert.equal(disabledCount(), 0);
-  assert.equal(enabledCount(), 9);
+  assert.equal(enabledCount(), 11);
   assert.ok(isHighlightEnabled("reopened"));
-  assert.equal(enabledSet().size, 9);
+  assert.equal(enabledSet().size, 11);
 });
 
 test("disabling a rule persists only the disabled id", async () => {
@@ -86,9 +86,9 @@ test("setAll(false) disables everything; setAll(true) re-enables", async () => {
   reset();
   await loadHighlightPrefs();
   setAll(false);
-  assert.equal(disabledCount(), 9);
+  assert.equal(disabledCount(), 11);
   assert.equal(enabledCount(), 0);
-  assert.equal((store[STORAGE.calclensHighlights] as unknown[]).length, 9);
+  assert.equal((store[STORAGE.calclensHighlights] as unknown[]).length, 11);
   setAll(true);
   assert.equal(disabledCount(), 0);
   assert.deepEqual(store[STORAGE.calclensHighlights], []);

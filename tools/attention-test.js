@@ -158,9 +158,11 @@ test("On Hold count within threshold is not flagged", () => {
 });
 
 test("slow pickup: assigned but never acknowledged", () => {
+  // slowPickup no longer fires for missing ack — that is missingAckn now.
   const row = baseRow({ assignTimeUtcIso: "2026-01-01T00:00:00Z", acknTimeUtcIso: "" });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
-  assert.ok(ids(flags).includes("slowPickup"));
+  assert.ok(!ids(flags).includes("slowPickup"), "slowPickup should NOT fire for missing ack");
+  assert.ok(ids(flags).includes("missingAckn"), "missingAckn should fire instead");
 });
 
 test("slow pickup: long assign->acknowledge gap", () => {
@@ -180,8 +182,81 @@ test("quick pickup is not flagged", () => {
   assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("slowPickup"));
 });
 
-test("empty plan data flags missing root cause + solution type", () => {
-  const row = baseRow({ rootCause: "", solutionType: "" });
+test("missingAckn: assigned with no ack time fires missingAckn not slowPickup", () => {
+  const row = baseRow({ assignTimeUtcIso: "2026-01-01T00:00:00Z", acknTimeUtcIso: "" });
+  const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
+  assert.ok(ids(flags).includes("missingAckn"));
+  assert.ok(!ids(flags).includes("slowPickup"), "slowPickup must not also fire");
+});
+
+test("missingAckn: no assign time does not fire", () => {
+  const row = baseRow({ assignTimeUtcIso: "", acknTimeUtcIso: "" });
+  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("missingAckn"));
+});
+
+test("missingAckn: present ack time does not fire", () => {
+  const row = baseRow({
+    assignTimeUtcIso: "2026-01-01T00:00:00Z",
+    acknTimeUtcIso:   "2026-01-01T04:00:00Z"
+  });
+  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("missingAckn"));
+});
+
+test("timelineOrder: ack before assign is flagged", () => {
+  const row = baseRow({
+    assignTimeUtcIso: "2026-01-02T10:00:00Z",
+    acknTimeUtcIso:   "2026-01-01T10:00:00Z"   // ack before assign
+  });
+  const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
+  assert.ok(ids(flags).includes("timelineOrder"));
+  const hit = flags.find((f) => f.id === "timelineOrder");
+  assert.ok(hit.detail.includes("ack before assign"));
+});
+
+test("timelineOrder: resume before suspend is flagged", () => {
+  const row = baseRow({
+    suspendTimeUtcIso: "2026-01-05T12:00:00Z",
+    resumeTimeUtcIso:  "2026-01-04T12:00:00Z"   // resume before suspend
+  });
+  const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
+  assert.ok(ids(flags).includes("timelineOrder"));
+  const hit = flags.find((f) => f.id === "timelineOrder");
+  assert.ok(hit.detail.includes("resume before suspend"));
+});
+
+test("timelineOrder: resolved before opened is flagged", () => {
+  const row = baseRow({
+    openedAt:   "2026-01-10T08:00:00Z",
+    resolvedAt: "2026-01-09T08:00:00Z"   // resolved before opened
+  });
+  const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
+  assert.ok(ids(flags).includes("timelineOrder"));
+  const hit = flags.find((f) => f.id === "timelineOrder");
+  assert.ok(hit.detail.includes("resolved before opened"));
+});
+
+test("timelineOrder: correct order produces no flag", () => {
+  const row = baseRow({
+    openedAt:          "2026-01-01T08:00:00Z",
+    assignTimeUtcIso:  "2026-01-01T09:00:00Z",
+    acknTimeUtcIso:    "2026-01-01T10:00:00Z",
+    suspendTimeUtcIso: "2026-01-02T09:00:00Z",
+    resumeTimeUtcIso:  "2026-01-03T09:00:00Z",
+    resolvedAt:        "2026-01-05T09:00:00Z"
+  });
+  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("timelineOrder"));
+});
+
+test("timelineOrder: missing timestamps are skipped (no false positives)", () => {
+  // Only openedAt and resolvedAt present — valid order, no other timestamps to check.
+  const row = baseRow({
+    openedAt:   "2026-01-01T08:00:00Z",
+    resolvedAt: "2026-01-05T08:00:00Z"
+  });
+  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("timelineOrder"));
+});
+
+test("empty plan data flags missing root cause + solution type", () => {  const row = baseRow({ rootCause: "", solutionType: "" });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(ids(flags).includes("emptyPlan"));
   const hit = flags.find((f) => f.id === "emptyPlan");
@@ -214,10 +289,10 @@ test("thresholds can be overridden", () => {
   assert.ok(!ids(flags).includes("repeatedOnHold"));
 });
 
-test("ATTENTION_RULES lists all nine rules with unique ids", () => {
-  assert.equal(ATTENTION_RULES.length, 9);
+test("ATTENTION_RULES lists all eleven rules with unique ids", () => {
+  assert.equal(ATTENTION_RULES.length, 11);
   const seen = new Set(ATTENTION_RULES.map((r) => r.id));
-  assert.equal(seen.size, 9, "rule ids are unique");
+  assert.equal(seen.size, 11, "rule ids are unique");
   for (const r of ATTENTION_RULES) {
     assert.equal(typeof r.id, "string");
     assert.ok(r.label && typeof r.label === "string", "each rule has a human label");
@@ -227,7 +302,8 @@ test("ATTENTION_RULES lists all nine rules with unique ids", () => {
 test("ATTENTION_RULES covers every rule id the engine can produce", () => {
   const engineIds = [
     "multiAssignWithinTeam", "multiGroupWithinTeam", "reopened", "slaBreach",
-    "longOnHold", "repeatedOnHold", "slowPickup", "emptyPlan", "lowConfidenceParse"
+    "longOnHold", "repeatedOnHold", "slowPickup", "missingAckn", "timelineOrder",
+    "emptyPlan", "lowConfidenceParse"
   ].sort();
   const listIds = ATTENTION_RULES.map((r) => r.id).sort();
   assert.deepEqual(listIds, engineIds);

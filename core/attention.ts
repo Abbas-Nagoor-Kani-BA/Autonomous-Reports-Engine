@@ -18,6 +18,8 @@ export type AttentionRuleId =
   | "longOnHold"
   | "repeatedOnHold"
   | "slowPickup"
+  | "missingAckn"
+  | "timelineOrder"
   | "emptyPlan"
   | "lowConfidenceParse";
 
@@ -37,6 +39,8 @@ export const ATTENTION_RULES: readonly { id: AttentionRuleId; label: string }[] 
   { id: "longOnHold", label: "Long On Hold" },
   { id: "repeatedOnHold", label: "Held On Hold repeatedly" },
   { id: "slowPickup", label: "Slow pickup" },
+  { id: "missingAckn", label: "Ack time missing" },
+  { id: "timelineOrder", label: "Timeline order error" },
   { id: "emptyPlan", label: "Missing plan data" },
   { id: "lowConfidenceParse", label: "Low-confidence parse" }
 ];
@@ -206,12 +210,10 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
     out.push(flag("repeatedOnHold", "Held On Hold repeatedly", `Went On Hold ${holdCount} times`, ["suspendTimeUtcIso", "resumeTimeUtcIso"]));
   }
 
-  // 7. Slow pickup — no acknowledgement, or a long assign→acknowledge gap.
+  // 7. Slow pickup — long assign→acknowledge gap (but NOT missing ack; that is rule 8).
   const assignIso = String(row.assignTimeUtcIso ?? "");
-  const acknIso = String(row.acknTimeUtcIso ?? "");
-  if (assignIso && !acknIso) {
-    out.push(flag("slowPickup", "Never acknowledged", "Assigned but no team member ever picked it up", ["assignTimeUtcIso", "acknTimeUtcIso"]));
-  } else if (assignIso && acknIso) {
+  const acknIso   = String(row.acknTimeUtcIso ?? "");
+  if (assignIso && acknIso) {
     const a = Date.parse(assignIso.replace(" ", "T"));
     const b = Date.parse(acknIso.replace(" ", "T"));
     if (Number.isFinite(a) && Number.isFinite(b) && b >= a && b - a > t.maxPickupMs) {
@@ -220,13 +222,55 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
     }
   }
 
-  // 8. Empty plan data.
+  // 8. Missing acknowledgement — ticket has an assign time but ack time is absent.
+  // Distinct from slowPickup so each can be toggled and filtered independently.
+  if (assignIso && !acknIso) {
+    out.push(flag("missingAckn", "Ack time missing",
+      "Assigned but no team member acknowledgement recorded", ["assignTimeUtcIso", "acknTimeUtcIso"]));
+  }
+
+  // 9. Timeline order errors — any key timestamp in an impossible chronological order.
+  // Expected ordering: openedAt ≤ assignTime ≤ acknTime ≤ resolvedAt
+  //                    assignTime ≤ suspendTime ≤ resumeTime ≤ resolvedAt
+  const openedIso  = String(row.openedAtRaw ?? row.openedAt ?? "");
+  const resolvedIso = String(row.resolvedAtRaw ?? row.resolvedAt ?? "");
+  const suspendIso = String(row.suspendTimeUtcIso ?? "");
+  const resumeIso  = String(row.resumeTimeUtcIso ?? "");
+
+  function ep(iso: string): number {
+    if (!iso) return NaN;
+    return Date.parse(iso.replace(" ", "T"));
+  }
+
+  const tOpened   = ep(openedIso);
+  const tAssign   = ep(assignIso);
+  const tAckn     = ep(acknIso);
+  const tSuspend  = ep(suspendIso);
+  const tResume   = ep(resumeIso);
+  const tResolved = ep(resolvedIso);
+
+  const orderViolations: string[] = [];
+  if (Number.isFinite(tOpened) && Number.isFinite(tAssign)   && tAssign   < tOpened)  orderViolations.push("assign before opened");
+  if (Number.isFinite(tAssign) && Number.isFinite(tAckn)     && tAckn     < tAssign)  orderViolations.push("ack before assign");
+  if (Number.isFinite(tAssign) && Number.isFinite(tSuspend)  && tSuspend  < tAssign)  orderViolations.push("suspend before assign");
+  if (Number.isFinite(tSuspend) && Number.isFinite(tResume)  && tResume   < tSuspend) orderViolations.push("resume before suspend");
+  if (Number.isFinite(tAckn)   && Number.isFinite(tResolved) && tResolved < tAckn)    orderViolations.push("resolved before ack");
+  if (Number.isFinite(tSuspend) && Number.isFinite(tResolved) && tResolved < tSuspend) orderViolations.push("resolved before suspend");
+  if (Number.isFinite(tOpened) && Number.isFinite(tResolved) && tResolved < tOpened)  orderViolations.push("resolved before opened");
+
+  if (orderViolations.length) {
+    out.push(flag("timelineOrder", "Timeline order error",
+      `Impossible timestamp order: ${orderViolations.join("; ")}`,
+      ["assignTimeUtcIso", "acknTimeUtcIso", "suspendTimeUtcIso", "resumeTimeUtcIso"]));
+  }
+
+  // 10. Empty plan data.
   const missingPlan: string[] = [];
   if (!String(row.rootCause ?? "").trim()) missingPlan.push("root cause");
   if (!String(row.solutionType ?? "").trim()) missingPlan.push("solution type");
   if (missingPlan.length) out.push(flag("emptyPlan", "Missing plan data", `No ${missingPlan.join(" or ")}`, ["rootCause", "solutionType"]));
 
-  // 9. Low-confidence parse.
+  // 11. Low-confidence parse.
   if (row.parseReview) out.push(flag("lowConfidenceParse", "Low-confidence parse", "AI classification was low confidence", ["solutionType", "rootCause"]));
 
   return out;
