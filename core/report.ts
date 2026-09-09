@@ -293,6 +293,16 @@ export type Report = {
   assignedClock?: string;
   acknClock?: string;
   resolvedClock?: string;
+  /** Business hours in the suspend window (susp->resume), 0 when not applicable. */
+  suspendWindowHours?: number;
+  /** Gross incident hours before suspend subtraction (created->resolved, biz). */
+  grossIncHours?: number;
+  /** Gross inc-current hours before suspend subtraction (assigned->resolved, biz). */
+  grossIncCurrentHours?: number;
+  /** Suspend clock label (instance-clock display). */
+  suspClock?: string;
+  /** Resume clock label (instance-clock display). */
+  resumedClock?: string;
 };
 
 export type MessageFormatter = (v: string) => string;
@@ -384,8 +394,31 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
     createdClock: created,
     assignedClock: assigned,
     acknClock: ackn,
-    resolvedClock: resolved
+    resolvedClock: resolved,
+    suspClock: susp,
+    resumedClock: resumed
   };
+
+  // Suspend window and gross hours for Calclens arithmetic display.
+  // grossInc* is the hours BEFORE suspend subtraction; suspendWindowHours
+  // is what was subtracted. These are biz-hours only (P3/P4); P1/P2 use
+  // wall-clock and the suspend window is also wall-clock there.
+  {
+    const prio = slaPriority(row.priority);
+    const hasSuspend = !!(susp && resumed);
+    const suspWindowH = hasSuspend
+      ? (prio === 1 || prio === 2
+          ? Math.max(0, (parseDisplayWallClock(resumed)!.getTime() - parseDisplayWallClock(susp)!.getTime()) / 3600000)
+          : businessHoursBetween(parseDisplayWallClock(susp)!, parseDisplayWallClock(resumed)!))
+      : 0;
+    rep.suspendWindowHours = Number.isFinite(suspWindowH) ? suspWindowH : 0;
+    rep.grossIncHours = Number.isFinite(rep.incHoursRaw)
+      ? (rep.incHoursRaw! + rep.suspendWindowHours)
+      : undefined;
+    rep.grossIncCurrentHours = Number.isFinite(rep.incCurrentRaw)
+      ? (rep.incCurrentRaw! + rep.suspendWindowHours)
+      : undefined;
+  }
 
   // Gate: SLA/hours calculations only apply to closed/resolved incidents.
   // For every other row blank the derived SLA fields (passthrough label/time

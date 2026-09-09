@@ -535,15 +535,15 @@ function explainDuration(
     if (durLabel === "assignToAckn") {
       out.steps.push(`The ticket reached the **${dflt(queueName)}** queue at **${dflt(clockRight)}**.`);
       out.steps.push(`It was picked up by **${person}** at **${dflt(clockLeft)}**.`);
-      out.steps.push(`That's about **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""} of wait time.`);
+      out.steps.push(`Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
       out.steps.push(`How it's measured: ${bizNote}.`);
     } else if (durLabel === "assignToResolve") {
       out.steps.push(`The ticket was assigned at **${dflt(clockRight)}** and resolved at **${dflt(clockLeft)}**.`);
-      out.steps.push(`That's about **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""} in total.`);
+      out.steps.push(`Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
       out.steps.push(`How it's measured: ${bizNote}.`);
     } else {
       out.steps.push(`This ticket went On Hold at **${dflt(clockRight)}** and came back at **${dflt(clockLeft)}**.`);
-      out.steps.push(`That's a held window of about **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
+      out.steps.push(`Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
       out.steps.push("Only the first On Hold \u2192 first resume window is counted here; a ticket held more than once shows less time on purpose.");
     }
   } else {
@@ -696,9 +696,14 @@ function explainReport(
     out.summary = "How long the ticket was open, from Created to Resolved.";
     out.digest = resolutionDigest(row, rep);
     out.steps = [
-      `It was created at **${dflt(rep.createdClock || rep.created)}** and resolved at **${dflt(rep.resolvedClock || rep.resolved)}**.`,
-      `That's about **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}**${rep.incHoursRaw != null ? ` (\`${dflt(rep.incidentHours)}\`)` : ""} in total.`,
-      `It's measured as: ${businessBranchNote(row.priority)}.`
+      `Created **${dflt(rep.createdClock || rep.created)}** → Resolved **${dflt(rep.resolvedClock || rep.resolved)}**.`,
+      `Gross (${businessBranchNote(row.priority)}): **${rep.grossIncHours != null ? fmtHoursDecimal(rep.grossIncHours) : "?"} h**.`,
+      ...(rep.suspendWindowHours != null && rep.suspendWindowHours > 0 ? [
+        `Suspend window (On Hold **${dflt(rep.suspClock)}** → Resumed **${dflt(rep.resumedClock)}**): − **${fmtHoursDecimal(rep.suspendWindowHours)} h**.`,
+        `Net = gross − suspend = **${rep.grossIncHours != null ? fmtHoursDecimal(rep.grossIncHours) : "?"} h** − **${fmtHoursDecimal(rep.suspendWindowHours)} h** = **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}** (\`${dflt(rep.incidentHours)}\`).`
+      ] : [
+        `Result: **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}** (\`${dflt(rep.incidentHours)}\`).`
+      ])
     ];
   } else if (field === "incidentTotalAge") {
     out.summary = "How many working days the ticket was open.";
@@ -711,9 +716,15 @@ function explainReport(
     out.summary = "How far along the ticket is, from assignment to resolution or now.";
     out.digest = resolutionDigest(row, rep);
     out.steps = [
-      `Counted from **Assigned** (\`${dflt(rep.assignedClock || rep.assigned)}\`) to **${rep.resolved ? "Resolved" : "now"}** (\`${dflt(rep.resolvedClock || rep.resolved || "now")}\`).`,
-      `That's about **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}**${rep.incCurrentRaw != null ? ` (\`${dflt(rep.incCurrentHours)}\`)` : ""}.`,
-      "This starts at assignment, not creation \u2014 slightly different from the full incident hours."
+      `Assigned **${dflt(rep.assignedClock || rep.assigned)}** → ${rep.resolved ? "Resolved" : "now"} **${dflt(rep.resolvedClock || rep.resolved || "now")}**.`,
+      `Gross (${businessBranchNote(row.priority)}): **${rep.grossIncCurrentHours != null ? fmtHoursDecimal(rep.grossIncCurrentHours) : "?"} h**.`,
+      ...(rep.suspendWindowHours != null && rep.suspendWindowHours > 0 ? [
+        `Suspend window (On Hold **${dflt(rep.suspClock)}** → Resumed **${dflt(rep.resumedClock)}**): − **${fmtHoursDecimal(rep.suspendWindowHours)} h**.`,
+        `Net = gross − suspend = **${rep.grossIncCurrentHours != null ? fmtHoursDecimal(rep.grossIncCurrentHours) : "?"} h** − **${fmtHoursDecimal(rep.suspendWindowHours)} h** = **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}** (\`${dflt(rep.incCurrentHours)}\`).`
+      ] : [
+        `Result: **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}** (\`${dflt(rep.incCurrentHours)}\`).`
+      ]),
+      "This starts at assignment, not creation — slightly different from the full incident hours."
     ];
   } else if (field === "incidentCurrentAge") {
     out.summary = "How many working days since the ticket was assigned.";
