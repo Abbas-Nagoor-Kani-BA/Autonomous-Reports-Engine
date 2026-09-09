@@ -613,6 +613,9 @@
   #calclensHlList { @apply flex flex-col; }
   #calclensHlList label { @apply flex items-center gap-2 px-1 py-0.75 cursor-pointer whitespace-nowrap rounded hover:bg-line; }
   #calclensHlList input { @apply accent-accent; }
+  .hl-violations { @apply list-none m-0 mt-0.5 mb-1 pl-6 flex flex-col gap-0.5; }
+  .hl-violation { @apply text-[11px] text-peach flex items-center gap-1.5 select-none; }
+  .hl-violation::before { content: "⚠"; @apply opacity-70; }
 
   #configModal { @apply fixed inset-0 z-[18] bg-card2/60 flex items-center justify-center; }
   #mapModal, #ciModal { @apply fixed inset-0 z-[19] bg-card2/60 flex items-center justify-center; }

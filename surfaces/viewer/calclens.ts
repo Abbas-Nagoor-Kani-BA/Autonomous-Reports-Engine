@@ -6,9 +6,9 @@
  * grid body is always read-only; the drawer also edits the derivation columns.
  */
 import { $, columnOptionList, visibleCols } from "./core.ts";
-import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus } from "./grid.ts";
+import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus, attentionCtx } from "./grid.ts";
 import { currentRows } from "./grid-data.ts";
-import { setSelPoint } from "./selection.ts";
+import { setSelPoint, getSelFocus } from "./selection.ts";
 import { getMsrLists } from "./store.ts";
 import { getCalclensMode, setCalclensMode } from "./calclens-state.ts";
 import { getEditMode } from "./edit-mode-state.ts";
@@ -20,7 +20,7 @@ import {
   setHighlightEnabled
 } from "./calclens-highlights.ts";
 import { getAttentionFilterActive, setAttentionFilterActive } from "./attention-filter.ts";
-import { ATTENTION_RULES } from "../../core/attention.ts";
+import { ATTENTION_RULES, computeAttention } from "../../core/attention.ts";
 import { explainCell } from "../../core/calclens.ts";
 import { CalclensPanel } from "../../components/calclens-panel.ts";
 import { activityPaneEl } from "./activity.ts";
@@ -177,10 +177,29 @@ function updateFilterBtn(): void {
   }
 }
 
+/**
+ * Returns the individual timeline order violation strings for the currently
+ * focused row, or an empty array when no row is focused or it has no violations.
+ * Used by buildCalclensHlList to render the detail sub-list.
+ */
+function getTimelineViolationsForFocusedRow(): string[] {
+  const focus = getSelFocus();
+  if (!focus) return [];
+  const row = findRowBySysId(focus.sysId);
+  if (!row) return [];
+  const flags = computeAttention(row, attentionCtx());
+  const tf = flags.find((f) => f.id === "timelineOrder");
+  if (!tf) return [];
+  // detail = "Impossible timestamp order: X; Y; Z"
+  const sep = tf.detail.indexOf(": ");
+  return (sep < 0 ? tf.detail : tf.detail.slice(sep + 2)).split("; ").filter(Boolean);
+}
+
 /** Rebuilds the highlight-toggle checkbox list from the canonical rules. */
 function buildCalclensHlList(): void {
   const list = $("calclensHlList");
   list.innerHTML = "";
+  const violations = getTimelineViolationsForFocusedRow();
   for (const { id, label } of ATTENTION_RULES) {
     const lab = document.createElement("label");
     const cb = document.createElement("input");
@@ -196,6 +215,20 @@ function buildCalclensHlList(): void {
     span.textContent = label;
     lab.append(cb, span);
     list.appendChild(lab);
+
+    // For the timelineOrder rule, show a read-only sub-list of violations
+    // found on the currently focused ticket (if any).
+    if (id === "timelineOrder" && violations.length) {
+      const ul = document.createElement("ul");
+      ul.className = "hl-violations";
+      for (const v of violations) {
+        const li = document.createElement("li");
+        li.className = "hl-violation";
+        li.textContent = v;
+        ul.appendChild(li);
+      }
+      list.appendChild(ul);
+    }
   }
 }
 
