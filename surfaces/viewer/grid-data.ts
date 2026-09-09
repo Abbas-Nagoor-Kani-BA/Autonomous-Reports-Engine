@@ -6,7 +6,6 @@ import type { DisplayValue } from "./search-match.ts";
 import { getSearchColumn, getSearchMode, isCaseSensitive } from "./search-state.ts";
 import { applySplitFilter } from "./split-filter.ts";
 import { applyAttentionFilter, getAttentionFilterActive } from "./attention-filter.ts";
-import { rowOffsetMs } from "../../core/sntime.ts";
 
 function st() { return dataStore.getState(); }
 
@@ -76,53 +75,6 @@ function parseLocalInput(text: string): Date | null {
   }
   const d = new Date(t);
   return isNaN(d.getTime()) ? null : d;
-}
-
-/**
- * Parse a date/time string typed by the user in the instance clock and return
- * a Date representing the correct UTC moment.
- *
- * fmtInstant displays UTC timestamps as instance-local wall-clock time by
- * adding instanceOffset to the UTC epoch. The inverse (what the user typed ->
- * UTC) is therefore: parse the display digits as if they were UTC, then
- * subtract instanceOffset.
- *
- * @param text  The string the user typed (same format fmtInstant produces).
- * @param row   The row being edited (provides the instance offset via its
- *              openedAt / openedAtRaw pair).
- * @param snOffsetMs  Fallback instance offset when the row pair is missing.
- */
-export function parseInstanceInput(
-  text: string,
-  row: ViewerRow | null | undefined,
-  snOffsetMs: number
-): Date | null {
-  const s = text.trim();
-  if (!s) return null;
-
-  let y: number, mo: number, d: number, h = 0, mi = 0, sec = 0;
-
-  // yyyy-MM-dd HH:mm[:ss]
-  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
-  if (m) {
-    y = +m[1]; mo = +m[2] - 1; d = +m[3]; h = +m[4]; mi = +m[5]; sec = +(m[6] || 0);
-  } else {
-    // dd-MM-yyyy HH:mm[:ss]  (the format fmtInstant produces)
-    m = s.match(/^(\d{1,2})[-./](\d{1,2})[-./](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-    if (m) {
-      y = +m[3]; mo = +m[2] - 1; d = +m[1]; h = +(m[4] || 0); mi = +(m[5] || 0); sec = +(m[6] || 0);
-    } else {
-      // fallback: let the engine parse it (may be ambiguous)
-      const dt = new Date(s);
-      return isNaN(dt.getTime()) ? null : dt;
-    }
-  }
-
-  // Treat the typed digits as instance-clock wall-clock time.
-  // fmtInstant: display = UTC + instanceOffset  =>  UTC = display - instanceOffset.
-  const displayAsUtcMs = Date.UTC(y, mo, d, h, mi, sec);
-  const instanceOffset = rowOffsetMs(row ?? undefined, snOffsetMs);
-  return new Date(displayAsUtcMs - instanceOffset);
 }
 
 export { currentRows, hasDataRows, parseLocalInput, setDisplayValueResolver, setAttentionCtxResolver };
