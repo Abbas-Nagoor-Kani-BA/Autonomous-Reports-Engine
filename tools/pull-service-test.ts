@@ -211,16 +211,18 @@ test("change summary pull issues two scoped change_request requests (last + next
   const crCounts = r.calls.filter((c) => c.method === "count" && c.args[0] === "change_request");
   assert.equal(crCounts.length, 2, "one count per week window (last, next)");
 
-  for (const c of crCounts) {
-    const q = String(c.args[1]);
+  // Last-week query uses end_dateBETWEEN; next-week uses start_dateBETWEEN.
+  const queries = crCounts.map((c) => String(c.args[1]));
+  for (const q of queries) {
     // Scope applied exactly once per request — no repetition, no top-level OR.
     assert.equal((q.match(/assignment_group\.nameINQueue A/g) || []).length, 1, `scope once in ${q}`);
     assert.equal((q.match(/\^OR/g) || []).length, 0, "no top-level OR in a single-window query");
-    assert.ok(q.includes("start_dateBETWEEN"), "filters on start_date BETWEEN a window");
     assert.ok(q.includes("gs.dateGenerate"), "uses instance-side date generation");
   }
+  assert.ok(queries[0].includes("end_dateBETWEEN"), "last-week query filters on end_date");
+  assert.ok(queries[1].includes("start_dateBETWEEN"), "next-week query filters on start_date");
   // The two windows must differ (last vs next week).
-  assert.notEqual(String(crCounts[0].args[1]), String(crCounts[1].args[1]), "last and next week windows differ");
+  assert.notEqual(queries[0], queries[1], "last and next week windows differ");
 });
 
 test("change summary pull persists change rows onto the dataset", async () => {

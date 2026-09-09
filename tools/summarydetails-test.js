@@ -35,28 +35,27 @@ check("sunday current to", sun.current.to, "2026-09-06");
 
 console.log("== bucketChanges ==");
 const changes = [
-  // implemented last week: start_date in last week, Closed
+  // implemented last week: end_date in last week, Closed
   { number: "CHG001", short_description: "impl a", state: "Closed", cmdb_ci: "RMS (prd)",
-    start_date: "2026-08-25 09:00:00", review_status: "Successful" },
-  // failed last week: review_status Unsuccessful
+    start_date: "2026-08-18 09:00:00", end_date: "2026-08-25 09:00:00", review_status: "Successful" },
+  // failed last week: end_date in last week, review_status Unsuccessful
   { number: "CHG002", short_description: "fail b", state: "Closed", cmdb_ci: "STAFF (prd)",
-    start_date: "2026-08-26 09:00:00", review_status: "Unsuccessful" },
-  // planned next week
+    start_date: "2026-08-19 09:00:00", end_date: "2026-08-26 09:00:00", review_status: "Unsuccessful" },
+  // planned next week: start_date in next week (no end_date yet)
   { number: "CHG003", short_description: "plan c", state: "Scheduled", cmdb_ci: "RIBI (prd)",
     start_date: "2026-09-08 09:00:00" },
-  // last week, in progress (Implement), not failed/cancelled -> IMPLEMENTED
-  // (implemented no longer requires terminal Closed state)
+  // last week, in progress (Implement), end_date in last week, not failed/cancelled -> IMPLEMENTED
   { number: "CHG004", short_description: "open d", state: "Implement", cmdb_ci: "OPS (prd)",
-    start_date: "2026-08-27 09:00:00" },
-  // current week -> in none of the three buckets (only last/next week matter)
+    start_date: "2026-08-20 09:00:00", end_date: "2026-08-27 09:00:00" },
+  // end_date in current week -> in none of the three buckets
   { number: "CHG005", short_description: "old e", state: "Closed", cmdb_ci: "X (prd)",
-    start_date: "2026-09-02 09:00:00" },
-  // u_failure flag failed, last week
+    start_date: "2026-08-31 09:00:00", end_date: "2026-09-02 09:00:00" },
+  // u_failure flag failed, end_date in last week
   { number: "CHG006", short_description: "fail f", state: "Closed", cmdb_ci: "Y (prd)",
-    start_date: "2026-08-28 09:00:00", u_failure: "true" },
-  // last week but Cancelled -> excluded from every bucket
+    start_date: "2026-08-21 09:00:00", end_date: "2026-08-28 09:00:00", u_failure: "true" },
+  // end_date in last week but Cancelled -> excluded from every bucket
   { number: "CHG007", short_description: "cancel g", state: "Cancelled", cmdb_ci: "Z (prd)",
-    start_date: "2026-08-29 09:00:00" }
+    start_date: "2026-08-22 09:00:00", end_date: "2026-08-29 09:00:00" }
 ];
 const b = bucketChanges(changes, w);
 check("implemented count", b.implemented.length, 2);
@@ -69,7 +68,7 @@ check("planned count", b.planned.length, 1);
 check("planned cr", b.planned[0].crNumber, "CHG003");
 check("current-week change excluded", b.implemented.concat(b.planned, b.failed).some((r) => r.crNumber === "CHG005"), false);
 check("cancelled change excluded", b.implemented.concat(b.planned, b.failed).some((r) => r.crNumber === "CHG007"), false);
-check("implemented date is a serial number", typeof b.implemented[0].date, "number");
+check("implemented date is a serial number (end_date)", typeof b.implemented[0].date, "number");
 
 console.log("== bucketChanges TZ boundaries (regression) ==");
 // start_date at the extreme edges of last week must stay in-window regardless
@@ -77,9 +76,9 @@ console.log("== bucketChanges TZ boundaries (regression) ==");
 // as UTC, so the window bounds must be UTC too (windowFrom uses Date.UTC).
 const edgeChanges = [
   { number: "EDGE1", short_description: "monday 00:00", state: "Closed", cmdb_ci: "A (prd)",
-    start_date: "2026-08-24 00:00:00", review_status: "Successful" },
+    start_date: "2026-08-17 09:00:00", end_date: "2026-08-24 00:00:00", review_status: "Successful" },
   { number: "EDGE2", short_description: "sunday 23:59", state: "Closed", cmdb_ci: "B (prd)",
-    start_date: "2026-08-30 23:59:00", review_status: "Successful" }
+    start_date: "2026-08-17 09:00:00", end_date: "2026-08-30 23:59:00", review_status: "Successful" }
 ];
 const eb = bucketChanges(edgeChanges, w);
 check("monday-00:00 edge implemented", eb.implemented.some((r) => r.crNumber === "EDGE1"), true);

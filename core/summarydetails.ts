@@ -6,14 +6,14 @@ import { displayToSerial } from "./msrchoices.ts";
 //
 //   - Key Incidents          : P1/P2 incidents resolved LAST week (from the
 //                               already-pulled incident rows in the data view)
-//   - Changes Implemented     : change_request start_date in LAST week,
+//   - Changes Implemented     : change_request end_date in LAST week,
 //                               not failed and not cancelled
-//   - Changes Failed          : change_request start_date in LAST week with
+//   - Changes Failed          : change_request end_date in LAST week with
 //                               review_status = fail
 //   - Changes Planned         : change_request start_date in NEXT week
 //
-// The pull issues one scoped request per week (last, next) keyed on
-// start_date, so bucketing here is by start_date only. Weeks are Monday-Sunday.
+// The pull issues two scoped requests per cycle: last week keyed on end_date,
+// next week keyed on start_date. Weeks are Monday-Sunday.
 // Dates are emitted as Excel serial numbers (the template's date cells store
 // serials like 46253.68), or null when unparseable. Everything else on the
 // Summary sheet is human-authored narrative left for the editable section.
@@ -191,18 +191,17 @@ function changeRow(row: SummarySourceRow, dateStr: string): ChangeRow {
 }
 
 /**
- * Bucket change_request rows by start_date:
- *   - implemented: LAST week, not failed and not cancelled
- *   - failed:      LAST week, review_status = fail
- *   - planned:     NEXT week
+ * Bucket change_request rows:
+ *   - implemented: end_date in LAST week, not failed and not cancelled
+ *   - failed:      end_date in LAST week, review_status = fail
+ *   - planned:     start_date in NEXT week
  *
- * Failed takes precedence over implemented for last-week rows; cancelled rows
- * are excluded from both. Implemented does NOT require terminal Closed state —
- * a change scheduled/executed last week that has not yet been closed still
- * counts, matching how the weekly report treats "implemented last week".
- * Bucketing is
- * by start_date only (the pull issues one scoped request per week), so no
- * boundary-spanning end_date logic is needed here.
+ * Using end_date for last-week rows means a change is counted as
+ * "implemented last week" when it finished last week, regardless of when it
+ * started. Using start_date for next-week rows means a change is "planned"
+ * when it is scheduled to begin next week.
+ *
+ * Failed takes precedence over implemented; cancelled rows are excluded.
  */
 export function bucketChanges(rows: SummarySourceRow[], weeks: WeekRanges): {
   implemented: ChangeRow[];
@@ -213,13 +212,15 @@ export function bucketChanges(rows: SummarySourceRow[], weeks: WeekRanges): {
   const planned: ChangeRow[] = [];
   const failed: ChangeRow[] = [];
   for (const row of rows) {
+    const endMs = parseSnDisplayMs(pick(row, ["end_date"]));
+    const endStr = pick(row, ["end_date"]);
     const startMs = parseSnDisplayMs(pick(row, ["start_date"]));
     const startStr = pick(row, ["start_date"]);
-    if (inWindow(startMs, weeks.last)) {
+    if (inWindow(endMs, weeks.last)) {
       if (isFailed(row)) {
-        failed.push(changeRow(row, startStr));
+        failed.push(changeRow(row, endStr));
       } else if (!isCancelled(row)) {
-        implemented.push(changeRow(row, startStr));
+        implemented.push(changeRow(row, endStr));
       }
     } else if (inWindow(startMs, weeks.next)) {
       planned.push(changeRow(row, startStr));

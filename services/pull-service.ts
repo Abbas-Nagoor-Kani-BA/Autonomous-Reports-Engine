@@ -265,17 +265,21 @@ export class PullService {
     const scope = groupNames.length
       ? `assignment_group.nameIN${groupNames.map((g) => String(g).replace(/['\\]/g, "")).join(",")}^`
       : "";
-    const windowQuery = (from: string, to: string): string =>
+    // Last week: end_date in window = change ended last week = implemented.
+    const lastWeekQuery = (from: string, to: string): string =>
+      `${scope}end_dateBETWEENjavascript:gs.dateGenerate('${from}','00:00:00')@javascript:gs.dateGenerate('${to}','23:59:59')`;
+    // Next week: start_date in window = change starts next week = planned.
+    const nextWeekQuery = (from: string, to: string): string =>
       `${scope}start_dateBETWEENjavascript:gs.dateGenerate('${from}','00:00:00')@javascript:gs.dateGenerate('${to}','23:59:59')`;
 
-    const windows: Array<{ label: string; from: string; to: string }> = [
-      { label: "last week", from: weeks.last.from, to: weeks.last.to },
-      { label: "next week", from: weeks.next.from, to: weeks.next.to }
+    const windows: Array<{ label: string; from: string; to: string; queryFn: (f: string, t: string) => string }> = [
+      { label: "last week (end_date)",   from: weeks.last.from, to: weeks.last.to, queryFn: lastWeekQuery },
+      { label: "next week (start_date)", from: weeks.next.from, to: weeks.next.to, queryFn: nextWeekQuery }
     ];
 
     const byId = new Map<string, TicketRow>();
     for (const w of windows) {
-      const query = windowQuery(w.from, w.to);
+      const query = w.queryFn(w.from, w.to);
       progress("summary", `Weekly Summary: change requests for ${w.label} (${w.from} \u2013 ${w.to})...`);
       try {
         const total = await tickets.count("change_request", query);
