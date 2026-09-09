@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Autonomous Reports Engine",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Pull ServiceNow tickets via REST API, extract queue timelines (assign/ackn/suspend/resume), export Excel analysis.",
   "permissions": ["storage", "unlimitedStorage", "downloads", "sidePanel", "cookies", "scripting"],
   "host_permissions": ["https://*.service-now.com/*", "https://huggingface.co/*", "https://cdn-lfs.huggingface.co/*"],
