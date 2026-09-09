@@ -604,7 +604,7 @@
   .searchCase .btn.active { @apply bg-accent text-card border-accent; }
 
   #calclensMenu {
-    @apply absolute top-0 right-[calc(100%+8px)] z-[7] bg-card border border-line rounded-lg p-2 min-w-[250px] max-h-[70vh] overflow-auto shadow-[0_8px_24px_rgba(17,17,27,.55)];
+    @apply absolute top-[calc(100%+4px)] left-0 z-[7] bg-card border border-line rounded-lg p-2 min-w-[250px] max-h-[70vh] overflow-auto shadow-[0_8px_24px_rgba(17,17,27,.55)];
   }
   #calclensMenu .menuHead { @apply flex justify-between items-center gap-3 pb-1.5 mb-1 border-b border-line text-[11.5px] uppercase tracking-wide text-muted; }
   #calclensMenu .menuHead button { @apply text-[11px] px-2 py-0.5 font-normal; }

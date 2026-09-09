@@ -170,14 +170,15 @@ const SKELETON = `
   <button id="tabTickets" class="tab on" role="tab" aria-selected="true"><span class="g">☰</span> Tickets</button>
   <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
   <button id="ticketStatsBtn" class="btn icon-btn" data-tip="Ticket stats" aria-label="Ticket stats"></button>
-  <button id="calclensMenuBtn" class="icon-btn hidden">▾</button>
-  <div id="calclensMenu" class="hidden">
-    <div class="menuHead"><span>Highlights</span><button id="calclensShowAll">Show all</button></div>
-    <div class="menuHead sub"><button id="calclensHideAll">Hide all</button></div>
-    <div id="calclensHlList"></div>
+  <div id="calclensMenuWrap" class="hidden" style="position:relative">
+    <button id="calclensMenuBtn" class="icon-btn">▾</button>
+    <div id="calclensMenu" class="hidden">
+      <div class="menuHead"><span>Highlights</span><button id="calclensShowAll">Show all</button></div>
+      <div class="menuHead sub"><button id="calclensHideAll">Hide all</button></div>
+      <div id="calclensHlList"></div>
+    </div>
   </div>
-  <button id="calclensFilterBtn" class="icon-btn hidden">Flagged only</button>
-  <span id="splitChip" class="splitChip hidden"><span class="splitChipLabel"></span><button id="splitChipClear">✕</button></span>
+  <button id="calclensFilterBtn" class="icon-btn hidden">Flagged only</button>  <span id="splitChip" class="splitChip hidden"><span class="splitChipLabel"></span><button id="splitChipClear">✕</button></span>
   <span id="attentionChip" class="splitChip hidden"><span id="attentionChipLabel" class="splitChipLabel"></span><button id="attentionChipClear">✕</button></span>
 </div>
 <div id="ticketStatsModal" class="hidden">

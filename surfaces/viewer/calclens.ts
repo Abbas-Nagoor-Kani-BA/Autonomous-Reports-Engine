@@ -136,11 +136,11 @@ function updateCalclensBtn(): void {
 
 /**
  * Show or hide the Calclens secondary controls in the tabs bar
- * (Highlights button and Flagged-only button). Called whenever Calclens mode
- * changes so the controls only appear when Calclens is ON.
+ * (Highlights button+menu wrapper and Flagged-only button). Called whenever
+ * Calclens mode changes so the controls only appear when Calclens is ON.
  */
 function updateCalclensControls(on: boolean): void {
-  $("calclensMenuBtn").classList.toggle("hidden", !on);
+  $("calclensMenuWrap").classList.toggle("hidden", !on);
   $("calclensFilterBtn").classList.toggle("hidden", !on);
   // If Calclens is turned off, also close the Highlights dropdown so it
   // doesn't stay open floating over the page.
