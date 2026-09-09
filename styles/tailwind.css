@@ -751,6 +751,11 @@
     @apply bg-accent text-card2 border-accent;
   }
 
+  #calclensFilterBtn { @apply border border-line; }
+  #calclensFilterBtn.calclens-filter-on {
+    @apply bg-accent text-card2 border-accent;
+  }
+
   #editModeBtn { @apply border border-line; }
   #editModeBtn.edit-on {
     @apply bg-accent text-card2 border-accent;
