@@ -72,6 +72,7 @@ export function initCalclens(): void {
     const next = !getCalclensMode();
     setCalclensMode(next);
     btn.classList.toggle("calclens-on", next);
+    updateCalclensControls(next);
     render();
     if (!next) {
       panel.close();
@@ -99,13 +100,9 @@ export function initCalclens(): void {
     }
   });
 
-  // Filter button: toggle the attention filter. Requires Calclens mode to be ON
-  // (the filter uses the same attention context and should only run in that mode).
+  // Filter button: toggle the attention filter. Only reachable when Calclens
+  // is ON (the button is hidden otherwise).
   filterBtn.addEventListener("click", () => {
-    if (!getCalclensMode()) {
-      showToast("Turn Calclens on first");
-      return;
-    }
     setAttentionFilterActive(!getAttentionFilterActive());
     render();
     updateFilterBtn();
@@ -120,6 +117,7 @@ export function initCalclens(): void {
 
   // Reflect the persisted mode on boot.
   btn.classList.toggle("calclens-on", getCalclensMode());
+  updateCalclensControls(getCalclensMode());
 
   initCalclensHighlights();
   updateFilterBtn();
@@ -134,6 +132,19 @@ function updateCalclensBtn(): void {
   btn.setAttribute("data-tip", hidden > 0
     ? `Calclens — inspect how each value was derived (${hidden} highlight${hidden === 1 ? "" : "s"} hidden)`
     : "Calclens — inspect how each value was derived and edit the derivation columns");
+}
+
+/**
+ * Show or hide the Calclens secondary controls in the tabs bar
+ * (Highlights button and Flagged-only button). Called whenever Calclens mode
+ * changes so the controls only appear when Calclens is ON.
+ */
+function updateCalclensControls(on: boolean): void {
+  $("calclensMenuBtn").classList.toggle("hidden", !on);
+  $("calclensFilterBtn").classList.toggle("hidden", !on);
+  // If Calclens is turned off, also close the Highlights dropdown so it
+  // doesn't stay open floating over the page.
+  if (!on) $("calclensMenu").classList.add("hidden");
 }
 
 /**

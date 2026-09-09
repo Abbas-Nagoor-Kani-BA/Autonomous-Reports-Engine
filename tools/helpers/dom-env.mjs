@@ -150,15 +150,7 @@ const SKELETON = `
   </div>
   <div id="railBody">
     <button id="calclensBtn" class="icon-btn">Calclens</button>
-    <button id="calclensMenuBtn" class="icon-btn">▾</button>
-    <div id="calclensMenu" class="hidden">
-      <div class="menuHead"><span>Highlights</span><button id="calclensShowAll">Show all</button></div>
-      <div class="menuHead sub"><button id="calclensHideAll">Hide all</button></div>
-      <div id="calclensHlList"></div>
-    </div>
-    <button id="calclensFilterBtn" class="icon-btn">Flagged only</button>
-    <button id="editModeBtn" class="icon-btn">Edit column</button>
-    <button id="copyMsrBtn" class="icon-btn">Copy for MSR</button>
+    <button id="editModeBtn" class="icon-btn">Edit column</button>    <button id="copyMsrBtn" class="icon-btn">Copy for MSR</button>
     <button id="colsBtn" class="icon-btn">Columns</button>
     <div id="colMenu" class="hidden">
       <div class="menuHead"><span>Visible columns</span><button id="showAllCols">Show all</button></div>
@@ -178,6 +170,13 @@ const SKELETON = `
   <button id="tabTickets" class="tab on" role="tab" aria-selected="true"><span class="g">☰</span> Tickets</button>
   <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
   <button id="ticketStatsBtn" class="btn icon-btn" data-tip="Ticket stats" aria-label="Ticket stats"></button>
+  <button id="calclensMenuBtn" class="icon-btn hidden">▾</button>
+  <div id="calclensMenu" class="hidden">
+    <div class="menuHead"><span>Highlights</span><button id="calclensShowAll">Show all</button></div>
+    <div class="menuHead sub"><button id="calclensHideAll">Hide all</button></div>
+    <div id="calclensHlList"></div>
+  </div>
+  <button id="calclensFilterBtn" class="icon-btn hidden">Flagged only</button>
   <span id="splitChip" class="splitChip hidden"><span class="splitChipLabel"></span><button id="splitChipClear">✕</button></span>
   <span id="attentionChip" class="splitChip hidden"><span id="attentionChipLabel" class="splitChipLabel"></span><button id="attentionChipClear">✕</button></span>
 </div>

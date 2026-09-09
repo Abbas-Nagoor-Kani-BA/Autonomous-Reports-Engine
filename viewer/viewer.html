@@ -38,13 +38,6 @@
     </div>
     <div id="railBody">
       <button id="calclensBtn" class="btn" data-tip="Calclens — inspect how each value was derived and edit the derivation columns" aria-label="Calclens"></button>
-      <button id="calclensMenuBtn" class="btn" data-tip="Choose which Calclens highlights are shown" aria-label="Calclens highlights"></button>
-      <div id="calclensMenu" class="hidden">
-        <div class="menuHead"><span>Highlights</span><button id="calclensShowAll" class="btn">Show all</button></div>
-        <div class="menuHead sub"><button id="calclensHideAll" class="btn">Hide all</button></div>
-        <div id="calclensHlList"></div>
-      </div>
-      <button id="calclensFilterBtn" class="btn" data-tip="Show only tickets with attention flags (Calclens must be on)" aria-label="Show flagged tickets only"></button>
       <button id="editModeBtn" class="btn" data-tip="Edit mode — click a cell to bulk-edit that column across the current view" aria-label="Edit column">Edit column</button>
       <button id="copyMsrBtn" class="btn" data-tip="Copy the current view as MSR 'BA AO' input columns (A–U) — paste onto rows whose formulas in V–AJ stay intact" aria-label="Copy for MSR"></button>
       <button id="colsBtn" class="btn" data-tip="Choose which columns are shown" aria-label="Columns"></button>
@@ -65,6 +58,13 @@
     <button id="tabTickets" class="tab on" role="tab" aria-selected="true"><span class="g">☰</span> Tickets</button>
     <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
     <button id="tabSummaryDetails" class="tab" role="tab" aria-selected="false"><span class="g">◫</span> Weekly Summary</button>
+    <button id="calclensMenuBtn" class="btn hidden" data-tip="Choose which Calclens highlights are shown" aria-label="Calclens highlights"></button>
+    <div id="calclensMenu" class="hidden">
+      <div class="menuHead"><span>Highlights</span><button id="calclensShowAll" class="btn">Show all</button></div>
+      <div class="menuHead sub"><button id="calclensHideAll" class="btn">Hide all</button></div>
+      <div id="calclensHlList"></div>
+    </div>
+    <button id="calclensFilterBtn" class="btn hidden" data-tip="Show only tickets with attention flags" aria-label="Show flagged tickets only"></button>
     <span id="splitChip" class="splitChip hidden ml-auto"><span class="splitChipLabel"></span><button id="splitChipClear" class="splitChipClear" data-tip="Clear split filter" aria-label="Clear split filter">✕</button></span>
     <span id="attentionChip" class="splitChip hidden"><span id="attentionChipLabel" class="splitChipLabel"></span><button id="attentionChipClear" class="splitChipClear" data-tip="Clear attention filter" aria-label="Clear attention filter">✕</button></span>
     <button id="ticketStatsBtn" class="btn icon-btn ml-auto" data-tip="Ticket stats — state breakdown and SLA met/breached for the current view" aria-label="Ticket stats"></button>
