@@ -43,30 +43,46 @@ are 24/7 obligations: SLA time accumulates through nights, weekends, and bank ho
 
 ## Full calculation formulas
 
-This section documents the exact step-by-step formula logic for every calculated column,
-covering both priorities. Verified against the extracted Excel formulas and the app source.
+This section documents the exact step-by-step formula logic for every calculated column.
+Verified against the extracted Excel formulas and the app source.
+
+**Important distinction:**
+
+- **WSR** has no priority column. Every formula unconditionally uses business hours
+  (Mon–Fri 08:00–17:00) and always subtracts the suspend window. There is no
+  P1/P2 vs P3/P4 branching anywhere in the WSR.
+- **MSR** has a priority column (col G, integer 1–4) and branches on it:
+  P1/P2 → wall-clock (no suspend subtraction); P3/P4 → business hours (suspend subtracted).
+- **App** follows the MSR branching logic.
+
+---
 
 ### IncidentHours  (WSR col J / MSR col Z)
 
 Measures the total ticket lifetime from creation to resolution.
 
-**P3/P4 — business hours:**
+**WSR — always business hours, always subtracts suspend:**
 ```
 gross  = biz(created, resolved)          # business hours Mon-Fri 08:00-17:00
 susp   = biz(suspended, resumed)         # 0 when either endpoint missing
+result = gross − susp                    # = H2 − I2
+```
+
+**MSR P3/P4 — business hours:**
+```
+gross  = biz(created, resolved)
+susp   = biz(suspended, resumed)         # only when both O and P are present
 result = gross − susp
 ```
 - If resolved is missing (open ticket): `gross = biz(created, NOW())`
 - Suspend subtraction only happens when BOTH suspended and resumed are present.
 
-**P1/P2 — wall-clock:**
+**MSR P1/P2 — wall-clock, no suspend subtraction:**
 ```
 result = resolved − created              # raw elapsed, no clipping, no suspend subtraction
 ```
-The suspend window is **not subtracted** for P1/P2. Being put on hold does not pause the
-P1/P2 SLA clock.
 
-**App function:** `calcBusinessHours` in `core/report.ts`
+**App function:** `calcBusinessHours` in `core/report.ts` (follows MSR branching)
 
 ---
 
@@ -75,36 +91,43 @@ P1/P2 SLA clock.
 Measures the time from assignment to resolution (or now for open tickets). This is the primary
 SLA metric used for MetMin/MaxResolution.
 
-**P3/P4 — business hours, four scenarios:**
+**WSR — always business hours, always subtracts suspend:**
+```
+gross  = biz(assigned, resolved)         # business hours
+susp   = biz(suspended, resumed)         # col I
+result = gross − susp                    # = G2 − I2
+```
+
+**MSR P3/P4 — business hours, four scenarios:**
 
 | Condition | Formula |
 |---|---|
 | Resolved (N present) | `biz(assigned, resolved) − biz(suspended, resumed)` |
-| Open, not on hold (N absent, O absent) | `biz(assigned, NOW()) − 0` |
+| Open, not on hold (N absent, O absent) | `biz(assigned, NOW())` |
 | Open, on hold (N absent, O present, P absent) | `biz(assigned, suspended)` — clock frozen at suspend time |
 | Open, resumed (N absent, O present, P present) | `biz(assigned, NOW()) − biz(suspended, resumed)` |
 
-**P1/P2 — wall-clock:**
+**MSR P1/P2 — wall-clock, no suspend subtraction:**
 ```
 result = resolved − assigned             # raw elapsed, no clipping
 ```
-The suspend window is **not subtracted** for P1/P2.
 
-**App function:** `calcIncCurrentHours` in `core/report.ts`
+**App function:** `calcIncCurrentHours` in `core/report.ts` (follows MSR branching)
 
 ---
 
 ### TotalSuspendedTime  (WSR col I only)
 
-WSR computes this as a standalone column so J and L can subtract it with a simple `H − I` and
-`G − I`. MSR embeds the suspend subtraction directly inside the IFS formula.
+WSR computes this as a standalone intermediate column so J and L can reference it directly.
+MSR embeds the suspend subtraction inside the IFS formula without a dedicated column.
 
+**WSR — always business hours:**
 ```
-result = biz(suspended, resumed)         # P3/P4 business hours
-       = 0   when either endpoint missing
+result = biz(suspended, resumed)
+       = 0   when either endpoint is missing
 ```
 
-P1/P2: not computed separately; never subtracted.
+No priority branching. The WSR always computes and always subtracts this value.
 
 **App field:** `rep.suspendWindowHours` (computed inline in `buildReport`)
 
@@ -114,27 +137,31 @@ P1/P2: not computed separately; never subtracted.
 
 Measures how long it took to acknowledge the ticket after assignment.
 
-**P3/P4 — business hours:**
+**WSR — always business hours, no suspend subtraction:**
+```
+result = biz(assigned, ack)
+```
+No priority column, so there is no wall-clock branch. However, like MSR, the suspend window
+is **never subtracted** from ResponseSLA in the WSR either.
+
+**MSR P3/P4 — business hours, no suspend subtraction:**
 ```
 result = biz(assigned, ack)
 ```
 If ack is missing (not yet acknowledged): `result = biz(assigned, NOW())`
 
-**The suspend window is NEVER subtracted from ResponseSLA in either WSR or MSR.**
-This is correct behaviour: the ack must happen before any suspend event in normal flow,
-so there is nothing to subtract.
+**The suspend window is NEVER subtracted from ResponseSLA — in WSR, MSR, or the app.**
+This is correct: acknowledgement happens before any suspend event in normal flow.
 
-**P1/P2 — wall-clock:**
+**MSR P1/P2 — wall-clock, no suspend subtraction:**
 ```
 result = ack − assigned                  # raw elapsed
 ```
-Same rule applies: no suspend subtraction.
 
 **App function:** `calcResponseSLA` in `core/report.ts`
 
-> ⚠️ Known bug: the current app implementation of `calcResponseSLA` subtracts the suspend
-> window for P3/P4, which does not match the Excel. The fix is to remove the suspend
-> subtraction block from the P3/P4 branch. See Gap 1 below.
+> ⚠️ Known bug: the current app `calcResponseSLA` subtracts the suspend window for P3/P4,
+> which does not match the WSR or MSR. P1/P2 are not affected. See Gap 1 below.
 
 ---
 
@@ -225,32 +252,55 @@ result = IFNA(IF(CumulativeSLA < max_target, "YES", "NO"), "")
 
 ---
 
-## P1/P2 suspend window — confirmed behaviour
+## P1/P2 and WSR suspend window — confirmed behaviour
 
-Verified against the MSR formula source and against 10 synthetic test tickets (5 P1, 5 P2)
-covering normal, breached, with-suspend, overnight, and weekend-spanning scenarios.
+Verified against the MSR and WSR formula source and against 10 synthetic test tickets
+(5 P1, 5 P2) covering normal, breached, with-suspend, overnight, and weekend-spanning
+scenarios.
 
-**MSR formula for P1/P2 (all three columns):**
+### WSR — no priority, always subtracts suspend
+
+The WSR has no priority column at all. Every formula is unconditional:
+
+```
+G  = biz(assigned, resolved)          ← gross, no suspend sub
+H  = biz(created,  resolved)          ← gross, no suspend sub
+I  = biz(suspended, resumed)          ← suspend window
+J  = H − I                            ← always subtracts I
+L  = G − I                            ← always subtracts I
+N  = biz(assigned, ack)               ← no suspend sub (ResponseSLA)
+```
+
+There are no `IF` branches on priority in the WSR. If you fill in a P1 ticket in the WSR,
+the suspend window will still be subtracted from IncidentHours and IncCurrentHours.
+
+### MSR — branches on priority
+
 ```excel
 IF(NOT(OR(G=1, G=2)),
-   <biz_hours_path>,          ← P3/P4 branch — does subtract suspend
-   <wall_clock_path>          ← P1/P2 branch: simply N-L or M-L, NO suspend sub
+   <biz_hours_path>,          ← P3/P4: uses biz hours, subtracts suspend from incH/curH
+   <wall_clock_path>          ← P1/P2: plain N-L / M-L, NO suspend subtraction, ever
 )
 ```
 
-The P1/P2 branch is a plain subtraction (`resolved − assigned`). There is no suspend
-subtraction in that branch, in any column, in either spreadsheet.
+The P1/P2 wall-clock branch is a plain subtraction (`resolved − assigned`). There is no
+suspend subtraction in that branch, in any column.
 
-**App implementation:** P1/P2 hit an early `return` inside `calcBusinessHours`,
-`calcIncCurrentHours`, and `calcResponseSLA` before the suspend subtraction block is reached.
-The result is identical to the MSR.
+### App — follows MSR branching
 
-**Practical consequence:** A P1 or P2 ticket that is put on hold still accumulates SLA time
-while on hold. Example — P2 assigned at 08:05, suspended 12:00–14:00, resolved at 18:00:
+P1/P2 hit an early `return` inside `calcBusinessHours`, `calcIncCurrentHours`, and
+`calcResponseSLA` before the suspend subtraction block is reached. Result identical to MSR.
+
+### Practical consequence for P1/P2
+
+A P1 or P2 ticket that is put on hold still accumulates SLA time while on hold.
+
+Example — P2 assigned at 08:05, suspended 12:00–14:00, resolved at 18:00:
 - IncCurrentHours = `18:00 − 08:05` = **9:55** (includes the 2h on-hold period)
 - MSR = **9:55**, App = **9:55** ✅
 
-This is intentional. P1/P2 carry 24/7 SLA obligations; suspend pauses are not excused.
+This is intentional. P1/P2 carry 24/7 SLA obligations; being placed on hold does not excuse
+the SLA clock.
 
 ---
 
@@ -276,7 +326,7 @@ The WSR spreadsheet (`wsr-slacal.xlsx`) is a single-sheet calculator.
 | G | InProgressTime (FromASG) | `biz(B, D)` | Gross business hours Assigned → Resolved. No suspend sub. |
 | H | InProgressTime (FromCRT) | `biz(A, D)` | Gross business hours Created → Resolved. No suspend sub. |
 | I | TotalSuspendedTime | `biz(E, F)` | Business hours of the suspend window only. |
-| J | IncidentHours (FromCRT) | `H − I` | Net: gross − suspend. P1/P2 not applicable (WSR is P3/P4 only). |
+| J | IncidentHours (FromCRT) | `H − I` | Net: gross − suspend. No priority check — always subtracted. |
 | K | IncidentTotalAge | `ROUND((J × 24) / 9, 2)` | J in working days (9 h/day). |
 | L | IncCurrentHours (FromASG) | `G − I` | Net: gross − suspend. |
 | M | IncidentCurrentAge (ASG) | `ROUND((L × 24) / 9, 2)` | L in working days. |
