@@ -5,3 +5,4 @@ styles/output.css
 *.zip
 .DS_Store
 graphify-out/
+*.xlsx
