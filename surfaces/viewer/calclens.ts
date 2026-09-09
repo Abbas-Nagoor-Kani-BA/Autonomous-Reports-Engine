@@ -6,7 +6,7 @@
  * grid body is always read-only; the drawer also edits the derivation columns.
  */
 import { $, columnOptionList, visibleCols } from "./core.ts";
-import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus, attentionCtx, getSnOffsetMs } from "./grid.ts";
+import { findRowBySysId, fmtInstant, render, reportCellFocus, scheduleSave, setOnCellFocus, attentionCtx, getSnOffsetMs } from "./grid.ts";
 import { currentRows, parseInstanceInput } from "./grid-data.ts";
 import { setSelPoint, getSelFocus } from "./selection.ts";
 import { getMsrLists } from "./store.ts";
