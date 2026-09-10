@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Autonomous Reports Engine",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Pull ServiceNow tickets via REST API, extract queue timelines (assign/ackn/suspend/resume), export Excel analysis.",
   "permissions": [
     "storage",
