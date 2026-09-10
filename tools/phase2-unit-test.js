@@ -45,6 +45,26 @@ check("ackn eligibility unaffected by clamp (pre-birth assignment still counts)"
   })(),
   ["2026-03-13T08:00:00.000Z", "2026-03-12T09:00:00.000Z"]);
 
+console.log("== same-epoch queue entry + member assignment => assignTime == acknTime ==");
+check("assigned_to listed before same-epoch group entry still acks (equal times)",
+  (() => {
+    const t = extractTimelines([
+      ev("assigned_to", "", "Fred Luddy", "2026-08-23 06:06:43"),
+      ev("assignment_group", "Other Queue", "QA Queue Alpha", "2026-08-23 06:06:43")
+    ], { ...base, openedAtUtcRaw: "2026-08-23 06:06:35" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso, t.assignTimeUtcIso === t.acknTimeUtcIso];
+  })(),
+  ["2026-08-23T06:06:43.000Z", "2026-08-23T06:06:43.000Z", true]);
+check("group entry listed before same-epoch assigned_to also acks (equal times)",
+  (() => {
+    const t = extractTimelines([
+      ev("assignment_group", "Other Queue", "QA Queue Alpha", "2026-08-23 06:06:43"),
+      ev("assigned_to", "", "Fred Luddy", "2026-08-23 06:06:43")
+    ], { ...base, openedAtUtcRaw: "2026-08-23 06:06:35" });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso, t.assignTimeUtcIso === t.acknTimeUtcIso];
+  })(),
+  ["2026-08-23T06:06:43.000Z", "2026-08-23T06:06:43.000Z", true]);
+
 console.log("== classic regressions ==");
 check("prequeue ackn ignored",
   extractTimelines([
@@ -405,6 +425,127 @@ check("enforceOrderingContract: hold->resolved captured as resume source Resolve
     return [t.suspendTimeUtcIso, t.resumeTimeUtcIso, t.resumeSource];
   })(),
   ["2026-09-01T09:00:00.000Z", "2026-09-01T11:00:00.000Z", "Resolved"]);
+
+console.log("== Option B: measure against ANY of our configured queues ==");
+// Our queues = QA Queue Alpha + INFORM; members = Fred Luddy, ITIL User.
+const multi = {
+  stateMap: base.stateMap,
+  queueNames: ["QA Queue Alpha", "INFORM"],
+  memberNames: base.memberNames
+};
+const mrun = (rows, snap, openedAt) => extractTimelines(rows, {
+  ...multi, queueName: snap, snapshotGroupName: snap, openedAtUtcRaw: openedAt
+});
+
+check("S1 multi-queue, acked in earlier of our queues (assign goes back)",
+  (() => {
+    const t = mrun([
+      ev("assignment_group", "OTHER", "QA Queue Alpha", "2026-01-01 09:00:00"),
+      ev("assigned_to", "", "Fred Luddy", "2026-01-01 09:05:00"),
+      ev("assignment_group", "QA Queue Alpha", "ETL", "2026-01-01 10:00:00"),
+      ev("assignment_group", "ETL", "QA Queue Alpha", "2026-01-01 11:00:00"),
+      ev("assigned_to", "", "ITIL User", "2026-01-01 11:20:00"),
+      ev("assignment_group", "QA Queue Alpha", "INFORM", "2026-01-01 15:00:00")
+    ], "INFORM", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-01-01T11:00:00.000Z", "2026-01-01T11:20:00.000Z"]);
+
+check("S2 acked in the latest of our queues",
+  (() => {
+    const t = mrun([
+      ev("assignment_group", "OTHER", "QA Queue Alpha", "2026-01-01 09:00:00"),
+      ev("assignment_group", "QA Queue Alpha", "INFORM", "2026-01-01 12:00:00"),
+      ev("assigned_to", "", "Fred Luddy", "2026-01-01 12:30:00")
+    ], "INFORM", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-01-01T12:00:00.000Z", "2026-01-01T12:30:00.000Z"]);
+
+check("S3 acked-stay wins over a later un-acked our-queue stay",
+  (() => {
+    const t = mrun([
+      ev("assignment_group", "OTHER", "QA Queue Alpha", "2026-01-01 09:00:00"),
+      ev("assigned_to", "", "Fred Luddy", "2026-01-01 09:10:00"),
+      ev("assignment_group", "QA Queue Alpha", "INFORM", "2026-01-01 14:00:00")
+    ], "INFORM", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-01-01T09:00:00.000Z", "2026-01-01T09:10:00.000Z"]);
+
+check("S4 through our queues but never acked -> latest entry, ack null",
+  (() => {
+    const t = mrun([
+      ev("assignment_group", "OTHER", "QA Queue Alpha", "2026-01-01 09:00:00"),
+      ev("assigned_to", "", "Zoe Nonmember", "2026-01-01 09:10:00"),
+      ev("assignment_group", "QA Queue Alpha", "INFORM", "2026-01-01 14:00:00")
+    ], "INFORM", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-01-01T14:00:00.000Z", null]);
+
+check("S5 ticket never entered any of our queues -> both null",
+  (() => {
+    const t = mrun([
+      ev("assignment_group", "OTHER", "ETL", "2026-01-01 09:00:00"),
+      ev("assigned_to", "", "Zoe Nonmember", "2026-01-01 09:10:00")
+    ], "ETL", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  [null, null]);
+
+check("S6 born in one of our queues, acked",
+  (() => {
+    const t = mrun([
+      ev("assigned_to", "", "Fred Luddy", "2026-01-01 08:30:00")
+    ], "QA Queue Alpha", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-01-01T08:00:00.000Z", "2026-01-01T08:30:00.000Z"]);
+
+check("S7 ack epoch equals our-queue entry epoch",
+  (() => {
+    const t = mrun([
+      ev("assignment_group", "OTHER", "QA Queue Alpha", "2026-01-01 09:00:00"),
+      ev("assigned_to", "", "Fred Luddy", "2026-01-01 09:00:00")
+    ], "QA Queue Alpha", "2026-01-01 08:00:00");
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-01-01T09:00:00.000Z", "2026-01-01T09:00:00.000Z"]);
+
+console.log("== Option B: real BA ticket (APPSUP_AIRPORTOPS + APPSUP_INFORM) ==");
+check("BA ticket resolves assign+ack from the earlier acked AIRPORTOPS stay",
+  (() => {
+    const rows = [
+      ev("assignment_group", "", "APPSUP_AIRPORTOPS", "2026-08-28 07:20:48"),
+      ev("state", "", "New", "2026-08-28 07:20:48"),
+      ev("assigned_to", "", "Sethupathi Rammohan", "2026-08-28 09:11:17"),
+      ev("state", "New", "In Progress", "2026-08-28 09:11:17"),
+      ev("assigned_to", "Sethupathi Rammohan", "", "2026-08-28 13:55:08"),
+      ev("assignment_group", "APPSUP_AIRPORTOPS", "APPSUP_ETL", "2026-08-28 13:55:08"),
+      ev("state", "In Progress", "Open", "2026-08-28 13:55:08"),
+      ev("assigned_to", "", "Jeevabharathi Srinivaasan", "2026-08-28 14:04:09"),
+      ev("state", "Open", "In Progress", "2026-08-28 14:04:09"),
+      ev("assigned_to", "Jeevabharathi Srinivaasan", "", "2026-08-28 16:05:35"),
+      ev("assignment_group", "APPSUP_ETL", "APPSUP_AIRPORTOPS", "2026-08-28 16:05:35"),
+      ev("state", "In Progress", "Open", "2026-08-28 16:05:35"),
+      ev("assigned_to", "", "Sethupathi Rammohan", "2026-08-28 16:26:43"),
+      ev("state", "Open", "In Progress", "2026-08-28 16:26:43"),
+      ev("assignment_group", "APPSUP_AIRPORTOPS", "APPSUP_INFORM", "2026-08-31 23:07:05"),
+      ev("state", "In Progress", "Resolved", "2026-08-31 23:07:05"),
+      ev("state", "Resolved", "Closed", "2026-09-03 23:44:10")
+    ];
+    const t = extractTimelines(rows, {
+      stateMap: {},
+      queueName: "appsup_inform",
+      queueNames: ["APPSUP_AIRPORTOPS", "APPSUP_INFORM"],
+      memberNames: ["Sethupathi Rammohan"],
+      snapshotGroupName: "APPSUP_INFORM",
+      openedAtUtcRaw: "2026-08-28 07:20:48"
+    });
+    return [t.assignTimeUtcIso, t.acknTimeUtcIso];
+  })(),
+  ["2026-08-28T16:05:35.000Z", "2026-08-28T16:26:43.000Z"]);
 
 console.log(`\nphase2: ${failed ? failed + " FAILED" : "all passed"}`);
 process.exit(failed ? 1 : 0);

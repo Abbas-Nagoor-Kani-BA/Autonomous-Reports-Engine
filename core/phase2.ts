@@ -7,8 +7,15 @@ import { parseSnDisplayMs } from "../core/sntime.ts";
 export type ExtractCtx = {
   /** OOB state value->label map */
   stateMap: Record<string, string>;
-  /** name-keyed target queue */
+  /** name-keyed target queue (the ticket's current group) */
   queueName: string;
+  /**
+   * All of OUR configured queues (name-keyed). The timeline is measured against
+   * ANY of these, not just the current group: a ticket can be assigned to and
+   * acknowledged in one of our queues, then travel to another of our queues
+   * before it is pulled. When absent, falls back to the single {@link queueName}.
+   */
+  queueNames?: string[];
   /** plain team-member names for ackn detection */
   memberNames: string[];
   /** the ticket's current group display name */
@@ -68,6 +75,17 @@ type AuditRowLike = {
   at: string;
 };
 
+const FIELD_ORDER: Record<string, number> = {
+  assignment_group: 0,
+  assigned_to: 1,
+  state: 2
+};
+
+function fieldRank(field: string | undefined): number {
+  const r = FIELD_ORDER[field ?? ""];
+  return r === undefined ? 3 : r;
+}
+
 function normalizeEvents(auditRows: AuditRowLike[] | null | undefined): Event[] {
   return (auditRows || [])
     .map(r => ({
@@ -77,7 +95,7 @@ function normalizeEvents(auditRows: AuditRowLike[] | null | undefined): Event[] 
       atEpoch: utcRawToEpochMs(r.at)
     }))
     .filter(e => Number.isFinite(e.atEpoch))
-    .sort((a, b) => a.atEpoch - b.atEpoch);
+    .sort((a, b) => a.atEpoch - b.atEpoch || fieldRank(a.field) - fieldRank(b.field));
 }
 
 function createResult(): Timeline {
@@ -92,17 +110,16 @@ function createResult(): Timeline {
   };
 }
 
-function applyBornInQueueFallback(events: Event[], result: Timeline, ctx: ExtractCtx): { group: string | null; stays: QueueStay[] } {
-  const inQueue = (g: unknown) => g != null && nameKey(g) === nameKey(ctx.queueName);
+function applyBornInQueueFallback(events: Event[], result: Timeline, ctx: ExtractCtx, ourQueues: Set<string>): { group: string | null; stays: QueueStay[] } {
   const hasGroupEvent = events.some(e => e.field === "assignment_group");
-  if (hasGroupEvent || !inQueue(ctx.snapshotGroupName)) return { group: null, stays: [] };
+  if (hasGroupEvent || !inOurQueues(ourQueues, ctx.snapshotGroupName)) return { group: null, stays: [] };
   const bornEpoch = utcRawToEpochMs(ctx.openedAtUtcRaw);
   if (!Number.isFinite(bornEpoch)) return { group: null, stays: [] };
   result.assignTimeUtcIso = epochMsToUtcIso(bornEpoch);
   result.lastQueueEntryEpoch = bornEpoch;
   return {
     group: ctx.snapshotGroupName,
-    stays: [{ entryEpoch: bornEpoch, exitEpoch: null, memberAcks: [] }]
+    stays: [{ entryEpoch: bornEpoch, exitEpoch: null, memberAcks: [], queue: ctx.snapshotGroupName }]
   };
 }
 
@@ -110,21 +127,28 @@ type QueueStay = {
   entryEpoch: number;
   exitEpoch: number | null;
   memberAcks: number[];
+  queue: string | null;
 };
 
 type HoldRecord = {
   suspendEpoch: number;
   resumeEpoch: number | null;
   resumeSource: string | null;
+  queue: string | null;
 };
 
 type LoopState = {
   currentGroup: string | null;
   memberSet: Set<string>;
+  ourQueues: Set<string>;
   queueStays: QueueStay[];
   allHolds: HoldRecord[];
   lastSuspendEpoch: number | null;
 };
+
+function inOurQueues(ourQueues: Set<string>, g: unknown): boolean {
+  return g != null && ourQueues.has(nameKey(g));
+}
 
 function lastOpenStay(arr: QueueStay[]): QueueStay | undefined {
   for (let i = arr.length - 1; i >= 0; i--) {
@@ -141,18 +165,18 @@ function lastOpenHold(arr: HoldRecord[]): HoldRecord | undefined {
 }
 
 function handleGroupEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState: LoopState): void {
-  const inQueue = (g: unknown) => g != null && nameKey(g) === nameKey(ctx.queueName);
-  const wasInQueue = inQueue(e.oldValue);
-  const nowInQueue = inQueue(e.newValue);
+  const wasInQueue = inOurQueues(loopState.ourQueues, e.oldValue);
+  const nowInQueue = inOurQueues(loopState.ourQueues, e.newValue);
 
-  if (nowInQueue) {
-    result.assignTimeUtcIso = epochMsToUtcIso(e.atEpoch);
-    result.lastQueueEntryEpoch = e.atEpoch;
-    loopState.queueStays.push({ entryEpoch: e.atEpoch, exitEpoch: null, memberAcks: [] });
-  } else if (wasInQueue) {
+  if (wasInQueue) {
     const openStay = lastOpenStay(loopState.queueStays);
     if (openStay) openStay.exitEpoch = e.atEpoch;
     loopState.lastSuspendEpoch = null;
+  }
+  if (nowInQueue) {
+    result.assignTimeUtcIso = epochMsToUtcIso(e.atEpoch);
+    result.lastQueueEntryEpoch = e.atEpoch;
+    loopState.queueStays.push({ entryEpoch: e.atEpoch, exitEpoch: null, memberAcks: [], queue: e.newValue });
   }
   loopState.currentGroup = e.newValue;
 }
@@ -165,15 +189,14 @@ function handleAssignmentEvent(e: Event, result: Timeline, ctx: ExtractCtx, loop
 }
 
 function handleStateEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState: LoopState): void {
-  const inQueue = (g: unknown) => g != null && nameKey(g) === nameKey(ctx.queueName);
-  if (!inQueue(loopState.currentGroup)) return;
+  if (!inOurQueues(loopState.ourQueues, loopState.currentGroup)) return;
 
   const toLabel = resolveLabel(ctx.stateMap, e.newValue).toLowerCase();
   const fromLabel = resolveLabel(ctx.stateMap, e.oldValue).toLowerCase();
 
   if (toLabel === "on hold" && fromLabel !== "on hold") {
     result.onHoldCount++;
-    loopState.allHolds.push({ suspendEpoch: e.atEpoch, resumeEpoch: null, resumeSource: null });
+    loopState.allHolds.push({ suspendEpoch: e.atEpoch, resumeEpoch: null, resumeSource: null, queue: loopState.currentGroup });
     loopState.lastSuspendEpoch = e.atEpoch;
   }
 
@@ -194,7 +217,10 @@ function handleStateEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState
   }
 }
 
-function resolveAssignAndAckTime(result: Timeline, queueStays: QueueStay[]): void {
+function resolveAssignAndAckTime(result: Timeline, queueStays: QueueStay[]): QueueStay | null {
+  // Acked-stay-wins: the LATEST of our-queue stays that carries a valid member
+  // ack sets BOTH assignTime (that stay's entry) and ackTime (its first ack),
+  // even if a later un-acked our-queue stay exists (assignTime "goes back").
   for (let i = queueStays.length - 1; i >= 0; i--) {
     const stay = queueStays[i];
     const validAcks = stay.memberAcks.filter(a => a >= stay.entryEpoch).sort((a, b) => a - b);
@@ -202,17 +228,36 @@ function resolveAssignAndAckTime(result: Timeline, queueStays: QueueStay[]): voi
       result.assignTimeUtcIso = epochMsToUtcIso(stay.entryEpoch);
       result.lastQueueEntryEpoch = stay.entryEpoch;
       result.acknTimeUtcIso = epochMsToUtcIso(validAcks[0]);
-      return;
+      return stay;
     }
   }
+  // No stay was ever acknowledged: assignTime is the LATEST entry into any of
+  // our queues (queue entry is guaranteed for a pulled ticket); ack stays null.
+  // If the ticket never entered one of our queues, both remain null.
+  if (queueStays.length > 0) {
+    const latest = queueStays[queueStays.length - 1];
+    result.assignTimeUtcIso = epochMsToUtcIso(latest.entryEpoch);
+    result.lastQueueEntryEpoch = latest.entryEpoch;
+    result.acknTimeUtcIso = null;
+    return latest;
+  }
+  result.assignTimeUtcIso = null;
+  result.acknTimeUtcIso = null;
+  result.lastQueueEntryEpoch = null;
+  return null;
 }
 
-function resolveSuspendResume(result: Timeline, allHolds: HoldRecord[]): void {
+function resolveSuspendResume(result: Timeline, allHolds: HoldRecord[], chosenStay: QueueStay | null): void {
   const assignEpoch = result.assignTimeUtcIso ? parseUtc(result.assignTimeUtcIso) : null;
   if (assignEpoch === null || !Number.isFinite(assignEpoch)) return;
 
+  // Suspend/resume follow the CHOSEN stay's QUEUE: only holds that occurred
+  // while the ticket was in that same queue count (across all of its stays in
+  // that queue), and only at/after assignTime. Holds in OTHER of our queues are
+  // excluded so a hold in a queue we did not pick cannot leak in.
+  const chosenQueue = chosenStay ? nameKey(chosenStay.queue) : null;
   const valid = allHolds
-    .filter(h => h.suspendEpoch > assignEpoch)
+    .filter(h => h.suspendEpoch > assignEpoch && (chosenQueue === null || nameKey(h.queue) === chosenQueue))
     .sort((a, b) => a.suspendEpoch - b.suspendEpoch);
   if (valid.length === 0) return;
 
@@ -256,11 +301,17 @@ function extractTimelines(auditRows: AuditRowLike[] | null | undefined, ctx: Ext
   const events = normalizeEvents(auditRows);
   const result = createResult();
   const memberSet = new Set((ctx.memberNames || []).map(nameKey));
+  const ourQueues = new Set<string>(
+    ((ctx.queueNames && ctx.queueNames.length ? ctx.queueNames : [ctx.queueName]) || [])
+      .map(nameKey)
+      .filter(q => q.length > 0)
+  );
 
-  const fallback = applyBornInQueueFallback(events, result, ctx);
+  const fallback = applyBornInQueueFallback(events, result, ctx, ourQueues);
   const loopState: LoopState = {
     currentGroup: fallback.group,
     memberSet,
+    ourQueues,
     queueStays: fallback.stays,
     allHolds: [],
     lastSuspendEpoch: null
@@ -272,8 +323,8 @@ function extractTimelines(auditRows: AuditRowLike[] | null | undefined, ctx: Ext
     else if (e.field === "state") handleStateEvent(e, result, ctx, loopState);
   }
 
-  resolveAssignAndAckTime(result, loopState.queueStays);
-  resolveSuspendResume(result, loopState.allHolds);
+  const chosenStay = resolveAssignAndAckTime(result, loopState.queueStays);
+  resolveSuspendResume(result, loopState.allHolds, chosenStay);
   clampAssignTime(result, ctx);
   enforceOrderingContract(result);
   return result;
@@ -370,10 +421,15 @@ function analyzeAll(
     const sysIdStr = typeof sysId === "string" ? sysId : null;
     const rows = sysIdStr ? (auditByTicket[sysIdStr] as AuditRowLike[] | undefined) : undefined;
     if (!rows) missingAudit++;
+    const queueNames = Object.keys(membersByQueue);
+    const flatMembers = queueNames.length
+      ? Array.from(new Set([...fallbackMembers, ...Object.values(membersByQueue).flat()]))
+      : fallbackMembers;
     const t = extractTimelines(rows, {
       stateMap,
       queueName: nameKey(snapshotGroupName),
-      memberNames: membersByQueue[nameKey(snapshotGroupName)] || fallbackMembers,
+      queueNames: queueNames.length ? queueNames : [nameKey(snapshotGroupName)],
+      memberNames: flatMembers,
       snapshotGroupName,
       openedAtUtcRaw: rawValue(rec.opened_at)
     });
