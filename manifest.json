@@ -1,10 +1,21 @@
 {
   "manifest_version": 3,
   "name": "Autonomous Reports Engine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Pull ServiceNow tickets via REST API, extract queue timelines (assign/ackn/suspend/resume), export Excel analysis.",
-  "permissions": ["storage", "unlimitedStorage", "downloads", "sidePanel", "cookies", "scripting"],
-  "host_permissions": ["https://*.service-now.com/*", "https://huggingface.co/*", "https://cdn-lfs.huggingface.co/*"],
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "downloads",
+    "sidePanel",
+    "cookies",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.service-now.com/*",
+    "https://huggingface.co/*",
+    "https://cdn-lfs.huggingface.co/*"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
@@ -24,8 +35,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.service-now.com/*"],
-      "js": ["content/content.js"],
+      "matches": [
+        "https://*.service-now.com/*"
+      ],
+      "js": [
+        "content/content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
