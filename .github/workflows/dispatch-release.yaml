@@ -118,4 +118,20 @@ jobs:
         run: |
           git tag "$NEW_TAG" -m "Release $NEW_TAG"
           git push origin "$NEW_TAG"
-          echo "Tagged and pushed $NEW_TAG — release.yaml will now build and publish the release."
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Full gate (typecheck + lint + test + build)
+        run: npm run release
+
+      - name: Package zip
+        run: npm run zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: ${{ steps.version.outputs.new_tag }}
+          files: '*.zip'
+          prerelease: ${{ inputs.prerelease_suffix != '' }}

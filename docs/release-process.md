@@ -54,7 +54,7 @@ Leave blank for a stable release. Enter a suffix string to publish a pre-release
 
 ## What happens automatically
 
-### dispatch-release.yaml
+### dispatch-release.yaml (does everything)
 
 1. Reads the current version from `package.json`.
 2. Applies the selected bump (major/minor/patch), resets lower components.
@@ -65,15 +65,18 @@ Leave blank for a stable release. Enter a suffix string to publish a pre-release
    requires a numeric-only `X.Y.Z` format in the extension manifest.
 7. Commits both files to `main`: `chore: bump version to 1.1.0-beta.1`
 8. Creates and pushes the tag `v1.1.0-beta.1`.
+9. Runs `npm ci` to install dependencies.
+10. Runs `npm run release` — full gate: typecheck + lint + test + build.
+11. Runs `npm run zip` — produces `autonomous-reports-engine-X.Y.Z.zip`.
+12. Creates a GitHub Release attached to the tag.
+    - No pre-release suffix → published as a **stable release**.
+    - Pre-release suffix provided → published as a **pre-release**.
 
-### release.yaml (fires automatically on the tag push)
+### release.yaml (manual tag fallback only)
 
-1. Checks out the tagged commit.
-2. Runs `npm run release` — full gate: typecheck + lint + test + build.
-3. Runs `npm run zip` — produces `autonomous-reports-engine-X.Y.Z.zip`.
-4. Creates a GitHub Release attached to the tag.
-   - Tag with no `-` (e.g. `v1.1.0`) → published as a **stable release**.
-   - Tag with `-` (e.g. `v1.1.0-beta.1`) → published as a **pre-release**.
+Still triggers on any manually pushed `v*` tag. Use this if you need to release
+from a specific commit without going through the dispatch workflow. Pre-release
+detection works the same way — a tag containing `-` is marked as pre-release.
 
 ---
 
