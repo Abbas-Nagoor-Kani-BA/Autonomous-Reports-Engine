@@ -1,9 +1,9 @@
-import * as MsrChoices from "../../core/msrchoices.ts";
+import * as MsrChoices from "../../core/classification/msrchoices.ts";
 import { letterToColNum } from "../../lib/markup.ts";
 import { pad2 } from "../../lib/format.ts";
-import { computeDurations, type Durations } from "../../core/durations.ts";
+import { computeDurations, type Durations } from "../../core/timeline/durations.ts";
 import { ReportService, type ReportFmt } from "./report-service.ts";
-import { displayNumber, priorityCell, isScTask } from "../../core/rowfields.ts";
+import { displayNumber, priorityCell, isScTask } from "../../core/export/rowfields.ts";
 
 /*
  * Export-BUILDING work for the viewer: the template column map, the field

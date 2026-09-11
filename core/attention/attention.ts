@@ -7,9 +7,9 @@
  * No DOM, no chrome.*, no I/O — same contract as the rest of core/.
  */
 
-import { snStateMap } from "./statechoices.ts";
-import type { Report } from "./report.ts";
-import { buildReport } from "./report.ts";
+import { snStateMap } from "../sla/statechoices.ts";
+import type { Report } from "../sla/report.ts";
+import { buildReport } from "../sla/report.ts";
 
 export type AttentionRuleId =
   | "multiAssignWithinTeam"

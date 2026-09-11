@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { detectSnOffsetMs, rowOffsetMs, fmtWithOffset, pairOffsetMs } from "../core/sntime.ts";
+import { detectSnOffsetMs, rowOffsetMs, fmtWithOffset, pairOffsetMs } from "../core/timeline/sntime.ts";
 
 let pass = 0;
 let fail = 0;

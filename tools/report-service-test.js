@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { ReportService } from "../viewer/services/report-service.ts";
-import { buildReport } from "../core/report.ts";
+import { buildReport } from "../core/sla/report.ts";
 
 let failed = 0;
 function check(name, got, want) {

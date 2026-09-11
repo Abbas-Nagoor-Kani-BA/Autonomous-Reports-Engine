@@ -1,6 +1,6 @@
 import { Component, el } from "../../common/components/component.ts";
 import type { ComponentProps } from "../../common/components/component.ts";
-import { normalizeNames, splitTerms } from "../../core/names.ts";
+import { normalizeNames, splitTerms } from "../../core/summary/names.ts";
 import { setTip } from "../../lib/tooltip.ts";
 
 export type ChipListState = {

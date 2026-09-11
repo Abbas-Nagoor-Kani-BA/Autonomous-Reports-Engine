@@ -2,7 +2,7 @@
  * Calclens — viewer wiring.
  *
  * Owns the toolbar toggle button and the right-side drawer, and routes the
- * currently-selected grid cell to the pure explainer in core/calclens.ts. The
+ * currently-selected grid cell to the pure explainer in core/attention/calclens.ts. The
  * grid body is always read-only; the drawer also edits the derivation columns.
  */
 import { $, columnOptionList, visibleCols } from "./core.ts";
@@ -20,8 +20,8 @@ import {
   setHighlightEnabled
 } from "./calclens-highlights.ts";
 import { getAttentionFilterActive, setAttentionFilterActive } from "./attention-filter.ts";
-import { ATTENTION_RULES, computeAttention } from "../core/attention.ts";
-import { explainCell } from "../core/calclens.ts";
+import { ATTENTION_RULES, computeAttention } from "../core/attention/attention.ts";
+import { explainCell } from "../core/attention/calclens.ts";
 import { CalclensPanel } from "./components/calclens-panel.ts";
 import { activityPaneEl } from "./activity.ts";
 import { showToast } from "../lib/toast.ts";

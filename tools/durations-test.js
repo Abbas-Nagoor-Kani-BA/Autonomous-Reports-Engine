@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { computeDurations } from "../core/durations.ts";
+import { computeDurations } from "../core/timeline/durations.ts";
 
 let failed = 0;
 function check(name, got, want) {

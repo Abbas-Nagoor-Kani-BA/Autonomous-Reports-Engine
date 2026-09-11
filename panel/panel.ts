@@ -1,7 +1,7 @@
-import { buildEncodedQuery, hasQueryConstraint } from "../core/querybuilder.ts";
-import type { QueryBuilderConfig } from "../core/querybuilder.ts";
-import { snStateChoices, SN_PRIORITY_CHOICES, snTableLabel } from "../core/statechoices.ts";
-import { presetOptions, resolvePresetSets } from "../core/preset-controller.ts";
+import { buildEncodedQuery, hasQueryConstraint } from "../core/query/querybuilder.ts";
+import type { QueryBuilderConfig } from "../core/query/querybuilder.ts";
+import { snStateChoices, SN_PRIORITY_CHOICES, snTableLabel } from "../core/sla/statechoices.ts";
+import { presetOptions, resolvePresetSets } from "../core/query/preset-controller.ts";
 import { FILTER_PRESET_REPO } from "../di/tokens.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { createPanel, describeFilterSet, filterSetToRows } from "./index.ts";

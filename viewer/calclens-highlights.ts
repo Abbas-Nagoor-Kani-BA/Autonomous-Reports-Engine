@@ -13,10 +13,10 @@
  * ATTENTION_RULES).
  *
  * This module only owns presentation state; it never changes rule semantics
- * (which live in the pure core/attention.ts).
+ * (which live in the pure core/attention/attention.ts).
  */
-import { ATTENTION_RULES } from "../core/attention.ts";
-import type { AttentionRuleId } from "../core/attention.ts";
+import { ATTENTION_RULES } from "../core/attention/attention.ts";
+import type { AttentionRuleId } from "../core/attention/attention.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { loadOnce, saveValue } from "../lib/storage.ts";
 

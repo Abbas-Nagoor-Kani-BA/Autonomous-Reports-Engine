@@ -16,7 +16,7 @@ import { getEditMode, setEditMode } from "./edit-mode-state.ts";
 import { getCalclensMode } from "./calclens-state.ts";
 import { isHighlightEnabled } from "./calclens-highlights.ts";
 import { timelinePaneEl } from "./activity.ts";
-import { computeAttention, flagsForColumn } from "../core/attention.ts";
+import { computeAttention, flagsForColumn } from "../core/attention/attention.ts";
 import { ColumnEditor } from "./components/column-editor.ts";
 import type { ColumnFlag } from "./components/column-editor.ts";
 import { iconize } from "../lib/icons.ts";

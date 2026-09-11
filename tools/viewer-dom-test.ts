@@ -5,7 +5,7 @@ import {
   seedAll, seed, peek, flush, installSkeleton, getLastCopied, getDownloads, clearDownloads
 } from "./helpers/dom-env.mjs";
 import fflate from "../lib/vendor/fflate.cjs";
-import { setFflate } from "../core/templatexml.ts";
+import { setFflate } from "../core/export/templatexml.ts";
 
 const FIXTURE = {
   lastData: {

@@ -2,8 +2,8 @@ import { loadOnce } from "../lib/storage.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { MlModelStore, specForModelId } from "../data/ml-model-repository.ts";
 import { dataStore, getMsrLists } from "./store.ts";
-import { msrType, rootCauseFor, normResolution, isClassifyEligible } from "../core/msrchoices.ts";
-import { categorizeField } from "../core/msrcategorize.ts";
+import { msrType, rootCauseFor, normResolution, isClassifyEligible } from "../core/classification/msrchoices.ts";
+import { categorizeField } from "../core/classification/msrcategorize.ts";
 
 /*
  * Data-View MSR classifier runner.

@@ -1,8 +1,8 @@
 import { $, el } from "./core.ts";
 import { currentRows } from "./grid-data.ts";
 import { fmtInstant } from "./grid.ts";
-import { buildTicketStats } from "../core/ticketstats.ts";
-import type { TicketStats, SlaTally } from "../core/ticketstats.ts";
+import { buildTicketStats } from "../core/sla/ticketstats.ts";
+import type { TicketStats, SlaTally } from "../core/sla/ticketstats.ts";
 import { Modal } from "../common/components/modal.ts";
 import { iconize } from "../lib/icons.ts";
 import type { InstantFn } from "./core.ts";

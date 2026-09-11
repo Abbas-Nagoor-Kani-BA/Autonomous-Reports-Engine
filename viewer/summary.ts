@@ -1,7 +1,7 @@
-import { rowOffsetMs } from "../core/sntime.ts";
+import { rowOffsetMs } from "../core/timeline/sntime.ts";
 import { pad2 } from "../lib/format.ts";
 import { icon } from "../lib/icons.ts";
-import type { SlaSummaryItem } from "../core/slasummary.ts";
+import type { SlaSummaryItem } from "../core/sla/slasummary.ts";
 import { buildSlaSummaryFor } from "./core.ts";
 import type { ViewerRow, ViewerData } from "./core.ts";
 import { dataStore } from "./store.ts";

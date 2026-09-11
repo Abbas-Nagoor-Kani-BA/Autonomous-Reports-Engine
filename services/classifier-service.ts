@@ -1,6 +1,6 @@
-import { categorizeField } from "../core/msrcategorize.ts";
-import type { MsrScore } from "../core/msrcategorize.ts";import { msrType, rootCauseFor } from "../core/msrchoices.ts";
-import type { MsrListSet } from "../core/msrchoices.ts";
+import { categorizeField } from "../core/classification/msrcategorize.ts";
+import type { MsrScore } from "../core/classification/msrcategorize.ts";import { msrType, rootCauseFor } from "../core/classification/msrchoices.ts";
+import type { MsrListSet } from "../core/classification/msrchoices.ts";
 import { ClassificationCacheStore } from "../data/classification-cache-repository.ts";
 import type { ClassificationCacheRepository, CacheKeyInput } from "../data/classification-cache-repository.ts";
 

@@ -2,11 +2,11 @@ import { Component, el } from "../../common/components/component.ts";
 import type { ComponentProps } from "../../common/components/component.ts";
 import { cellShort, placePopupNear } from "../../lib/markup.ts";
 import { setTip } from "../../lib/tooltip.ts";
-import { buildReport } from "../../core/report.ts";
-import { displayNumber, priorityCell } from "../../core/rowfields.ts";
-import { computeDurations } from "../../core/durations.ts";
-import type { AttentionFlag, AttentionRuleId } from "../../core/attention.ts";
-import { flagsForColumn } from "../../core/attention.ts";
+import { buildReport } from "../../core/sla/report.ts";
+import { displayNumber, priorityCell } from "../../core/export/rowfields.ts";
+import { computeDurations } from "../../core/timeline/durations.ts";
+import type { AttentionFlag, AttentionRuleId } from "../../core/attention/attention.ts";
+import { flagsForColumn } from "../../core/attention/attention.ts";
 
 /** [key, label, cell class, default width] — matches COLUMNS in surfaces/viewer/core.ts. */
 export type GridColumn = readonly [string, string, string, number];

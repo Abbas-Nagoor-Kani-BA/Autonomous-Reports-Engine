@@ -1,6 +1,6 @@
-import * as Journal from "../core/journal.ts";
-import { rowOffsetMs } from "../core/sntime.ts";
-import { parseSnDisplayMs } from "../core/sntime.ts";
+import * as Journal from "../core/timeline/journal.ts";
+import { rowOffsetMs } from "../core/timeline/sntime.ts";
+import { parseSnDisplayMs } from "../core/timeline/sntime.ts";
 import { el } from "./core.ts";
 import type { ViewerRow } from "./core.ts";
 import { fmtInstant } from "./grid.ts";

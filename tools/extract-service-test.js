@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { ExtractService } from "../viewer/services/extract-service.ts";
-import { extractHeuristic } from "../core/aiextract.ts";
+import { extractHeuristic } from "../core/classification/aiextract.ts";
 
 let failed = 0;
 function check(name, got, want) {

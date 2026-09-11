@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { buildTicketStats } from "../core/ticketstats.ts";
+import { buildTicketStats } from "../core/sla/ticketstats.ts";
 
 const fmt = (v) => v;
 

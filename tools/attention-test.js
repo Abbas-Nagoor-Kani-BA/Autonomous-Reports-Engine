@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { computeAttention, ATTENTION_RULES } from "../core/attention.ts";
+import { computeAttention, ATTENTION_RULES } from "../core/attention/attention.ts";
 
 const MEMBERS = ["John Doe", "Jane Smith", "Alice Wu"];
 const GROUPS = ["APPSUP_TEST", "PAYMENTS"];

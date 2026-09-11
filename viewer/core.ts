@@ -1,11 +1,11 @@
-import * as MsrChoices from "../core/msrchoices.ts";
+import * as MsrChoices from "../core/classification/msrchoices.ts";
 import { CELL_MAX, cellShort, placePopupNear } from "../lib/markup.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { saveValue } from "../lib/storage.ts";
 import { uiStore, setHiddenCols, setMsrLists, getMsrLists } from "./store.ts";
 import { ReportService } from "./services/report-service.ts";
-import { buildSummaryDetails } from "../core/summarydetails.ts";
-import type { SummaryDetailsData } from "../core/templatexml.ts";
+import { buildSummaryDetails } from "../core/summary/summarydetails.ts";
+import type { SummaryDetailsData } from "../core/export/templatexml.ts";
 
 const report = new ReportService();
 

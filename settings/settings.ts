@@ -4,7 +4,7 @@ import { STORAGE } from "../lib/keys.ts";
 import { showToast } from "../lib/toast.ts";
 import { initTooltips } from "../lib/tooltip.ts";
 import { createSettings, fillMsrLists, collectMsrLists } from "./index.ts";
-import { norm as normHintKey } from "../core/msrcategorize.ts";
+import { norm as normHintKey } from "../core/classification/msrcategorize.ts";
 import { normaliseSettings } from "../common/services/settings-service.ts";
 
 import type { SettingsDraft } from "../common/services/settings-service.ts";

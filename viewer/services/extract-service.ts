@@ -1,7 +1,7 @@
-import { extractHeuristic } from "../../core/aiextract.ts";
+import { extractHeuristic } from "../../core/classification/aiextract.ts";
 
 /*
- * Viewer-facing wrapper over the closure-note heuristic (core/aiextract.ts).
+ * Viewer-facing wrapper over the closure-note heuristic (core/classification/aiextract.ts).
  *
  * The heuristic itself is pure; this service owns the per-row apply loop the
  * viewer used to run by hand: fill solutionType/rootCause from the closure

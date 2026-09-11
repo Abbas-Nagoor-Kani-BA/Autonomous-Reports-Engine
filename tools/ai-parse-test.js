@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { extractHeuristic, findLabeledValue } from "../core/aiextract.ts";
+import { extractHeuristic, findLabeledValue } from "../core/classification/aiextract.ts";
 
 let failed = 0;
 function check(name, got, want) {

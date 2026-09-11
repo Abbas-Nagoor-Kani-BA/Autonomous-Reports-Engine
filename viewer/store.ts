@@ -1,7 +1,7 @@
 import { createStore } from "../lib/store.ts";
 import { onStorageChange, loadOnce, saveValue, removeValue } from "../lib/storage.ts";
 import { STORAGE } from "../lib/keys.ts";
-import * as MsrChoices from "../core/msrchoices.ts";
+import * as MsrChoices from "../core/classification/msrchoices.ts";
 import type { ViewerData, MsrLists } from "./core.ts";
 
 export type SelPoint = { sysId: string; key: string };

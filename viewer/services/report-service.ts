@@ -1,8 +1,8 @@
-import { buildReport, type WalkedRow, type MessageFormatter } from "../../core/report.ts";
-import { buildSlaSummary, buildSlaSummaryRows, type SlaSummaryItem } from "../../core/slasummary.ts";
+import { buildReport, type WalkedRow, type MessageFormatter } from "../../core/sla/report.ts";
+import { buildSlaSummary, buildSlaSummaryRows, type SlaSummaryItem } from "../../core/sla/slasummary.ts";
 
 /*
- * Report and SLA computation for the viewer (core/report.ts + core/slasummary.ts
+ * Report and SLA computation for the viewer (core/sla/report.ts + core/sla/slasummary.ts
  * hold the pure work; this service adapts the viewer's two-arg instance-clock
  * formatter to the core one-arg MessageFormatter).
  *

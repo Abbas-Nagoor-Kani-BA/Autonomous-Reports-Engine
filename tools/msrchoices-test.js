@@ -3,7 +3,7 @@ import {
   MSR_DEFAULT_LISTS, mergeMsrLists, normResolution, msrStatus, msrType,
   isClassifyEligible,
   rootCauseFor, parseDisplayMs, excelSerialFromMs, displayToSerial, hmsToDays
-} from "../core/msrchoices.ts";
+} from "../core/classification/msrchoices.ts";
 
 let failed = 0;
 function check(name, got, want) {

@@ -1,5 +1,5 @@
-import * as TemplateXml from "../core/templatexml.ts";
-import type { TemplateCol } from "../core/templatexml.ts";
+import * as TemplateXml from "../core/export/templatexml.ts";
+import type { TemplateCol } from "../core/export/templatexml.ts";
 import { STORAGE } from "../lib/keys.ts";
 import {
   b64FromBuffer, bufferFromB64, sanitizeFilePart

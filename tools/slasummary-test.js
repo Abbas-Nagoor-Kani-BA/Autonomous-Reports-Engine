@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { buildSlaSummary, buildSlaSummaryRows } from "../core/slasummary.ts";
+import { buildSlaSummary, buildSlaSummaryRows } from "../core/sla/slasummary.ts";
 
 let failed = 0;
 function check(name, got, want) {

@@ -10,14 +10,14 @@
  * never re-parses the live audit feed.
  */
 
-import { computeDurations } from "./durations.ts";
-import type { DurationRow } from "./durations.ts";
-import { buildReport, hmsToHours, responseTargetHours, resolutionTargetHours } from "./report.ts";
-import type { Report } from "./report.ts";
-import { snStateMap } from "./statechoices.ts";
-import { classifyMsr } from "./msrcategorize.ts";
-import { type MsrScore } from "./msrcategorize.ts";
-import { isClassifyEligible } from "./msrchoices.ts";
+import { computeDurations } from "../timeline/durations.ts";
+import type { DurationRow } from "../timeline/durations.ts";
+import { buildReport, hmsToHours, responseTargetHours, resolutionTargetHours } from "../sla/report.ts";
+import type { Report } from "../sla/report.ts";
+import { snStateMap } from "../sla/statechoices.ts";
+import { classifyMsr } from "../classification/msrcategorize.ts";
+import { type MsrScore } from "../classification/msrcategorize.ts";
+import { isClassifyEligible } from "../classification/msrchoices.ts";
 
 export type ActivityEv = { f?: string; o?: string; n?: string; atEpoch?: number };
 

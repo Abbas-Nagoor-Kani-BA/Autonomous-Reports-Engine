@@ -1,11 +1,11 @@
-import { detectSnOffsetMs, rowOffsetMs } from "../core/sntime.ts";
+import { detectSnOffsetMs, rowOffsetMs } from "../core/timeline/sntime.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { MSG } from "../lib/keys.ts";
 import { broadcast } from "../lib/storage.ts";
 import { pad2 } from "../lib/format.ts";
 import { showToast } from "../lib/toast.ts";
-import { normalizeNames } from "../core/names.ts";
-import { computeAttention } from "../core/attention.ts";
+import { normalizeNames } from "../core/summary/names.ts";
+import { computeAttention } from "../core/attention/attention.ts";
 import { $, columnOptionList, migrateLegacyResolutions, setColumnVisible, setStatus, visibleCols } from "./core.ts";
 import type { ViewerData, ViewerRow } from "./core.ts";
 import type { InstantFn } from "./core.ts";

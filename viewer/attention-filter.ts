@@ -13,7 +13,7 @@
  * No DOM, no chrome.*, no I/O — pure state + pure filter function.
  */
 
-import { computeAttention } from "../core/attention.ts";
+import { computeAttention } from "../core/attention/attention.ts";
 import type { ViewerRow } from "./core.ts";
 import { isHighlightEnabled } from "./calclens-highlights.ts";
 

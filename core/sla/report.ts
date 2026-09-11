@@ -1,4 +1,4 @@
-import { pairOffsetMs } from "../core/sntime.ts";
+import { pairOffsetMs } from "../timeline/sntime.ts";
 
 const SLA_TABLE: Record<number, { min: number; max: number }> = {
   1: { min: 1, max: 4 },

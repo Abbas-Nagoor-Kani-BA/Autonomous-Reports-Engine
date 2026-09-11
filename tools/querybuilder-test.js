@@ -1,4 +1,4 @@
-import { buildEncodedQuery, encodeConditions, hasQueryConstraint } from "../core/querybuilder.ts";
+import { buildEncodedQuery, encodeConditions, hasQueryConstraint } from "../core/query/querybuilder.ts";
 
 let failures = 0;
 function check(name, actual, expected) {

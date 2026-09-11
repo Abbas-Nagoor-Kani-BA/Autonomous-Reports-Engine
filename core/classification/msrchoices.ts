@@ -1,4 +1,4 @@
-import { parseSnDisplayMs } from "./sntime.ts";
+import { parseSnDisplayMs } from "../timeline/sntime.ts";
 
 export type RootCauseLists = { Incident: string[]; RFS: string[]; P_Ticket: string[] };
 export type MsrListSet = {

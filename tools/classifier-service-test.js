@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { ClassifierService, deterministicClassify } from "../services/classifier-service.ts";
-import { MSR_DEFAULT_LISTS, mergeMsrLists } from "../core/msrchoices.ts";
+import { MSR_DEFAULT_LISTS, mergeMsrLists } from "../core/classification/msrchoices.ts";
 import { createMemoryClassificationCacheRepository } from "../data/classification-cache-repository.ts";
 
 const LISTS = mergeMsrLists(null);

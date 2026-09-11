@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { presetOptions, resolvePresetSets } from "../core/preset-controller.ts";
+import { presetOptions, resolvePresetSets } from "../core/query/preset-controller.ts";
 import { WSR_PRESET_VALUE } from "../data/repositories/preset-repository.ts";
 
 const NOW = new Date(2026, 8, 3, 10, 0, 0);

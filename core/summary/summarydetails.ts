@@ -1,5 +1,5 @@
-import { parseSnDisplayMs } from "./sntime.ts";
-import { displayToSerial } from "./msrchoices.ts";
+import { parseSnDisplayMs } from "../timeline/sntime.ts";
+import { displayToSerial } from "../classification/msrchoices.ts";
 
 // ---------------------------------------------------------------------------
 // Weekly Status Report "Summary" sheet derivation (pure domain, no I/O).

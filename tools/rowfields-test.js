@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { isScTask, displayNumber, priorityCell } from "../core/rowfields.ts";
+import { isScTask, displayNumber, priorityCell } from "../core/export/rowfields.ts";
 
 test("isScTask detects SCTASK numbers only", () => {
   assert.equal(isScTask({ number: "SCTASK0012345" }), true);

@@ -2,7 +2,7 @@
  * Per-ticket timeline extraction context. `queueName` and `snapshotGroupName`
  * are compared in name-space (lowercased/trimmed) via {@link nameKey}.
  */
-import { parseSnDisplayMs } from "../core/sntime.ts";
+import { parseSnDisplayMs } from "./sntime.ts";
 
 export type ExtractCtx = {
   /** OOB state value->label map */

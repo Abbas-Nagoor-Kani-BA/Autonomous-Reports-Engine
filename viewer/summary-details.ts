@@ -2,7 +2,7 @@ import { STORAGE } from "../lib/keys.ts";
 import { loadOnce, saveValue } from "../lib/storage.ts";
 import { dataStore } from "./store.ts";
 import { buildSummaryDetailsFor } from "./core.ts";
-import type { SummaryChangeRow, SummaryIncidentRow } from "../core/templatexml.ts";
+import type { SummaryChangeRow, SummaryIncidentRow } from "../core/export/templatexml.ts";
 
 const $ = (id: string): any => document.getElementById(id);
 

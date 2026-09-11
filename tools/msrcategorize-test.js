@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { classifyMsr } from "../core/msrcategorize.ts";
-import { MSR_DEFAULT_LISTS, rootCauseFor, msrType } from "../core/msrchoices.ts";
+import { classifyMsr } from "../core/classification/msrcategorize.ts";
+import { MSR_DEFAULT_LISTS, rootCauseFor, msrType } from "../core/classification/msrchoices.ts";
 
 const INCIDENT_RC = rootCauseFor(MSR_DEFAULT_LISTS.rootCause, msrType("INC001"));
 const RESOLUTION = MSR_DEFAULT_LISTS.resolution;
@@ -159,7 +159,7 @@ test("cascade returns null when no stage clears its bar", () => {
 });
 
 
-import { categorizeField } from "../core/msrcategorize.ts";
+import { categorizeField } from "../core/classification/msrcategorize.ts";
 
 const HINTS = MSR_DEFAULT_LISTS.hints;
 

@@ -1,6 +1,6 @@
 import { Component, el } from "../../common/components/component.ts";
 import type { ComponentProps } from "../../common/components/component.ts";
-import type { Explanation, SlDigest, TimelineStep, TimelineMarker } from "../../core/calclens.ts";
+import type { Explanation, SlDigest, TimelineStep, TimelineMarker } from "../../core/attention/calclens.ts";
 import { icon, iconButton } from "../../lib/icons.ts";
 import { SearchPicker } from "./search-picker.ts";
 

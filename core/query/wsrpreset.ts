@@ -1,5 +1,5 @@
-import { weekRanges } from "./summarydetails.ts";
-import type { FilterSet } from "../data/repositories/filter-list-repository.ts";
+import { weekRanges } from "../summary/summarydetails.ts";
+import type { FilterSet } from "../../data/repositories/filter-list-repository.ts";
 
 type PresetSpec = {
   table: string;
