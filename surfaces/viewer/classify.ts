@@ -11,10 +11,14 @@ import { categorizeField } from "../../core/msrcategorize.ts";
  * Modes (settings ml.mode):
  *   - heuristic -> deterministic only (core/msrcategorize), inline; no worker.
  *   - hybrid    -> deterministic first (fills likely labels), then the worker
- *                  (Transformers.js) fills any cells the scorer left blank.
- *   - ml        -> the worker evaluates every note row; the deterministic
- *                  cascade is still authoritative and ML fills the blanks. ml
- *                  and hybrid therefore converge on the same verdict.
+ *                  (Transformers.js) fills any cells the scorer left blank. The
+ *                  deterministic cascade stays authoritative: an established
+ *                  value is never overridden or erased.
+ *   - ml        -> the worker (Transformers.js) is authoritative: it evaluates
+ *                  every eligible note row, OVERWRITES existing values with the
+ *                  model's verdict, and CLEARS a cell when the model produces no
+ *                  label. ML-only means ML-only, so switching the model changes
+ *                  the results.
  *
  * Results stream back in chunks and are applied via `updateRow` (mapped onto
  * DataGrid.updateRows), so the view fills in incrementally. No DOM, no chrome.*
@@ -284,25 +288,39 @@ function deterministicPass(
  *  notes (`preDone`) are counted as not-classifiable. */
 /**
  * Resolves the value/source/confidence to commit for one classification cell.
- * The worker verdict is already decisive (deterministic cascade authoritatively
- * fills whatever it can, ML follows for the blanks), so in `fallback` mode a
- * value is preserved only when the worker genuinely produced nothing new.
- * Pure, so it is unit-tested.
+ *
+ * `mode` selects the rule:
+ *   - "hybrid" (heuristic authoritative): non-destructive. Never erase an
+ *     existing value when the worker returned no label; keep an established ML
+ *     result; only fill blanks or correct a weak heuristic cell. (The worker
+ *     verdict already had the deterministic cascade fill whatever it could and
+ *     ML follow for the blanks.)
+ *   - "ml" (ML authoritative): the worker verdict is decisive and REPLACES the
+ *     current value, INCLUDING clearing the cell when the worker produced no
+ *     label (null). ML-only means ML-only.
+ *
+ * The legacy boolean form is still accepted: `true` == "hybrid" (fallback),
+ * `false` == "ml" (always). Pure, so it is unit-tested.
  */
 export function resolveApplyCell(
   worker: { value: string | null; source?: string; confidence?: number },
   current: { value: string | null; source?: unknown; confidence?: number },
-  fallback: boolean
+  mode: "ml" | "hybrid" | boolean
 ): { value: string | null; source: string; confidence: number } {
+  const fallback = mode === "hybrid" || mode === true;
   const wValue = worker.value ?? null;
   const wSource = worker.source ?? "heuristic";
   const wConf = Number(worker.confidence) || 0;
-  // Non-destructive: never erase an existing value when the worker returned no
-  // label for the cell. Keep the current value and its source/confidence marker.
+  // ML mode is authoritative: the worker verdict replaces the cell, and a null
+  // verdict clears it. No preservation of the current value.
+  if (!fallback) {
+    return { value: wValue, source: wSource, confidence: wConf };
+  }
+  // Hybrid is non-destructive: never erase an existing value when the worker
+  // returned no label for the cell. Keep the current value and its marker.
   if (wValue == null && current.value != null) {
     return { value: current.value, source: String(current.source || "unrecorded"), confidence: Number(current.confidence) || 0 };
   }
-  if (!fallback) return { value: wValue, source: wSource, confidence: wConf };
   const mlWon = worker.source === "ml";
   const keep = !!current.value && !(current.source === "heuristic" && mlWon);
   if (keep) {
@@ -337,15 +355,16 @@ function mlPass(
           const row = targets.find((r) => String(r.sysId ?? "") === res.sysId);
           if (!row) continue;
 
+          const applyMode = mode === "fallback" ? "hybrid" : "ml";
           const rc = resolveApplyCell(
             { value: res.rootCause, source: res.rootCauseSource, confidence: res.rootCauseConfidence },
             { value: row.rootCause, source: row.__rcSource, confidence: row.__rcConf },
-            mode === "fallback"
+            applyMode
           );
           const sol = resolveApplyCell(
             { value: res.solutionType, source: res.solutionSource, confidence: res.solutionConfidence },
             { value: row.solutionType, source: row.__solSource, confidence: row.__solConf },
-            mode === "fallback"
+            applyMode
           );
 
           const before = row.rootCause !== rc.value || row.solutionType !== sol.value;
@@ -410,8 +429,13 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
 
   // ML was requested but the model isn't cached: degrade to the built-in scorer
   // and tell the user, so the worker never has to (misleadingly) warn mid-run.
+  // Rows filled here are stamped with a DISTINCT degraded fp (not the ML/hybrid
+  // fp), so that once the model IS downloaded a real ML/hybrid run — which uses
+  // the plain fp — sees a context mismatch and re-processes them instead of
+  // skipping them as "already classified".
   if (mode !== "heuristic" && !(await modelAvailable(modelId))) {
-    const d = deterministicPass(rows, false, cb, stats, modelId, fp);
+    const degradedFp = `degraded::${fp}`;
+    const d = deterministicPass(rows, false, cb, stats, modelId, degradedFp);
     cb.onProgress(total, total, d.notClassified);
     cb.onStats(stats);
     return {
@@ -424,15 +448,18 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
     };
   }
 
-  // ML-only: the worker evaluates EVERY note row — including rows that already
-  // carried heuristic values, so they get re-run. The deterministic cascade is
-  // still authoritative and ML fills the blanks, so the verdicts match hybrid.
-  // Rows already classified under the current context (model + lists) with
-  // unchanged notes are skipped (the feature cache makes repeats cheap anyway).
+  // ML-only: the worker evaluates EVERY note row and its verdict is decisive —
+  // it overwrites existing values and clears a cell when the model produced no
+  // label (ML mode is ML-authoritative; see resolveApplyCell/resolveOutcome).
+  // The only rows skipped are those already classified under the CURRENT context
+  // (same model + mode + lists = same fp) with unchanged notes; the source is
+  // not part of the skip test, because an ML-cleared cell has no "ml" value to
+  // key on. A model switch, a mode switch, or a prior heuristic/degraded run all
+  // change the fp, so those rows re-run.
   if (mode === "ml") {
     const targets = classifiableRows(rows).filter((r) => {
       const notes = String(r.closeNotes ?? "").trim();
-      return !(r.__rcSource === "ml" && r.__solSource === "ml" && r.__classFp === fp && r.notesHash === hashNotes(notes));
+      return !(r.__classFp === fp && r.notesHash === hashNotes(notes));
     });
     stats.done = preDone;
     stats.notClassified = preDone;

@@ -2,7 +2,6 @@ import type { ClassifyRowInput, ClassifyCell } from "../services/classifier-serv
 import { deterministicClassify } from "../services/classifier-service.ts";
 import { MlModelStore, specForModelId } from "../data/ml-model-repository.ts";
 import type { MlModelSpec } from "../data/ml-model-repository.ts";
-import { STORAGE } from "../lib/keys.ts";
 
 // Common English function words. Deliberately excludes negation/qualifier words
 // that carry meaning in the MSR labels ("not", "no", "never", "only", "but",
@@ -44,17 +43,6 @@ export type EnginePick = {
   confidence: number;
   source: "ml" | "heuristic" | "regex" | "keyword" | "cosine";
 };
-
-/** Reads the selected model id from the persisted settings. */
-async function selectedModelId(): Promise<string> {
-  try {
-    const st = await chrome.storage.local.get(STORAGE.pluginSettings);
-    const ml = (st?.[STORAGE.pluginSettings] as any)?.ml;
-    return typeof ml?.modelId === "string" ? ml.modelId : "mobilebert";
-  } catch {
-    return "mobilebert";
-  }
-}
 
 /*
  * Optional Transformers.js classification backend.
@@ -112,12 +100,12 @@ type MlClassifier = {
   (notes: string, labels: string[]): Promise<{ label: string | null; confidence: number }>;
 };
 
-async function loadMlClassifier(): Promise<MlClassifier | null> {
+async function loadMlClassifier(modelId: string): Promise<MlClassifier | null> {
   const repo = new MlModelStore();
-  // Use the model selected in Settings (ml.modelId), not just whichever was
-  // downloaded last. A stale or half-downloaded model must not load.
-  const selectedId = await selectedModelId();
-  const spec = specForModelId(selectedId);
+  // Load the model named by the caller (the classify message carries the model
+  // id selected in Settings), so the worker and the viewer's cache key never
+  // disagree about which model produced a result.
+  const spec = specForModelId(modelId);
   if (!(await repo.matches(spec))) {
     console.warn(
       "[classifier] selected ML model not downloaded — run Settings → ML classification → Download model."
@@ -207,12 +195,19 @@ async function loadMlClassifier(): Promise<MlClassifier | null> {
  *  verdict can be re-derived under whatever `pickExact` rule is current. */
 export type CellPicks = { ml: EnginePick | null; det: EnginePick };
 
-/** Combines the ML and deterministic picks for a cell into the decisive pick. */
-export function resolvePick(ml: EnginePick | null, det: EnginePick): EnginePick {
-  // The heuristic cascade is authoritative: when the (regex/keyword/cosine)
-  // scorer produced a label it wins outright. ML only fills cells the heuristic
-  // left blank. This keeps the classifier deterministic and never lets the ML
-  // model override a clean keyword/regex match.
+/** Combines the ML and deterministic picks for a cell into the decisive pick.
+ *
+ *  `mlAuthoritative` selects the mode's rule:
+ *   - false (Hybrid, the default): the heuristic cascade is authoritative — when
+ *     the (regex/keyword/cosine) scorer produced a label it wins outright, and
+ *     ML only fills cells the heuristic left blank.
+ *   - true (ML mode): the ML pick is authoritative and is returned as-is,
+ *     INCLUDING a null value (the cell is cleared). There is no fallback to the
+ *     deterministic scorer, so ML-only means ML-only. */
+export function resolvePick(ml: EnginePick | null, det: EnginePick, mlAuthoritative = false): EnginePick {
+  if (mlAuthoritative) {
+    return ml ? { ...ml } : { value: null, confidence: 0, source: "ml" };
+  }
   if (det.value) return { ...det };
   if (ml && ml.value) return { ...ml };
   return { ...det };
@@ -268,11 +263,13 @@ export function pickExact(
  * them with `resolveOutcome`, so a changed decision rule never serves a stale
  * verdict from the cache.
  */
-export async function createMlPicker(): Promise<
+export async function createMlPicker(
+  modelId: string
+): Promise<
   ((input: ClassifyRowInput) => Promise<{ solutionType: CellPicks; rootCause: CellPicks }>) | null
 > {
   try {
-    const ml = await loadMlClassifier();
+    const ml = await loadMlClassifier(modelId);
     if (!ml) return null;
     return (input: ClassifyRowInput) => classifyWithMl(ml, input);
   } catch (err) {
@@ -281,14 +278,20 @@ export async function createMlPicker(): Promise<
   }
 }
 
-/** Turns raw per-cell picks into the final verdict outcome (one source per cell). */
-export function resolveOutcome(p: { solutionType: CellPicks; rootCause: CellPicks }): {
+/** Turns raw per-cell picks into the final verdict outcome (one source per cell).
+ *  `mlAuthoritative` selects the mode's decision rule (see `resolvePick`): the
+ *  default (false) is Hybrid (heuristic authoritative); true is ML mode (the ML
+ *  pick wins, and a null ML value clears the cell). */
+export function resolveOutcome(
+  p: { solutionType: CellPicks; rootCause: CellPicks },
+  mlAuthoritative = false
+): {
   solutionType: EnginePick;
   rootCause: EnginePick;
 } {
   return {
-    rootCause: resolvePick(p.rootCause.ml, p.rootCause.det),
-    solutionType: resolvePick(p.solutionType.ml, p.solutionType.det)
+    rootCause: resolvePick(p.rootCause.ml, p.rootCause.det, mlAuthoritative),
+    solutionType: resolvePick(p.solutionType.ml, p.solutionType.det, mlAuthoritative)
   };
 }
 

@@ -181,3 +181,36 @@ test("specForModelId falls back to the default model for unknown/blank ids", () 
   assert.equal(specForModelId(null).repoId, CLASSIFIER_MODEL.repoId);
   assert.equal(specForModelId("").repoId, CLASSIFIER_MODEL.repoId);
 });
+
+test("worker model selection follows the given model id, not the last download", async () => {
+  // loadMlClassifier now resolves the spec from the model id passed in the
+  // classify message (specForModelId(modelId)) and loads it only when that
+  // exact model matches the cache. This is the single-source-of-truth contract:
+  // downloading model B must not cause a run for model A to load B.
+  const restore = withFetch({
+    "config.json": "{}",
+    "tokenizer.json": "{}",
+    "tokenizer_config.json": "{}",
+    "onnx/model_quantized.onnx": "BYTES"
+  });
+  try {
+    const repo = createMemoryMlModelRepository();
+    const mobilebert = specForModelId("mobilebert");
+    const distilbert = specForModelId("distilbert");
+
+    // Only mobilebert is downloaded.
+    await repo.download(mobilebert);
+    assert.equal(await repo.matches(mobilebert), true);
+
+    // A run naming "distilbert" must NOT be satisfied by the cached mobilebert:
+    // the worker would resolve specForModelId("distilbert") and find it absent.
+    assert.equal(await repo.matches(distilbert), false);
+
+    // After downloading distilbert too, a run naming it loads exactly it.
+    await repo.download(distilbert);
+    assert.equal(await repo.matches(distilbert), true);
+    assert.notEqual(mobilebert.repoId, distilbert.repoId);
+  } finally {
+    restore();
+  }
+});

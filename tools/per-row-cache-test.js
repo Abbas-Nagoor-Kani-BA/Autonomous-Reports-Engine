@@ -46,3 +46,39 @@ test("classificationListsFp changes when the MSR lists change", () => {
   assert.notEqual(classificationListsFp(lists), classificationListsFp(changed), "a list edit changes the fp");
   assert.equal(classificationListsFp(lists), classificationListsFp({ ...lists }), "same lists -> same fp");
 });
+
+test("degraded (model-missing) rows re-run once the model is available", () => {
+  // The degrade path stamps a distinct "degraded::<fp>" so a later real ML run,
+  // which checks the plain fp, sees a mismatch and re-processes the row.
+  const notes = "Disk failure, replaced the drive.";
+  const h = hashNotes(notes);
+  const inc = { number: "INC001" };
+  const mlFp = "ml-model::ml::lists1";
+  const degradedRow = {
+    ...inc,
+    rootCause: "Hardware",
+    solutionType: "Workaround solution",
+    notesHash: h,
+    __classFp: `degraded::${mlFp}`
+  };
+  // Idempotent while still degraded (same degraded fp) -> skipped.
+  assert.equal(alreadyClassified(degradedRow, notes, `degraded::${mlFp}`), true);
+  // But under the real ML fp the context differs -> must re-run.
+  assert.equal(alreadyClassified(degradedRow, notes, mlFp), false);
+});
+
+test("a model switch forces a re-run of an ML-classified row", () => {
+  const notes = "Certificate expired on the gateway.";
+  const h = hashNotes(notes);
+  const inc = { number: "INC002" };
+  const row = {
+    ...inc,
+    rootCause: "Certificate expiry",
+    solutionType: "Permanent solution",
+    notesHash: h,
+    __classFp: "mobilebert::ml::lists1"
+  };
+  assert.equal(alreadyClassified(row, notes, "mobilebert::ml::lists1"), true, "same model -> steady state, skip");
+  assert.equal(alreadyClassified(row, notes, "distilbert::ml::lists1"), false, "switched model -> re-run");
+  assert.equal(alreadyClassified(row, notes, "mobilebert::hybrid::lists1"), false, "switched mode -> re-run");
+});

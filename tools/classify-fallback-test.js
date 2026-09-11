@@ -45,24 +45,28 @@ test("always mode applies the worker pick regardless of current cell", () => {
   assert.equal(r.source, "ml");
 });
 
-test("always mode keeps a heuristic pick when ML was not confident", () => {
-  const r = resolveApplyCell(W("Hardware", "heuristic", 0.4), { value: null, source: undefined, confidence: undefined }, false);
-  assert.equal(r.value, "Hardware");
-  assert.equal(r.source, "heuristic");
+test("ML mode overwrites an existing heuristic value with the ML pick", () => {
+  const r = resolveApplyCell(W("Certificate expiry", "ml", 0.72), { value: "Hardware", source: "heuristic", confidence: 0.5 }, "ml");
+  assert.equal(r.value, "Certificate expiry");
+  assert.equal(r.source, "ml");
+  assert.equal(r.confidence, 0.72);
 });
 
-test("always mode: a null worker result never erases an existing value", () => {
-  const r = resolveApplyCell(W(null, "heuristic", 0), { value: "Previous value", source: "heuristic", confidence: 0.5 }, false);
-  assert.equal(r.value, "Previous value");
+test("ML mode: a null worker result CLEARS the cell (ML-only means ML-only)", () => {
+  const r = resolveApplyCell(W(null, "ml", 0), { value: "Previous value", source: "heuristic", confidence: 0.5 }, "ml");
+  assert.equal(r.value, null);
+});
+
+test("ML mode: a null worker result clears even an established ML marker", () => {
+  const r = resolveApplyCell(W(null, "ml", 0), { value: "Application bug", source: "ml", confidence: 0.96 }, "ml");
+  assert.equal(r.value, null);
+});
+
+test("hybrid mode preserves an existing value when the worker returns null", () => {
+  const r = resolveApplyCell(W(null, "heuristic", 0), { value: "Network", source: "heuristic", confidence: 0.5 }, "hybrid");
+  assert.equal(r.value, "Network");
   assert.equal(r.source, "heuristic");
   assert.equal(r.confidence, 0.5);
-});
-
-test("always mode: a null worker result keeps an established ML marker", () => {
-  const r = resolveApplyCell(W(null, "heuristic", 0), { value: "Application bug", source: "ml", confidence: 0.96 }, false);
-  assert.equal(r.value, "Application bug");
-  assert.equal(r.source, "ml");
-  assert.equal(r.confidence, 0.96);
 });
 
 test("fallback mode: a null worker result never erases an existing value", () => {

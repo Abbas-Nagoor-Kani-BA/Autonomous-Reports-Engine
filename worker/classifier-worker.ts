@@ -66,12 +66,12 @@ let mlPicker: PickFn | null = null;
  * (logged to the console) so classification never hangs on an incomplete
  * download.
  */
-async function ensureMl(): Promise<PickFn | null> {
+async function ensureMl(modelId: string): Promise<PickFn | null> {
   if (mlPicker) return mlPicker;
   try {
     console.log("[classifier:worker] loading ML module…");
     const { createMlPicker } = await import("./ml-classify.ts");
-    mlPicker = await createMlPicker();
+    mlPicker = await createMlPicker(modelId);
     console.log(`[classifier:worker] ML loaded=${!!mlPicker}`);
   } catch (err) {
     console.warn("[classifier] ML unavailable, using deterministic scorer", err);
@@ -82,8 +82,8 @@ async function ensureMl(): Promise<PickFn | null> {
 
 let mlReady: Promise<PickFn | null> | null = null;
 
-function getMl(): Promise<PickFn | null> {
-  if (!mlReady) mlReady = ensureMl().catch(() => null);
+function getMl(modelId: string): Promise<PickFn | null> {
+  if (!mlReady) mlReady = ensureMl(modelId).catch(() => null);
   return mlReady;
 }
 
@@ -163,6 +163,11 @@ async function classifyCached(
   mode: ClassifyMode
 ): Promise<{ solutionType: { value: string | null; confidence: number; source: "ml" | "heuristic" | "regex" | "keyword" | "cosine" }; rootCause: { value: string | null; confidence: number; source: "ml" | "heuristic" | "regex" | "keyword" | "cosine" } }> {
   const key = keyFor(input, modelId, mode);
+  // ML mode ("always") is ML-authoritative: the ML pick wins and a null pick
+  // clears the cell. Hybrid ("fallback") keeps the heuristic cascade
+  // authoritative. The rule is applied on every read (including cache hits),
+  // so it never serves a verdict frozen under a different mode.
+  const mlAuthoritative = mode === "always";
   if (cache) {
     const hit = await cache.get(key);
     // Only trust cached entries that carry per-cell raw picks (ml + det). Older
@@ -170,7 +175,7 @@ async function classifyCached(
     // compute so the current rule applies (self-healing, one-time cost).
     if (hit && hasEnginePicks(hit.outcome)) {
       await cache.noteHit(key);
-      return resolveOutcome(hit.outcome);
+      return resolveOutcome(hit.outcome, mlAuthoritative);
     }
   }
   let picks: { solutionType: CellPicks; rootCause: CellPicks };
@@ -192,7 +197,7 @@ async function classifyCached(
     const entry: ClassifyCacheEntry = { outcome: picks, savedAt: Date.now(), hits: 0 };
     await cache.put(key, entry);
   }
-  return resolveOutcome(picks);
+  return resolveOutcome(picks, mlAuthoritative);
 }
 
 /** True when a cached outcome records the raw per-cell picks (ml + det). */
@@ -212,9 +217,9 @@ function hasEnginePicks(
     return;
   }
 
-  const useMl = msg.useMl ? await getMl() : null;
-  const cache = msg.cacheEnabled ? new ClassificationCacheStore() : null;
   const modelId = msg.modelId || "deterministic";
+  const useMl = msg.useMl ? await getMl(modelId) : null;
+  const cache = msg.cacheEnabled ? new ClassificationCacheStore() : null;
   const total = msg.rows.length;
   let done = 0;
   let notClassified = 0;

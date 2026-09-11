@@ -71,6 +71,45 @@ test("resolvePick: ML fills a cell the deterministic left blank", () => {
   assert.equal(r.value, "Hardware");
 });
 
+test("resolvePick (ML mode): the ML pick wins over a deterministic label", () => {
+  const ml = { value: "Certificate expiry", confidence: 0.72, source: "ml" };
+  const det = { value: "Hardware", confidence: 0.5, source: "heuristic" };
+  const r = resolvePick(ml, det, true);
+  assert.equal(r.source, "ml");
+  assert.equal(r.value, "Certificate expiry");
+});
+
+test("resolvePick (ML mode): a null ML pick clears the cell (no det fallback)", () => {
+  const det = { value: "Hardware", confidence: 0.5, source: "heuristic" };
+  const r = resolvePick(null, det, true);
+  assert.equal(r.value, null);
+  assert.equal(r.source, "ml");
+});
+
+test("resolveOutcome (ML mode): same picks resolve to the ML label, unlike Hybrid", () => {
+  const p = {
+    ml: { value: "Certificate expiry", confidence: 0.72, source: "ml" },
+    det: { value: "Hardware", confidence: 0.5, source: "heuristic" }
+  };
+  const hybrid = resolveOutcome({ rootCause: p, solutionType: p });
+  assert.equal(hybrid.rootCause.value, "Hardware");
+  assert.equal(hybrid.rootCause.source, "heuristic");
+  const ml = resolveOutcome({ rootCause: p, solutionType: p }, true);
+  assert.equal(ml.rootCause.value, "Certificate expiry");
+  assert.equal(ml.rootCause.source, "ml");
+});
+
+test("resolveOutcome (ML mode): a null ML pick clears the cell even when det has a label", () => {
+  const p = {
+    ml: { value: null, confidence: 0, source: "ml" },
+    det: { value: "Workaround", confidence: 0.9, source: "heuristic" }
+  };
+  const ml = resolveOutcome({ rootCause: p, solutionType: p }, true);
+  assert.equal(ml.solutionType.value, null);
+  const hybrid = resolveOutcome({ rootCause: p, solutionType: p });
+  assert.equal(hybrid.solutionType.value, "Workaround");
+});
+
 test("stripCommonWords drops function words but keeps negation/labels", () => {
   const out = stripCommonWords("The user had a problem and the network was down.");
   assert.equal(out, "user problem network down");
