@@ -2,7 +2,8 @@
 
 The MSR **Root cause category** and **Solution type** columns are filled from
 each ticket's closure notes. A built-in offline scorer always runs; an optional
-local machine-learning model can fill what the scorer leaves blank.
+local machine-learning model can also be used — filling the scorer's blanks in
+Hybrid mode, or driving every eligible row in ML-only mode (see [Modes](#modes)).
 
 > For a step-by-step explanation of the scoring algorithm (with examples), see
 > **[Classification Algorithm](Classification-Algorithm)**.
@@ -66,15 +67,15 @@ context fingerprint and forces a re-run, so a stale value is never shown.
 
 ## Modes
 
-Set the mode under **Classification** in [Configuration](Configuration). In every
-mode the **deterministic cascade is authoritative** — ML only ever fills cells
-the scorer left blank, it never overrides an established heuristic value.
+Set the mode under **Classification** in [Configuration](Configuration). The mode
+decides how the deterministic scorer and the ML model combine — in particular
+whether the scorer or the model is **authoritative**.
 
 | Mode | Behaviour |
 |---|---|
 | **Heuristic only** (`heuristic`) | Deterministic scorer only, inline; no worker. Fills all eligible rows (existing valid values kept). |
-| **Hybrid** (`hybrid`, default) | Deterministic pass fills blanks first, then the ML worker fills any cell still blank. |
-| **ML only** (`ml`) | The ML worker evaluates every eligible note row, but the deterministic cascade stays authoritative and ML fills the blanks — so `ml` and `hybrid` converge on the same verdicts. |
+| **Hybrid** (`hybrid`, default) | The **scorer is authoritative**: a deterministic pass fills blanks first, then the ML worker fills any cell still blank. ML never overrides or erases an established value. |
+| **ML only** (`ml`) | The **ML model is authoritative**: the worker evaluates every eligible note row, **replaces** existing values with the model's verdict, and **clears** a cell when the model produces no label. Switching the model changes the results. |
 
 The default mode is **Hybrid** and the default model id is **`mobilebert`**.
 Switching the mode re-classifies the loaded data automatically.

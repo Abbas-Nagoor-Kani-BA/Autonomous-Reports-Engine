@@ -108,8 +108,19 @@ label-directed cascade:
 
 The offline scorer combines exact-phrase (regex), fuzzy keyword, and TF-IDF
 cosine matching, ignores negated cues (for example "no workaround needed" does
-not score *Workaround*), and resolves competing matches by specificity. The
-optional ML model only fills cells the deterministic scorer leaves blank.
+not score *Workaround*), and resolves competing matches by specificity.
+
+The classification **mode** decides how the offline scorer and the ML model
+combine:
+
+- **Heuristic only** — the offline scorer alone; the ML model is never used.
+- **Hybrid** — the scorer is authoritative and runs first; the ML model then
+  fills only the cells the scorer left blank and never overrides or erases an
+  existing value.
+- **ML only** — the ML model is authoritative. It evaluates every eligible
+  (closed Incident/RFS) row, **replaces** existing values with the model's
+  verdict, and **clears** a cell when the model produces no label. Switching the
+  model therefore changes the results.
 
 ## Development
 
