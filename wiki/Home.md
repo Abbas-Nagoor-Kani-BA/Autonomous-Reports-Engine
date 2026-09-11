@@ -52,6 +52,7 @@ Start here if you want to run pulls and produce reports.
 - [Filters and Presets](Filters-and-Presets) — conditions, filter sets, presets, WSR.
 - [Data Viewer](Data-Viewer) — search, column editor, CI split, ticket stats.
 - [Calclens](Calclens) — how each derived value was computed.
+- [Why Time Conversions](Why-Time-Conversions) — why times are shown on the instance clock.
 - [Classification](Classification) — root cause / solution type, heuristic and ML.
 - [Classification Algorithm](Classification-Algorithm) — how the scorer decides, step by step.
 - [Export](Export) — WSR workbook fill and Copy for MSR.

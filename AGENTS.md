@@ -265,5 +265,6 @@ component needs its own test; end-to-end coverage is not enough.
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | Layered architecture, directory map, layering rules, download path. Start here. |
 | [`docs/timeline.md`](docs/timeline.md) | The four timeline rules, timezone contract, export sheet lookup. |
+| [`docs/time-handling.md`](docs/time-handling.md) | How timestamps flow UTC→instance clock: representations, offset resolution, pitfalls, and how to test time behavior. |
 | [`docs/timeline-scenarios.md`](docs/timeline-scenarios.md) | Full assignTime/acknTime scenario catalogue (multi-queue, acked-stay-wins, equal timestamps). |
 | [`docs/roadmap.md`](docs/roadmap.md) | Known limits and forward-looking work. |

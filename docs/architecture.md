@@ -81,3 +81,9 @@ downloads via Blob + `chrome.downloads.download`. Extension pages have
 `URL.createObjectURL`; workers do not. Never move export building back into the
 background, and never regenerate the workbook with a spreadsheet library
 (ExcelJS/SheetJS re-serialization corrupts formatted templates).
+
+## Related docs
+
+- [`timeline.md`](timeline.md) — the four timeline rules and the timezone contract.
+- [`time-handling.md`](time-handling.md) — how timestamps flow from UTC to the instance clock, with worked examples and test instructions.
+- [`sla-formula-analysis.md`](sla-formula-analysis.md) — how derived times feed the SLA formulas.

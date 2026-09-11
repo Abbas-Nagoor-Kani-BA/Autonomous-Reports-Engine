@@ -40,7 +40,9 @@ looked up, so the tool needs no extra ServiceNow permissions.
 The codebase is layered (`core` → `data` → `services` → `components` →
 `surfaces`) and wired by a small dependency-injection container. See
 [`docs/architecture.md`](docs/architecture.md) for the full design and
-[`docs/timeline.md`](docs/timeline.md) for the timeline, SLA and timezone rules.
+[`docs/timeline.md`](docs/timeline.md) for the timeline, SLA and timezone rules,
+and [`docs/time-handling.md`](docs/time-handling.md) for how timestamps flow from
+UTC to the instance clock.
 
 ## Requirements
 
