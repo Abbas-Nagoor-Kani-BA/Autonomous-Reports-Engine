@@ -46,7 +46,7 @@ export type TimelineStep = {
   to: string;
   /** True when this event is the one whose time the selected cell shows. */
   selected: boolean;
-  /** Key-moment tags (Assign/Ackn/Suspend/Resume/Opened/Resolved) + display time. */
+  /** Key-moment tags (Assign/Ackn/Suspend/Resume) + display time. */
   markers?: TimelineMarker[];
 };
 
@@ -259,13 +259,11 @@ const KEY_MOMENTS: Array<{ label: string; fieldIcon: TimelineFieldIcon | null; k
   { label: "Assign", fieldIcon: "group", key: "assignTimeUtcIso", iso: (r) => r.assignTimeUtcIso },
   { label: "Ackn", fieldIcon: "assignee", key: "acknTimeUtcIso", iso: (r) => r.acknTimeUtcIso },
   { label: "Suspend", fieldIcon: "state", key: "suspendTimeUtcIso", iso: (r) => r.suspendTimeUtcIso },
-  { label: "Resume", fieldIcon: "state", key: "resumeTimeUtcIso", iso: (r) => r.resumeTimeUtcIso },
-  { label: "Opened", fieldIcon: null, key: "createdOn", iso: (r) => r.openedAtRaw ?? r.openedAt },
-  { label: "Resolved", fieldIcon: null, key: "resolvedAt", iso: (r) => r.resolvedAtRaw ?? r.resolvedAt }
+  { label: "Resume", fieldIcon: "state", key: "resumeTimeUtcIso", iso: (r) => r.resumeTimeUtcIso }
 ];
 
-/** Tag the timeline's key moments for a row (assign/ackn/suspend/resume by field+time,
- *  opened/resolved by time) with their display times, so the drawer can highlight them. */
+/** Tag the timeline's key moments for a row (assign/ackn/suspend/resume by
+ *  field+time) with their display times, so the drawer can highlight them. */
 function markKeyMoments(timeline: TimelineStep[], row: Record<string, any>): TimelineStep[] {
   for (const k of KEY_MOMENTS) {
     const iso = k.iso(row);

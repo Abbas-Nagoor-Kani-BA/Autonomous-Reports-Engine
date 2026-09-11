@@ -367,17 +367,18 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
           marks.push(m);
         }
       }
-      const row = el("div", `calclens-tl-row${selected ? " selected" : ""}${marks.length ? " marked" : ""}`);
+      const row = el("div", `calclens-tl-row${selected ? " selected" : ""}${marks.length ? " has-marks" : ""}`);
       const gutter = el("div", "calclens-tl-gutter");
       gutter.appendChild(icon("clock" as any, "calclens-tl-icn"));
       if (pickable) gutter.appendChild(icon("check-circle-2" as any, "calclens-tl-pick-icn"));
       row.appendChild(gutter);
       const body = el("div", "calclens-tl-body");
-      body.appendChild(el("span", "calclens-tl-time", grp.atLabel || grp.atIso || "\u00b7"));
+      const timeRow = el("div", "calclens-tl-timerow");
+      timeRow.appendChild(el("span", "calclens-tl-time", grp.atLabel || grp.atIso || "\u00b7"));
       if (marks.length) {
         const markRow = el("div", "calclens-tl-marks");
         for (const m of marks) {
-          const chip = el("button", "calclens-tl-mark", `${m.label} \u00b7 ${m.time || grp.atLabel || ""}`);
+          const chip = el("button", "calclens-tl-mark", m.label);
           chip.type = "button";
           if (this.deps.onJumpToCell) {
             const sysId = String(this.getState().edit?.row?.sysId ?? "");
@@ -388,8 +389,9 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
           }
           markRow.appendChild(chip);
         }
-        body.appendChild(markRow);
+        timeRow.appendChild(markRow);
       }
+      body.appendChild(timeRow);
       const changes = el("div", "calclens-tl-changes");
       for (const ev of grp.steps) changes.appendChild(this.renderChange(ev));
       body.appendChild(changes);

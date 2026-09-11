@@ -880,14 +880,14 @@
   .calclens-tl-row.selected .calclens-tl-time { @apply text-accent font-semibold; }
   .calclens-tl-row.pickable.selected { background: rgba(137, 180, 250, 0.12); }
 
-  /* Marked key-moment rows (static columns): a highlight plus label·time chips. */
-  .calclens-tl-row.marked .calclens-tl-time { @apply text-accent font-bold; }
-  .calclens-tl-row.marked .calclens-tl-icn { @apply bg-peach text-card2; }
-  .calclens-tl-marks { @apply flex flex-wrap gap-1 mt-1; }
+  /* Key-moment badges (no row highlight): text-only outline pills sitting to
+     the right of the timestamp; click jumps the grid to the derived cell. */
+  .calclens-tl-timerow { @apply flex flex-wrap items-center gap-1.5; }
+  .calclens-tl-marks { @apply flex flex-wrap gap-1; }
   .calclens-tl-mark {
-    @apply inline-flex items-center gap-1 rounded-full bg-accent/15 text-accent px-2 py-0.5 text-[10.5px] font-semibold whitespace-nowrap;
+    @apply inline-flex items-center rounded-full border border-accent bg-transparent text-accent px-2 py-0.5 text-[10.5px] font-semibold whitespace-nowrap leading-none;
   }
-  button.calclens-tl-mark { @apply cursor-pointer border-0; }
+  button.calclens-tl-mark { @apply cursor-pointer; }
   button.calclens-tl-mark:hover { @apply bg-accent text-card2; }
 
   /* Static-column change counts (no. of assignees / states / groups). */
