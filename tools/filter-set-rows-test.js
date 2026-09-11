@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-const { filterSetToRows, describeFilterSet } = await import("../surfaces/panel/index.ts");
+const { filterSetToRows, describeFilterSet } = await import("../panel/index.ts");
 
 const COND_FIELDS = [
   { key: "assignedTo", label: "Assigned to", field: "assigned_to", type: "ref" },

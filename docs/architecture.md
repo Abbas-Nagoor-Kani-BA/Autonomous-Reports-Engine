@@ -6,7 +6,7 @@ before adding code.
 ## Layered design
 
 ```
-core/ → data/ → services/ → components/ → surfaces/
+core/ → data/ → common/ → viewer/ | panel/ | settings/
 ```
 
 Wired by a DI container in `di/`. Dependency direction is strictly downward.
@@ -27,36 +27,46 @@ data/        Everything that touches storage or the network.
   datasource/    sn-transport (session auth), sn-remote (ServiceNow client)
   idb.ts, key-value-store.ts, chrome-key-value-store.ts,
   classification-cache-repository.ts, ml-model-repository.ts
-services/    Business logic. No DOM; depends on repositories, never on
-             components. pull, connection, settings, queue-scope,
-             classifier, report, extract, export, remote-bridge.
-components/  OOP UI units that own their state and their DOM:
-             Component (base), Modal, DataGrid, SearchPicker, MapDialog,
-             CiDialog, LogCard, ProgressCard, ConditionBuilder, FilterSetList,
-             ChipList, CalclensPanel.
-             Never touch chrome.*, indexedDB or fetch — call a service.
-surfaces/    Composition roots: panel, settings, viewer. The only place that
-             knows both the container and the components.
+common/      Shared UI units and services used by more than one surface.
+  components/    Component (base class), Modal.
+  services/      RemoteBridge, SettingsService.
+viewer/      The data-view surface. Self-contained: HTML page, composition root,
+             and all viewer-specific modules in one place.
+  viewer.html
+  index.ts             Composition root — calls each module's init*() in order.
+  core.ts, store.ts, grid.ts, toolbar.ts, classify.ts, calclens.ts, ...
+  components/          Viewer-only UI components:
+                       DataGrid, SearchPicker, ColumnEditor, CalclensPanel,
+                       CiDialog, MapDialog.
+  services/            Viewer-only business logic:
+                       ExportService, ReportService, ExtractService.
+panel/       The side-panel surface. Self-contained.
+  panel.html
+  panel.ts             Entry module (esbuild entry point).
+  index.ts             Composition root.
+  components/          Panel-only UI components:
+                       LogCard, ProgressCard, ConditionBuilder, FilterSetList.
+settings/    The options-page surface. Self-contained.
+  settings.html
+  settings.ts          Entry module (esbuild entry point).
+  index.ts             Composition root.
+  components/          Settings-only UI component: ChipList.
 di/          Container, tokens, and the per-surface registration functions
              (container, token, tokens, register-core, register-background).
 lib/         Platform and UI helpers: keys, storage, store, markup, picklist,
              servicenow, toast, tooltip, format, icons, icons-data.
+services/    Platform-level services not owned by any surface:
+             PullService, ConnectionService, QueueScope, ClassifierService.
 worker/      Off-thread ML classification: classifier-worker, ml-classify.
 platform/    The service worker (background.ts).
-viewer/      The data-view page (viewer/viewer.html only). Its modules live in
-             surfaces/viewer/.
-panel/, settings/, content/, types/, styles/, icons/
+content/, types/, styles/, icons/
 ```
 
-### surfaces/viewer/
+### viewer/index.ts
 
-The viewer page's own composition root plus its modules: `core`, `store`,
-`grid-data`, `cols`, `config-state`, `exporter`, `clipboard`, `summary`,
-`toolbar`, `dialogs`, `grid`, `selection`, `activity`, `classify`, `calclens`,
-`calclens-state`, `worker-client`, `shared`, `interactions`.
-`surfaces/viewer/index.ts` calls each module's `init*()` in a fixed order and
-then boots. The modules own the data stores and the export pipeline; their UI
-lives in `components/`.
+The viewer page's composition root. Calls each module's `init*()` in a fixed
+order and then boots. The modules own the data stores and the export pipeline;
+their UI lives in `viewer/components/`.
 
 **Nothing binds DOM handlers at module scope.** Every module exports an
 `init*()` and the composition root decides when it runs. Adding top-level
@@ -68,10 +78,10 @@ wiring to a viewer module re-introduces the invisible ordering this replaced.
 |---|---|---|
 | `core/` | only `core/` | `chrome.*`, `indexedDB`, `fetch`, DOM |
 | `lib/` | `core/` | other layers |
-| `data/` | `core/`, `lib/`, platform APIs | DOM, `services/`, `components/` |
-| `services/` | `core/`, `lib/`, `data/` | DOM, `components/` |
-| `components/` | `core/`, `lib/`, services via `deps` | repositories, `chrome.*`, `indexedDB`, `fetch` |
-| `surfaces/` | everything | containing business logic |
+| `data/` | `core/`, `lib/`, platform APIs | DOM, `services/`, `common/`, surfaces |
+| `services/` | `core/`, `lib/`, `data/` | DOM, `common/components/` |
+| `common/components/` | `core/`, `lib/`, services via `deps` | repositories, `chrome.*`, `indexedDB`, `fetch` |
+| `viewer/`, `panel/`, `settings/` | everything | containing business logic |
 
 ## Download path (MV3 constraint)
 

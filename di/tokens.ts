@@ -2,7 +2,7 @@ import { token } from "./token.ts";
 
 import type { ConnectionService } from "../services/connection-service.ts";
 import type { PullService } from "../services/pull-service.ts";
-import type { RemoteBridge } from "../services/remote-bridge.ts";
+import type { RemoteBridge } from "../common/services/remote-bridge.ts";
 
 import type { IdbDatabase } from "../data/idb.ts";
 import type { MsrListsRepository } from "../data/repositories/msr-lists-repository.ts";

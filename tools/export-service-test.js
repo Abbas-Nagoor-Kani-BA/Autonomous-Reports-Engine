@@ -2,7 +2,7 @@
 import {
   ExportService, MAP_MAX_COL, DEFAULT_EXPORT_MAP,
   expStr, tsvCell, sanitizeFilePart, b64FromBuffer, bufferFromB64
-} from "../services/export-service.ts";
+} from "../viewer/services/export-service.ts";
 import { buildReport } from "../core/report.ts";
 
 let failed = 0;

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { hashNotes, alreadyClassified, classificationListsFp } from "../surfaces/viewer/classify.ts";
+import { hashNotes, alreadyClassified, classificationListsFp } from "../viewer/classify.ts";
 
 test("hashNotes is deterministic and sensitive to the note text", () => {
   assert.equal(hashNotes("Restarted the server"), hashNotes("Restarted the server"));

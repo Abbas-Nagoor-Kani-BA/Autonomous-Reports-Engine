@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import "./helpers/dom-env.mjs";
 import { splitTerms } from "../core/names.ts";
-import { ChipList } from "../components/chip-list.ts";
+import { ChipList } from "../settings/components/chip-list.ts";
 
 function makeChip(opts = {}) {
   const root = document.createElement("div");

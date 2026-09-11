@@ -32,7 +32,7 @@ const FIXTURE = {
 before(async () => {
   installSkeleton();
   seedAll(FIXTURE);
-  await import("../surfaces/viewer/index.ts");
+  await import("../viewer/index.ts");
   await flush();
 });
 

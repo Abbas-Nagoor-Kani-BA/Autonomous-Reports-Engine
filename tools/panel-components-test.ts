@@ -28,9 +28,9 @@ globalThis.KeyboardEvent = win.KeyboardEvent;
 globalThis.localStorage = win.localStorage;
 win.document.body.innerHTML = html;
 
-const { LogCard } = await import("../components/log-card.ts");
-const { ProgressCard } = await import("../components/progress-card.ts");
-const { ConditionBuilder, validateConditions, COND_OPS } = await import("../components/condition-builder.ts");
+const { LogCard } = await import("../panel/components/log-card.ts");
+const { ProgressCard } = await import("../panel/components/progress-card.ts");
+const { ConditionBuilder, validateConditions, COND_OPS } = await import("../panel/components/condition-builder.ts");
 
 const FIELDS = [
   { key: "assignedTo", label: "Assigned to", field: "assigned_to", type: "ref" },
@@ -274,7 +274,7 @@ test("validateConditions rejects a field absent from the chosen table", () => {
 
 // --- filter set list ---
 
-const { FilterSetList, migrateLegacyFilterSets } = await import("../components/filter-set-list.ts");
+const { FilterSetList, migrateLegacyFilterSets } = await import("../panel/components/filter-set-list.ts");
 const { createMemoryKeyValueStore } = await import("../data/key-value-store.ts");
 const { FilterListStore } = await import("../data/repositories/filter-list-repository.ts");
 

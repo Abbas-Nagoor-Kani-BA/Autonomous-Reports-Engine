@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { ReportService } from "../services/report-service.ts";
+import { ReportService } from "../viewer/services/report-service.ts";
 import { buildReport } from "../core/report.ts";
 
 let failed = 0;

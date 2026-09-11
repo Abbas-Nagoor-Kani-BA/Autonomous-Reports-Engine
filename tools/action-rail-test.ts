@@ -2,7 +2,7 @@ import { test, before } from "node:test";
 import assert from "node:assert/strict";
 
 import { seedAll, seed, peek, flush, installSkeleton } from "./helpers/dom-env.mjs";
-import { clampPosition } from "../surfaces/viewer/action-rail.ts";
+import { clampPosition } from "../viewer/action-rail.ts";
 import { STORAGE } from "../lib/keys.ts";
 
 // clampPosition is pure and does not need the DOM.
@@ -28,7 +28,7 @@ before(async () => {
   seed(STORAGE.viewerActionRail, { x: 120, y: 90, folded: true });
   Object.defineProperty(window, "innerWidth", { value: 1200, configurable: true });
   Object.defineProperty(window, "innerHeight", { value: 800, configurable: true });
-  await import("../surfaces/viewer/index.ts");
+  await import("../viewer/index.ts");
   await flush();
 });
 

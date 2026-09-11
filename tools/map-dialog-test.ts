@@ -11,8 +11,8 @@ globalThis.KeyboardEvent = win.KeyboardEvent;
 globalThis.MouseEvent = win.MouseEvent;
 globalThis.Node = win.Node;
 
-const { Modal, closeAllModals } = await import("../components/modal.ts");
-const { MapDialog } = await import("../components/map-dialog.ts");
+const { Modal, closeAllModals } = await import("../common/components/modal.ts");
+const { MapDialog } = await import("../viewer/components/map-dialog.ts");
 
 /*
  * Export column mapping.

@@ -4,14 +4,14 @@ import { snStateChoices, SN_PRIORITY_CHOICES, snTableLabel } from "../core/state
 import { presetOptions, resolvePresetSets } from "../core/preset-controller.ts";
 import { FILTER_PRESET_REPO } from "../di/tokens.ts";
 import { STORAGE } from "../lib/keys.ts";
-import { createPanel, describeFilterSet, filterSetToRows } from "../surfaces/panel/index.ts";
+import { createPanel, describeFilterSet, filterSetToRows } from "./index.ts";
 import { showToast } from "../lib/toast.ts";
 import { initTooltips } from "../lib/tooltip.ts";
 
-import type { CondFieldDef } from "../components/condition-builder.ts";
+import type { CondFieldDef } from "./components/condition-builder.ts";
 import type { FilterSet } from "../data/repositories/filter-list-repository.ts";
 import type { UserPreset } from "../data/repositories/preset-repository.ts";
-import type { LogLevel } from "../components/log-card.ts";
+import type { LogLevel } from "./components/log-card.ts";
 import type { MsgProgress } from "../types/global.d.ts";
 
 const $ = (id: string): any => document.getElementById(id);

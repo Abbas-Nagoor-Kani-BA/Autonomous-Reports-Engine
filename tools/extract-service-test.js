@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { ExtractService } from "../services/extract-service.ts";
+import { ExtractService } from "../viewer/services/extract-service.ts";
 import { extractHeuristic } from "../core/aiextract.ts";
 
 let failed = 0;
