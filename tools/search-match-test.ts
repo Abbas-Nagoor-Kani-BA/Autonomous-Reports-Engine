@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { rowMatches } from "../surfaces/viewer/search-match.ts";
-import type { SearchColumn } from "../surfaces/viewer/search-match.ts";
+import { rowMatches } from "../viewer/search-match.ts";
+import type { SearchColumn } from "../viewer/search-match.ts";
 
 const COLUMNS: SearchColumn[] = [
   ["number", "Number", "num", 120],

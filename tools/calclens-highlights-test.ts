@@ -37,7 +37,7 @@ const {
   enabledSet,
   enabledCount,
   disabledCount
-} = await import("../surfaces/viewer/calclens-highlights.ts");
+} = await import("../viewer/calclens-highlights.ts");
 
 function reset(): void {
   for (const k of Object.keys(store)) delete store[k];

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { resolveApplyCell } from "../surfaces/viewer/classify.ts";
+import { resolveApplyCell } from "../viewer/classify.ts";
 
 const W = (value = null, source = "ml", confidence = 0) => ({ value, source, confidence });
 

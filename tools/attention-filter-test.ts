@@ -28,13 +28,13 @@ const fakeChrome = {
 Object.defineProperty(globalThis, "chrome", { value: fakeChrome, configurable: true, writable: true });
 
 const { loadHighlightPrefs, setHighlightEnabled, setAll } =
-  await import("../surfaces/viewer/calclens-highlights.ts");
+  await import("../viewer/calclens-highlights.ts");
 
 const {
   getAttentionFilterActive,
   setAttentionFilterActive,
   applyAttentionFilter
-} = await import("../surfaces/viewer/attention-filter.ts");
+} = await import("../viewer/attention-filter.ts");
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

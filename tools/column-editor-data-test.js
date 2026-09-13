@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { columnEntries, focusedIndexOf } from "../surfaces/viewer/column-editor-data.ts";
+import { columnEntries, focusedIndexOf } from "../viewer/column-editor-data.ts";
 
 const rows = [
   { sysId: "s1", number: "INC0001", assignedTo: "Jane Doe" },

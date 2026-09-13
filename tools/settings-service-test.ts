@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { Container } from "../di/container.ts";
 import { SETTINGS_REPO, KEY_VALUE_STORE, MSR_LISTS_REPO } from "../di/tokens.ts";
 import { createMemoryKeyValueStore } from "../data/key-value-store.ts";
-import { normaliseSettings, SettingsService, SETTINGS_DEFAULTS } from "../services/settings-service.ts";
+import { normaliseSettings, SettingsService, SETTINGS_DEFAULTS } from "../common/services/settings-service.ts";
 import { SettingsStore } from "../data/repositories/settings-repository.ts";
 import { MsrListsStore } from "../data/repositories/msr-lists-repository.ts";
 

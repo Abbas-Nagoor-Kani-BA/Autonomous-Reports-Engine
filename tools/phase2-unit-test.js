@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { extractTimelines, analyzeAll, extractEventsFromListHistory } from "../core/phase2.ts";
+import { extractTimelines, analyzeAll, extractEventsFromListHistory } from "../core/timeline/phase2.ts";
 
 let failed = 0;
 function check(name, got, want) {

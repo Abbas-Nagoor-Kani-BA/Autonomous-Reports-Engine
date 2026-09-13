@@ -2,8 +2,8 @@
 import {
   ExportService, MAP_MAX_COL, DEFAULT_EXPORT_MAP,
   expStr, tsvCell, sanitizeFilePart, b64FromBuffer, bufferFromB64
-} from "../services/export-service.ts";
-import { buildReport } from "../core/report.ts";
+} from "../viewer/services/export-service.ts";
+import { buildReport } from "../core/sla/report.ts";
 
 let failed = 0;
 function check(name, got, want) {

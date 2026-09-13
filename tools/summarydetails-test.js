@@ -4,7 +4,7 @@ import {
   bucketChanges,
   keyIncidents,
   buildSummaryDetails
-} from "../core/summarydetails.ts";
+} from "../core/summary/summarydetails.ts";
 
 let failed = 0;
 function check(name, got, want) {

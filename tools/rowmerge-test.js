@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mergeRows } from "../core/rowmerge.ts";
+import { mergeRows } from "../core/timeline/rowmerge.ts";
 
 let failed = 0;
 function check(name, got, want) {

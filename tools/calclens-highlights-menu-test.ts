@@ -2,7 +2,7 @@ import { test, before } from "node:test";
 import assert from "node:assert/strict";
 
 import { seedAll, flush, installSkeleton, peek } from "./helpers/dom-env.mjs";
-import { ATTENTION_RULES } from "../core/attention.ts";
+import { ATTENTION_RULES } from "../core/attention/attention.ts";
 import { STORAGE } from "../lib/keys.ts";
 
 const FIXTURE = {
@@ -32,7 +32,7 @@ const FIXTURE = {
 before(async () => {
   installSkeleton();
   seedAll(FIXTURE);
-  await import("../surfaces/viewer/index.ts");
+  await import("../viewer/index.ts");
   await flush();
 });
 

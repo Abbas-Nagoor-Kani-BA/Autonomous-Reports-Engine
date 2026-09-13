@@ -13,7 +13,7 @@ globalThis.MouseEvent = win.MouseEvent;
 globalThis.Event = win.Event;
 globalThis.Node = win.Node;
 
-const { ColumnEditor } = await import("../components/column-editor.ts");
+const { ColumnEditor } = await import("../viewer/components/column-editor.ts");
 
 const entries = [
   { sysId: "s1", number: "INC0001", value: "Jane Doe" },

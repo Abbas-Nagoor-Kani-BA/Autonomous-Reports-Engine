@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getEditMode, setEditMode } from "../surfaces/viewer/edit-mode-state.ts";
+import { getEditMode, setEditMode } from "../viewer/edit-mode-state.ts";
 
 test("edit mode defaults off", () => {
   assert.equal(getEditMode(), false);

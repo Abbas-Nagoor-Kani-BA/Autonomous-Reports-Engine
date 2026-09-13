@@ -10,8 +10,8 @@ globalThis.HTMLInputElement = win.HTMLInputElement;
 globalThis.MouseEvent = win.MouseEvent;
 globalThis.Node = win.Node;
 
-const { DataGrid } = await import("../components/data-grid.ts");
-import type { GridColumn, DataGridState } from "../components/data-grid.ts";
+const { DataGrid } = await import("../viewer/components/data-grid.ts");
+import type { GridColumn, DataGridState } from "../viewer/components/data-grid.ts";
 
 /*
  * Component-level tests for the grid.

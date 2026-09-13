@@ -7,12 +7,12 @@ import type { TicketRepository } from "../data/repositories/ticket-repository.ts
 import type { TimelineRepository } from "../data/repositories/timeline-repository.ts";
 import type { TicketRow } from "../data/repositories/dataset-repository.ts";
 
-import { buildEncodedQuery, type QueryBuilderConfig } from "../core/querybuilder.ts";
-import { snStateMap, snTableLabel } from "../core/statechoices.ts";
-import { normalizeNames } from "../core/names.ts";
-import { mergeRows } from "../core/rowmerge.ts";
-import { analyzeAll } from "../core/phase2.ts";
-import { weekRanges, CHANGE_SUMMARY_FIELDS } from "../core/summarydetails.ts";
+import { buildEncodedQuery, type QueryBuilderConfig } from "../core/query/querybuilder.ts";
+import { snStateMap, snTableLabel } from "../core/sla/statechoices.ts";
+import { normalizeNames } from "../core/summary/names.ts";
+import { mergeRows } from "../core/timeline/rowmerge.ts";
+import { analyzeAll } from "../core/timeline/phase2.ts";
+import { weekRanges, CHANGE_SUMMARY_FIELDS } from "../core/summary/summarydetails.ts";
 import { groupScopeOf, scopeGroups } from "./queue-scope.ts";
 
 export type ProgressFn = (stage: string, detail: string, extra?: Record<string, unknown>) => void;
@@ -250,7 +250,7 @@ export class PullService {
    * single OR'd query) because repeating the queue scope across OR branches
    * makes the encoded query long enough that ServiceNow rejects it with 400.
    *
-   * Rows are bucketed later (core/summarydetails.ts): last-week rows into
+   * Rows are bucketed later (core/summary/summarydetails.ts): last-week rows into
    * implemented / failed, next-week rows into planned. Key Incidents come from
    * the already-pulled incident rows, not from here. No timelines are needed.
    */

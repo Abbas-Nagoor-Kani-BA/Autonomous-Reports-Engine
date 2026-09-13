@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { buildWsrFilterSets } from "../core/wsrpreset.ts";
-import { weekRanges } from "../core/summarydetails.ts";
-import { buildEncodedQuery } from "../core/querybuilder.ts";
+import { buildWsrFilterSets } from "../core/query/wsrpreset.ts";
+import { weekRanges } from "../core/summary/summarydetails.ts";
+import { buildEncodedQuery } from "../core/query/querybuilder.ts";
 
 // Fixed reference: Thursday 2026-09-03. Last week (Mon-Sun) = 2026-08-24..2026-08-30.
 const NOW = new Date(2026, 8, 3, 10, 0, 0);

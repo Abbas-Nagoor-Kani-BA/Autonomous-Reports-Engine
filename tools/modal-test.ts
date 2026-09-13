@@ -11,8 +11,8 @@ globalThis.KeyboardEvent = win.KeyboardEvent;
 globalThis.MouseEvent = win.MouseEvent;
 globalThis.Node = win.Node;
 
-const { Modal, hasOpenModal, closeAllModals } = await import("../components/modal.ts");
-const { CiDialog, unassignedItems } = await import("../components/ci-dialog.ts");
+const { Modal, hasOpenModal, closeAllModals } = await import("../common/components/modal.ts");
+const { CiDialog, unassignedItems } = await import("../viewer/components/ci-dialog.ts");
 
 /*
  * Modal stack and Escape cascade.

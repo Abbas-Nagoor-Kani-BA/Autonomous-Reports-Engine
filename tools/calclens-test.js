@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { explainCell } from "../core/calclens.ts";
+import { explainCell } from "../core/attention/calclens.ts";
 
 let failed = 0;
 function check(name, got, want) {

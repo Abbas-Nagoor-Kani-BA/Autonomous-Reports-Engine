@@ -5,7 +5,7 @@ import {
   getSearchColumn, setSearchColumn,
   getSearchMode, setSearchMode,
   isCaseSensitive, setCaseSensitive
-} from "../surfaces/viewer/search-state.ts";
+} from "../viewer/search-state.ts";
 
 test("defaults reproduce the original all-column substring search", () => {
   assert.equal(getSearchColumn(), "");

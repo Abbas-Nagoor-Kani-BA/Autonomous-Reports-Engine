@@ -12,7 +12,7 @@ globalThis.MouseEvent = win.MouseEvent;
 globalThis.Element = win.Element;
 globalThis.Node = win.Node;
 
-const { SearchPicker } = await import("../components/search-picker.ts");
+const { SearchPicker } = await import("../viewer/components/search-picker.ts");
 
 const OPTIONS = ["Permanent fix", "Workaround", "Known error"];
 

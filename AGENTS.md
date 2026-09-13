@@ -12,8 +12,11 @@ Excel (.xlsx) analysis workbook.
 - Auth model: reuses the user's browser login session. No API keys or Basic auth.
 - Two-phase pipeline: Phase 1 = paginated ticket list; Phase 2 = audit-history timelines.
 
-**The codebase is a layered architecture: `core/` → `data/` → `services/` →
-`components/` → `surfaces/`, wired by a DI container in `di/`. Read
+**The codebase is a layered architecture: `core/` → `data/` → `common/` →
+`viewer/` | `panel/` | `settings/`, wired by a DI container in `di/`. Each
+surface is self-contained: its HTML page, entry module, composition root,
+surface-specific components, and surface-specific services all live in one
+folder. Shared components and services live in `common/`. Read
 [`docs/architecture.md`](docs/architecture.md) before adding code — it defines
 the directory map and what each layer may and may not do.**
 
@@ -22,7 +25,7 @@ All application source is TypeScript (`.ts`); esbuild strips the types. The only
 
 ## Component contract
 
-Components extend `components/component.ts`. Two rules are load-bearing and both
+Components extend `common/components/component.ts`. Two rules are load-bearing and both
 were found the hard way — see the file's own documentation:
 
 - **`build()` runs once; `patch()` runs on every state change.** A full rebuild
@@ -146,7 +149,7 @@ There is no bundler or package manager for tests. Verify with node after every
 change:
 
 ```bash
-node --check platform/background.ts core/*.ts lib/*.ts surfaces/viewer/*.ts panel/*.ts settings/*.ts content/content.js && \
+node --check platform/background.ts core/*.ts lib/*.ts viewer/*.ts panel/*.ts settings/*.ts content/content.js && \
 node -e "JSON.parse(require('fs').readFileSync('manifest.json'))"
 ```
 

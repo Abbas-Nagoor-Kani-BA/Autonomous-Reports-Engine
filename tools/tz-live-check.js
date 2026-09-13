@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { detectSnOffsetMs, rowOffsetMs, fmtWithOffset } from "../core/sntime.ts";
+import { detectSnOffsetMs, rowOffsetMs, fmtWithOffset } from "../core/timeline/sntime.ts";
 
 const INSTANCE = (process.env.TZ_INSTANCE || process.env.SEED_INSTANCE || "").replace(/\/+$/, "");
 const USER = process.env.TZ_USER || process.env.SEED_USER || "";

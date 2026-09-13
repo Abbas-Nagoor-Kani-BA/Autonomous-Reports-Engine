@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { RemoteBridge } from "../services/remote-bridge.ts";
+import { RemoteBridge } from "../common/services/remote-bridge.ts";
 import { MSG } from "../lib/keys.ts";
 
 const listeners = new Set<(msg: unknown) => void>();

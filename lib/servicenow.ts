@@ -1,4 +1,4 @@
-import * as Analysis from "../core/phase2.ts";
+import * as Analysis from "../core/timeline/phase2.ts";
 
 export type TransportResult = {
   ok: boolean;

@@ -5,7 +5,7 @@ import {
   seedAll, seed, peek, flush, installSkeleton, getLastCopied, getDownloads, clearDownloads
 } from "./helpers/dom-env.mjs";
 import fflate from "../lib/vendor/fflate.cjs";
-import { setFflate } from "../core/templatexml.ts";
+import { setFflate } from "../core/export/templatexml.ts";
 
 const FIXTURE = {
   lastData: {
@@ -44,9 +44,9 @@ let grid, clipboard;
 before(async () => {
   installSkeleton();
   seedAll(FIXTURE);
-  await import("../surfaces/viewer/index.ts");
-  grid = await import("../surfaces/viewer/grid.ts");
-  clipboard = await import("../surfaces/viewer/clipboard.ts");
+  await import("../viewer/index.ts");
+  grid = await import("../viewer/grid.ts");
+  clipboard = await import("../viewer/clipboard.ts");
   await flush();
 });
 
@@ -168,7 +168,7 @@ test("grid body is permanently read-only (no inline editor on double-click)", { 
 });
 
 test("Calclens date input does not persist until Save is clicked", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   calState.setCalclensMode(true);
   const row = grid.findRowBySysId("aaa");
   row.assignTimeUtcIso = "";
@@ -199,7 +199,7 @@ test("Calclens date input does not persist until Save is clicked", { timeout: 80
 });
 
 test("Calclens timeline pick stages a time and only Save persists + toasts", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   const row = grid.findRowBySysId("aaa");
   row.assignTimeUtcIso = "";
   row.activity = [
@@ -232,8 +232,8 @@ test("Calclens timeline pick stages a time and only Save persists + toasts", { t
 });
 
 test("clicking a key-moment chip jumps to the derived cell and opens its editor", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
-  const selection = await import("../surfaces/viewer/selection.ts");
+  const calState = await import("../viewer/calclens-state.ts");
+  const selection = await import("../viewer/selection.ts");
   const row = grid.findRowBySysId("aaa");
   const iso = (u) => new Date(u).toISOString();
   row.assignTimeUtcIso = iso(Date.UTC(2026, 7, 25, 9, 15, 0));
@@ -263,7 +263,7 @@ test("clicking a key-moment chip jumps to the derived cell and opens its editor"
 });
 
 test("Calclens groups same-timestamp changes under one timeline node", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   const row = grid.findRowBySysId("aaa");
   const sameEpoch = Date.UTC(2026, 7, 5, 11, 15, 0);
   row.assignTimeUtcIso = "";
@@ -286,7 +286,7 @@ test("Calclens groups same-timestamp changes under one timeline node", { timeout
 });
 
 test("Calclens timeline shows empty old value as 'empty'", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   const row = grid.findRowBySysId("aaa");
   row.assignTimeUtcIso = "";
   row.activity = [
@@ -307,7 +307,7 @@ test("Calclens timeline shows empty old value as 'empty'", { timeout: 8000 }, as
 });
 
 test("Calclens discards an unsaved pick when moving to the next cell", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   const row = grid.findRowBySysId("bbb");
   row.assignTimeUtcIso = "";
   row.activity = [
@@ -330,7 +330,7 @@ test("Calclens discards an unsaved pick when moving to the next cell", { timeout
 });
 
 test("Calclens drawer shows a choice picker but not a date editor for solutionType", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   calState.setCalclensMode(true);
   grid.reportCellFocus({ sysId: "aaa", key: "solutionType" });
   await flush();
@@ -343,7 +343,7 @@ test("Calclens drawer shows a choice picker but not a date editor for solutionTy
 });
 
 test("Calclens drawer does not offer editing for non-derivation columns", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   calState.setCalclensMode(true);
   grid.reportCellFocus({ sysId: "aaa", key: "shortDescription" });
   await flush();
@@ -353,7 +353,7 @@ test("Calclens drawer does not offer editing for non-derivation columns", { time
 });
 
 test("Calclens ON flags attention cells with a marker and tooltip", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   const row = grid.currentRows()[0];
   row.rootCause = "";
   row.solutionType = "";
@@ -375,8 +375,8 @@ test("Calclens ON flags attention cells with a marker and tooltip", { timeout: 8
 });
 
 test("disabling a highlight suppresses the mark but keeps the tooltip", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
-  const hl = await import("../surfaces/viewer/calclens-highlights.ts");
+  const calState = await import("../viewer/calclens-state.ts");
+  const hl = await import("../viewer/calclens-highlights.ts");
   const row = grid.currentRows()[0];
   row.rootCause = "";
   row.solutionType = "";
@@ -422,7 +422,7 @@ test("tooltip hides when the hovered cell is re-rendered", { timeout: 8000 }, as
 });
 
 test("classifyRows degrades to the scorer with a notice when the ML model is missing", { timeout: 8000 }, async () => {
-  const { classifyRows } = await import("../surfaces/viewer/classify.ts");
+  const { classifyRows } = await import("../viewer/classify.ts");
   await chrome.storage.local.set({
     pluginSettings: {
       defaults: { ticketType: "incident", queues: ["APPSUP_TEST"], teamMembers: ["John Doe"] },
@@ -473,8 +473,8 @@ test("switching classification mode re-runs on already-loaded data (mode is in t
 });
 
 test("single-cell selection + arrow navigation focuses the selected cell", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
-  const selModule = await import("../surfaces/viewer/selection.ts");
+  const calState = await import("../viewer/calclens-state.ts");
+  const selModule = await import("../viewer/selection.ts");
   calState.setCalclensMode(true);
   await selModule.setSelPoint("aaa", "number", false);
   await flush();
@@ -515,7 +515,7 @@ test("derived duration columns render HMS from the timeline stamps", { timeout: 
 });
 
 test("clicking a body cell reports it to Calclens (single-cell focus)", { timeout: 8000 }, async () => {
-  const calState = await import("../surfaces/viewer/calclens-state.ts");
+  const calState = await import("../viewer/calclens-state.ts");
   calState.setCalclensMode(true);
   const numTd = document.querySelector(`#tbl tbody tr[data-sys-id="bbb"]`).children[0];
   numTd.dispatchEvent(new window.MouseEvent("click", { bubbles: true, button: 0 }));
@@ -638,7 +638,7 @@ test("split radios default to single file when split is off", async () => {
 });
 
 test("selecting 'Separate files' with groups persists enabled and flips radios", async () => {
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   toolbar.setCiSplit({ enabled: false, groups: [{ name: "Appsupp", items: ["App"] }] });
   toolbar.syncSplitRadio();
   const radSingle = document.getElementById("radSingle");
@@ -652,7 +652,7 @@ test("selecting 'Separate files' with groups persists enabled and flips radios",
 });
 
 test("selecting 'Single file' while split is active disables and persists", async () => {
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   toolbar.setCiSplit({ enabled: true, groups: [{ name: "Appsupp", items: ["App"] }] });
   toolbar.syncSplitRadio();
   const radSingle = document.getElementById("radSingle");
@@ -664,7 +664,7 @@ test("selecting 'Single file' while split is active disables and persists", asyn
 });
 
 test("selecting 'Separate files' with no groups opens the CI dialog and reverts", async () => {
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   toolbar.setCiSplit({ enabled: false, groups: [] });
   toolbar.syncSplitRadio();
   const radSplit = document.getElementById("radSplit");
@@ -728,7 +728,7 @@ test("split export writes one file per CI group (serialized downloads)", { timeo
   await flush();
   seed("snXlsxTemplate", { name: "report-template.xlsx", dataB64: b64, savedAt: Date.now() });
 
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   toolbar.setCiSplit({
     enabled: true,
     groups: [
@@ -750,7 +750,7 @@ test("split export writes one file per CI group (serialized downloads)", { timeo
 });
 
 test("buildCiGroups splits on contained keywords, not just start-prefixes", async () => {
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   toolbar.setCiSplit({
     enabled: true,
     groups: [
@@ -776,7 +776,7 @@ test("buildCiGroups splits on contained keywords, not just start-prefixes", asyn
 });
 
 test("split preview in config popup shows per-group ticket counts", async () => {
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   const rows = grid.currentRows();
   rows.forEach(r => { r.configItem = ""; });
   rows[0].configItem = "Payment Gateway PRD";
@@ -803,7 +803,7 @@ test("split preview in config popup shows per-group ticket counts", async () => 
 });
 
 test("cell copy/paste/undo are disabled: no fill handle and body edits are blocked", { timeout: 8000 }, async () => {
-  const selModule = await import("../surfaces/viewer/selection.ts");
+  const selModule = await import("../viewer/selection.ts");
   assert.equal(document.getElementById("fillHandle"), null, "fill handle element removed");
   assert.equal(document.querySelector("#tbl.selecting"), null, "no range-select mode class exists");
   await selModule.setSelPoint("aaa", "shortDescription", false);
@@ -825,7 +825,7 @@ test("column-copy button removed from headers", async () => {
 });
 
 test("persisted column width is applied by buildHead", async () => {
-  const store = await import("../surfaces/viewer/store.ts");
+  const store = await import("../viewer/store.ts");
   store.setColWidths({ shortDescription: 300 });
   grid.buildHead();
   const ths = document.querySelectorAll("#tbl thead th");
@@ -835,7 +835,7 @@ test("persisted column width is applied by buildHead", async () => {
 });
 
 test("dragging a column resize handle updates and persists the width", { timeout: 8000 }, async () => {
-  const store = await import("../surfaces/viewer/store.ts");
+  const store = await import("../viewer/store.ts");
   store.setColWidths({});
   grid.buildHead();
   const ths = document.querySelectorAll("#tbl thead th");
@@ -866,7 +866,7 @@ test("clicking the resize handle does not trigger header sort", { timeout: 8000 
 });
 
 test("reset widths clears persisted widths and reverts the column", async () => {
-  const store = await import("../surfaces/viewer/store.ts");
+  const store = await import("../viewer/store.ts");
   store.setColWidths({ shortDescription: 320 });
   grid.buildHead();
   grid.resetColWidths();
@@ -879,7 +879,7 @@ test("reset widths clears persisted widths and reverts the column", async () => 
 });
 
 test("split preview icon session-filters the grid by CI group", { timeout: 8000 }, async () => {
-  const toolbar = await import("../surfaces/viewer/toolbar.ts");
+  const toolbar = await import("../viewer/toolbar.ts");
   const rows = grid.currentRows();
   rows.forEach((r) => { r.configItem = ""; });
   rows[0].configItem = "Payment Gateway PRD";
@@ -926,7 +926,7 @@ test("split preview icon session-filters the grid by CI group", { timeout: 8000 
 });
 
 test("edit mode opens the column editor on cell select, listing that column across the view", { timeout: 8000 }, async () => {
-  const editState = await import("../surfaces/viewer/edit-mode-state.ts");
+  const editState = await import("../viewer/edit-mode-state.ts");
   const modalEl = document.getElementById("columnEditorModal");
   assert.ok(modalEl.classList.contains("hidden"), "editor starts closed");
 
@@ -1001,7 +1001,7 @@ test("clearing pulled data closes the column editor", { timeout: 8000 }, async (
 });
 
 test("buildTimeline merges notes and field changes newest-first and marks key moments", { timeout: 8000 }, async () => {
-  const activity = await import("../surfaces/viewer/activity.ts");
+  const activity = await import("../viewer/activity.ts");
   const row = {
     number: "INC0009",
     shortDescription: "Timeline test",
@@ -1035,7 +1035,7 @@ test("buildTimeline merges notes and field changes newest-first and marks key mo
 });
 
 test("buildTimeline interleaves notes and field changes across an instance offset", { timeout: 8000 }, async () => {
-  const activity = await import("../surfaces/viewer/activity.ts");
+  const activity = await import("../viewer/activity.ts");
   // Instance is UTC+1: openedAt display is one hour ahead of the raw UTC.
   const row = {
     number: "INC0010",
@@ -1057,7 +1057,7 @@ test("buildTimeline interleaves notes and field changes across an instance offse
 });
 
 test("groupTimeline buckets same-timestamp events into one card and unions moments", async () => {
-  const activity = await import("../surfaces/viewer/activity.ts");
+  const activity = await import("../viewer/activity.ts");
   const row = {
     number: "INC0011",
     openedAt: "2026-08-01 10:00:00",
@@ -1085,7 +1085,7 @@ test("groupTimeline buckets same-timestamp events into one card and unions momen
 });
 
 test("buildTimeline splits a multi-entry note blob (dd-MM-yyyy) and interleaves each with field changes", { timeout: 8000 }, async () => {
-  const activity = await import("../surfaces/viewer/activity.ts");
+  const activity = await import("../viewer/activity.ts");
   const row = {
     number: "INC2595727",
     openedAt: "02-09-2026 00:48:23",
@@ -1122,7 +1122,7 @@ test("buildTimeline splits a multi-entry note blob (dd-MM-yyyy) and interleaves 
 });
 
 test("groupTimeline never merges notes/comments even at the same timestamp", async () => {
-  const activity = await import("../surfaces/viewer/activity.ts");
+  const activity = await import("../viewer/activity.ts");
   const row = {
     number: "INC0012",
     openedAt: "2026-08-01 10:00:00",

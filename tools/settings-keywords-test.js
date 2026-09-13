@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import "./helpers/dom-env.mjs";
-import { ChipList } from "../components/chip-list.ts";
-import { mergeMsrLists } from "../core/msrchoices.ts";
-import { classifyMsr, norm } from "../core/msrcategorize.ts";
+import { ChipList } from "../settings/components/chip-list.ts";
+import { mergeMsrLists } from "../core/classification/msrchoices.ts";
+import { classifyMsr, norm } from "../core/classification/msrcategorize.ts";
 import {
   rebuildKeywordChips,
   fillMsrLists,
   collectMsrLists
-} from "../surfaces/settings/index.ts";
+} from "../settings/index.ts";
 
 function makeWiring() {
   const stack = document.createElement("div");

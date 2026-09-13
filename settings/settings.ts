@@ -3,11 +3,11 @@ import { ML_MODEL_CATALOG } from "../data/ml-model-repository.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { showToast } from "../lib/toast.ts";
 import { initTooltips } from "../lib/tooltip.ts";
-import { createSettings, fillMsrLists, collectMsrLists } from "../surfaces/settings/index.ts";
-import { norm as normHintKey } from "../core/msrcategorize.ts";
-import { normaliseSettings } from "../services/settings-service.ts";
+import { createSettings, fillMsrLists, collectMsrLists } from "./index.ts";
+import { norm as normHintKey } from "../core/classification/msrcategorize.ts";
+import { normaliseSettings } from "../common/services/settings-service.ts";
 
-import type { SettingsDraft } from "../services/settings-service.ts";
+import type { SettingsDraft } from "../common/services/settings-service.ts";
 import type { MlModelOption } from "../data/ml-model-repository.ts";
 
 const $ = (id: string): any => document.getElementById(id);
