@@ -149,6 +149,36 @@ test("condition builder renders a row and emits change", () => {
   assert.equal($("condRows").querySelector(".cfield").value, "assignedTo");
 });
 
+test("hasConditions reflects presence of rows without validating", () => {
+  const builder = makeBuilder();
+  assert.equal(builder.hasConditions(), false, "no rows initially");
+
+  builder.addRow();
+  assert.equal(builder.hasConditions(), true, "true once a row exists");
+
+  const del = $("condRows").querySelector(".cdel");
+  del.dispatchEvent(new win.MouseEvent("click"));
+  assert.equal(builder.hasConditions(), false, "false again after removing the last row");
+});
+
+test("panel disables the Add-to-filter button until a condition exists", () => {
+  const builder = makeBuilder();
+  const addBtn = $("addFilterBtn");
+  const sync = () => { addBtn.disabled = !builder.hasConditions(); };
+
+  sync();
+  assert.equal(addBtn.disabled, true, "disabled with no conditions");
+
+  builder.addRow();
+  sync();
+  assert.equal(addBtn.disabled, false, "enabled once a condition is added");
+
+  const del = $("condRows").querySelector(".cdel");
+  del.dispatchEvent(new win.MouseEvent("click"));
+  sync();
+  assert.equal(addBtn.disabled, true, "disabled again after the last condition is removed");
+});
+
 test("typing a value keeps focus and caret because rows are not rebuilt", () => {
   const builder = makeBuilder();
   builder.addRow();

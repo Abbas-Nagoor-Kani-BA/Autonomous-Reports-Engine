@@ -164,6 +164,14 @@ export class ConditionBuilder extends Component<ConditionBuilderState, Component
     return validateConditions(rows, this.deps, table);
   }
 
+  /**
+   * Whether any condition rows exist. Presence only — does not validate, so it
+   * never throws. Used to gate the "Add to filter list" action.
+   */
+  hasConditions(): boolean {
+    return this.getState().rows.length > 0;
+  }
+
   protected allowedFields(table: string): CondFieldDef[] {
     return this.deps.fields.filter((f) => !f.tables || f.tables.includes(table));
   }

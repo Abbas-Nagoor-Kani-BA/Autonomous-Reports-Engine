@@ -28,7 +28,8 @@ const els = {
   runBtn: $("runBtn"),
   viewBtn: $("viewBtn"),
   lastRun: $("lastRun"),
-  includeSummary: $("includeSummary")
+  includeSummary: $("includeSummary"),
+  addFilter: $("addFilterBtn")
 };
 function choiceList(key: string): { value: string | number; label: string }[] {
   if (key === "states") return snStateChoices(els.ticketType.value);
@@ -176,6 +177,12 @@ function instanceUrl(): string {
 }
 $("addFilterBtn").addEventListener("click", async () => {
   try {
+    if (!conditions.hasConditions()) {
+      const msg = "Add at least one condition before adding to the filter list";
+      logger.log(msg, "error");
+      showToast(msg, "error");
+      return;
+    }
     const f = currentFilters();
     delete f.rawQuery;
     const outcome = await filterSets.add(f);
@@ -418,6 +425,10 @@ function refreshGenerated(): void {
   } catch (e) {
     els.generatedQuery.textContent = (e as Error).message;
   }
+  updateAddFilterButton();
+}
+function updateAddFilterButton(): void {
+  els.addFilter.disabled = !conditions.hasConditions();
 }
 ["change", "input"].forEach((ev) => {
   [els.ticketType].forEach(
@@ -483,8 +494,11 @@ els.preview.addEventListener("click", async () => {
         pullable += res.total!;
       }
     }
-    progressCard.setLabel(overLimit ? `${pullable} pullable \xB7 ${overLimit} set(s) skipped by limit` : `${pullable} matching ticket${pullable === 1 ? "" : "s"}`);
-    showToast(`Preview \u2014 ${pullable} matching ticket${pullable === 1 ? "" : "s"}`);
+    const summary = overLimit
+      ? `${pullable} pullable \xB7 ${overLimit} set(s) skipped by limit`
+      : `${pullable} matching ticket${pullable === 1 ? "" : "s"}`;
+    progressCard.setLabel(summary);
+    showToast(`Preview \u2014 ${summary}`, overLimit ? "error" : "info");
     if (lastQuery) logger.log(`Query: ${lastQuery}`);
   } catch (err) {
     progressCard.setLabel((err as Error).message);
