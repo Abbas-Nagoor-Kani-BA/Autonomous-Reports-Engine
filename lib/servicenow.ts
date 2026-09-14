@@ -200,7 +200,7 @@ class ServiceNowClient {
   async fetchTimelineEvents(
     sysIds: string[],
     fieldNames: string[],
-    onProgress?: (p: { ticketsDone: number; ticketsTotal: number }) => void,
+    onProgress?: (p: { ticketsDone: number; total: number }) => void,
     signal?: AbortSignal,
     tableName = "incident"
   ): Promise<Record<string, { field: string; oldValue: string; newValue: string; at: string }[]>> {
@@ -211,7 +211,7 @@ class ServiceNowClient {
   async #fetchViaActivity(
     sysIds: string[],
     fieldNames: string[],
-    onProgress?: (p: { ticketsDone: number; ticketsTotal: number }) => void,
+    onProgress?: (p: { ticketsDone: number; total: number }) => void,
     signal?: AbortSignal,
     tableName = "incident"
   ): Promise<Record<string, { field: string; oldValue: string; newValue: string; at: string }[]>> {
@@ -256,7 +256,7 @@ class ServiceNowClient {
   async #runListHistory(
     sysIds: string[],
     wanted: Set<string>,
-    onProgress?: (p: { ticketsDone: number; ticketsTotal: number }) => void,
+    onProgress?: (p: { ticketsDone: number; total: number }) => void,
     signal?: AbortSignal,
     tableName = "incident",
     preloaded: Record<string, ListHistoryPayload> | null = null
@@ -269,7 +269,7 @@ class ServiceNowClient {
       let events = Analysis.extractEventsFromListHistory(payload)[sysId] || [];
       if (filterWanted) events = events.filter(e => wanted.has(e.field));
       if (events.length) byTicket[sysId] = events;
-      onProgress?.({ ticketsDone: idx + 1, ticketsTotal: sysIds.length });
+      onProgress?.({ ticketsDone: idx + 1, total: sysIds.length });
     }
     if (!Object.keys(byTicket).length && sysIds.length) {
       this.#emit({
@@ -304,7 +304,7 @@ class ServiceNowClient {
   async #runStream(
     sysIds: string[],
     wanted: Set<string>,
-    onProgress?: (p: { ticketsDone: number; ticketsTotal: number }) => void,
+    onProgress?: (p: { ticketsDone: number; total: number }) => void,
     signal?: AbortSignal,
     tableName = "incident"
   ): Promise<Record<string, { field: string; oldValue: string; newValue: string; at: string }[]>> {
@@ -324,7 +324,7 @@ class ServiceNowClient {
       let events = parse(entries) || [];
       if (filterWanted) events = events.filter(e => wanted.has(e.field));
       if (events.length) byTicket[sysId] = events;
-      onProgress?.({ ticketsDone: idx + 1, ticketsTotal: sysIds.length });
+      onProgress?.({ ticketsDone: idx + 1, total: sysIds.length });
     }
     if (!Object.keys(byTicket).length && sysIds.length) {
       this.#emit({
