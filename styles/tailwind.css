@@ -266,11 +266,6 @@
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(137, 180, 250, 0.08);
   }
 
-  .msrStack {
-    column-width: 200px;
-    column-gap: 14px;
-  }
-
   .msrTile {
     display: inline-block;
     width: 100%;
