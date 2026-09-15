@@ -154,6 +154,59 @@ test("column header click sorts by that column", { timeout: 8000 }, async () => 
   assert.ok(/^INC/.test(firstNum), "first cell is a ticket number after sort");
 });
 
+test("Columns menu drag-to-sort reorders columns, persists, then Reset order restores", { timeout: 8000 }, async () => {
+  const store = await import("../viewer/store.ts");
+  const headerLabels = () =>
+    [...document.querySelectorAll("#tbl thead th")].map(t => t.textContent.replace(/[▾▴⋮]/g, "").trim());
+
+  const before = headerLabels();
+  assert.equal(before[0], "Number", "precondition: Number is first");
+
+  // Open the Columns menu (builds the sortable row list).
+  document.getElementById("colsBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flush();
+  const rows = [...document.querySelectorAll("#colList .colRow")];
+  assert.ok(rows.length >= 3, "menu lists column rows");
+  assert.equal(rows[0].dataset.colKey && rows[0].querySelector(".colName").textContent, before[0],
+    "menu row order matches header order");
+
+  // Drag the first row (Number) onto the third row's lower half -> after it.
+  const from = rows[0];
+  const onto = rows[2];
+  const ontoKey = onto.dataset.colKey;
+  Object.defineProperty(onto, "getBoundingClientRect", {
+    value: () => ({ left: 0, top: 0, width: 200, height: 24, right: 200, bottom: 24 }),
+    configurable: true
+  });
+  const drag = (type, clientY) => {
+    const ev = new window.Event(type, { bubbles: true, cancelable: true });
+    ev.clientY = clientY;
+    ev.dataTransfer = { setData() {}, getData() { return ""; }, effectAllowed: "", dropEffect: "" };
+    return ev;
+  };
+  from.dispatchEvent(drag("dragstart", 0));
+  onto.dispatchEvent(drag("dragover", 20)); // lower half -> below
+  onto.dispatchEvent(drag("drop", 20));
+  from.dispatchEvent(drag("dragend", 0));
+  await flush();
+
+  const after = headerLabels();
+  assert.notDeepEqual(after, before, "header order changed after drag-to-sort");
+  assert.ok(after.indexOf("Number") > after.indexOf(before[2]), "Number moved after its drop target");
+  assert.ok(store.getColOrder().length > 0, "order held in the ui store");
+  assert.ok(Array.isArray(peek("viewerColOrder")) && peek("viewerColOrder").length > 0, "order persisted to storage");
+  void ontoKey;
+
+  // Reset order restores the default sequence (and clears the store).
+  document.getElementById("resetColOrderBtn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flush();
+  assert.equal(store.getColOrder().length, 0, "order cleared after Reset order");
+  assert.deepEqual(headerLabels(), before, "header order restored to default");
+
+  // Close the menu so it doesn't overlay later tests.
+  document.getElementById("colMenu").classList.add("hidden");
+});
+
 test("grid body is permanently read-only (no inline editor on double-click)", { timeout: 8000 }, async () => {
   const tr = document.querySelector("#tbl tbody tr");
   const prioIdx = [...document.querySelectorAll("#tbl thead th")]

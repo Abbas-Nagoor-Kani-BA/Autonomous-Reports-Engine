@@ -3,6 +3,8 @@ import { CELL_MAX, cellShort, placePopupNear } from "../lib/markup.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { saveValue } from "../lib/storage.ts";
 import { uiStore, setHiddenCols, setMsrLists, getMsrLists } from "./store.ts";
+import { getColOrder } from "./store.ts";
+import { orderColumns } from "./col-order.ts";
 import { ReportService } from "./services/report-service.ts";
 import { buildSummaryDetails } from "../core/summary/summarydetails.ts";
 import type { SummaryDetailsData } from "../core/export/templatexml.ts";
@@ -60,7 +62,13 @@ const COLUMNS: ViewerCol[] = [
 function hideStore(): Set<string> { return uiStore.getState().hiddenCols; }
 
 function visibleCols(): ViewerCol[] {
-  return COLUMNS.filter(([key]) => !hideStore().has(key));
+  const ordered = orderColumns(COLUMNS, getColOrder());
+  return ordered.filter(([key]) => !hideStore().has(key));
+}
+
+/** All columns in the user's chosen display order, including hidden ones. */
+function orderedCols(): ViewerCol[] {
+  return orderColumns(COLUMNS, getColOrder());
 }
 
 /** Shared show/hide column mutation: enforces "at least one visible", mutates
@@ -158,6 +166,7 @@ function buildSummaryDetailsFor(
 
 export {
   visibleCols,
+  orderedCols,
   hideStore,
   setColumnVisible,
   cellShort,

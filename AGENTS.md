@@ -202,6 +202,7 @@ Regression suites (`npm test` runs all of them):
 | `panel-components-test.ts`, `data-grid-test.ts`, `search-picker-test.ts`, `modal-test.ts`, `map-dialog-test.ts`, `settings-chips-test.js` | components |
 | `viewer-dom-test.ts` | end-to-end viewer flow (happy-dom) |
 | `search-state-test.ts`, `search-match-test.ts` | column-scoped search: state owner + pure matcher (modes, case, all/single-column, displayed-value match) |
+| `col-order-test.ts` | pure column-order model (`orderColumns`/`reorderKeys`): drag-to-sort reordering, migration-safe merge, hidden-column compose |
 
 Manual test loop (user performs): reload extension at `chrome://extensions`
 → refresh the ServiceNow tab → Connect → Preview count → Run export.

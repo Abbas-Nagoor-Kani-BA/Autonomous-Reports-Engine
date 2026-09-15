@@ -598,6 +598,16 @@
   #colList { @apply flex flex-col; }
   #colList label { @apply flex items-center gap-2 px-1 py-0.75 cursor-pointer whitespace-nowrap rounded hover:bg-line; }
   #colList input { @apply accent-accent; }
+  #colList .colRow { @apply relative; }
+  #colList .colGrip { @apply text-dim cursor-grab select-none text-[13px] leading-none; }
+  #colList .colRow.row-dragging { @apply opacity-40; }
+  #colList .colRow.drop-above::before,
+  #colList .colRow.drop-below::after {
+    content: "";
+    @apply absolute left-1 right-1 h-0.5 bg-pink z-[1];
+  }
+  #colList .colRow.drop-above::before { top: -1px; }
+  #colList .colRow.drop-below::after { bottom: -1px; }
 
   .searchCase { @apply inline-flex gap-0.5; }
   .searchCase .btn { @apply px-2 py-1 text-[12px] font-mono; }

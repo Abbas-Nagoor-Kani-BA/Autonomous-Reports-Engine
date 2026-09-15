@@ -25,6 +25,7 @@ type SelState = {
 type UiState = {
   hiddenCols: Set<string>;
   colWidths: Record<string, number>;
+  colOrder: string[];
   msrLists: MsrLists;
 };
 
@@ -47,6 +48,7 @@ export const selStore = createStore<SelState>({
 export const uiStore = createStore<UiState>({
   hiddenCols: new Set(),
   colWidths: {},
+  colOrder: [],
   msrLists: MsrChoices.mergeMsrLists(null)
 });
 
@@ -56,28 +58,39 @@ export function setSelfPush(v: boolean) { dataStore.setState({ selfPush: v }); }
 export function setHiddenCols(set: Set<string>) { uiStore.setState({ hiddenCols: set }); }
 export function getColWidths() { return uiStore.getState().colWidths; }
 export function setColWidths(widths: Record<string, number>) { uiStore.setState({ colWidths: widths || {} }); }
+export function getColOrder(): string[] { return uiStore.getState().colOrder; }
+export function setColOrder(order: string[]) { uiStore.setState({ colOrder: Array.isArray(order) ? order : [] }); }
 export function getMsrLists(): MsrLists { return uiStore.getState().msrLists; }
 export function setMsrLists(lists: unknown) {
   uiStore.setState({ msrLists: MsrChoices.mergeMsrLists(lists as MsrChoices.MsrListOverrides | null | undefined) });
 }
 
 export async function hydrateStores() {
-  const [lastData, viewerSel, hiddenCols, colWidths, storedLists] = await Promise.all([
+  const [lastData, viewerSel, hiddenCols, colWidths, colOrder, storedLists] = await Promise.all([
     loadOnce<ViewerData>(STORAGE.lastData, null),
     loadOnce<{ a: SelPoint; f: SelPoint }>(STORAGE.viewerSel, null),
     loadOnce<string[]>(STORAGE.viewerHiddenCols, []),
     loadOnce<Record<string, number>>(STORAGE.viewerColWidths, {}),
+    loadOnce<string[]>(STORAGE.viewerColOrder, []),
     loadOnce<{ lists?: Record<string, unknown> }>(STORAGE.msrLists, null)
   ]);
   const hc = new Set(Array.isArray(hiddenCols) ? hiddenCols : []);
   dataStore.setState({ data: lastData || null });
   selStore.setState({ pending: viewerSel && viewerSel.a && viewerSel.f ? viewerSel : null });
-  uiStore.setState({ hiddenCols: hc, colWidths: (colWidths && typeof colWidths === "object") ? colWidths : {} });
+  uiStore.setState({
+    hiddenCols: hc,
+    colWidths: (colWidths && typeof colWidths === "object") ? colWidths : {},
+    colOrder: Array.isArray(colOrder) ? colOrder : []
+  });
   setMsrLists(storedLists && storedLists.lists ? storedLists.lists : null);
 }
 
 export async function saveColWidths() {
   await saveValue(STORAGE.viewerColWidths, getColWidths());
+}
+
+export async function saveColOrder() {
+  await saveValue(STORAGE.viewerColOrder, getColOrder());
 }
 
 export async function saveSel() {
