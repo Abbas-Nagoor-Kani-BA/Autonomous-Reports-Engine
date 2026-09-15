@@ -346,6 +346,18 @@ function rawValue(v: SnValue | unknown): string {
   return "";
 }
 
+/**
+ * Priority source per table. Incident carries the custom `u_priority`; problem
+ * and sc_task use the OOB `priority`. Both fields are requested in the pull's
+ * DEFAULT_FIELDS, so we pick whichever actually yields a value rather than
+ * relying on `??` — a requested-but-absent field can arrive as an empty string
+ * or empty object (not nullish), which `??` would not fall through.
+ */
+function pickPriority(rec: Record<string, unknown>): unknown {
+  const hasValue = (v: unknown): boolean => fieldValue(v) !== "" || rawValue(v) !== "";
+  return hasValue(rec.u_priority) ? rec.u_priority : rec.priority;
+}
+
 function resolveStateLabel(state: SnValue | unknown, stateMap: Record<string, string>): string {
   const display = fieldValue(state);
   const raw = rawValue(state);
@@ -464,8 +476,8 @@ function analyzeAll(
       shortDescription: fieldValue(rec.short_description),
       state: resolveStateLabel(rec[stateField], stateMap),
       stateValue: rawValue(rec[stateField]),
-      priority: fieldValue(rec.u_priority ?? rec.priority),
-      priorityValue: rawValue(rec.u_priority ?? rec.priority),
+      priority: fieldValue(pickPriority(rec as Record<string, unknown>)),
+      priorityValue: rawValue(pickPriority(rec as Record<string, unknown>)),
       category: fieldValue(rec.category),
       caller: fieldValue(rec.caller_id),
       assignmentGroup: fieldValue(rec.assignment_group),

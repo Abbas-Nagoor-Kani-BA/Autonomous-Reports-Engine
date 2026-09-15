@@ -547,5 +547,42 @@ check("BA ticket resolves assign+ack from the earlier acked AIRPORTOPS stay",
   })(),
   ["2026-08-28T16:05:35.000Z", "2026-08-28T16:26:43.000Z"]);
 
+console.log("== analyzeAll: priority source (u_priority for incident, priority for problem/sc_task) ==");
+(() => {
+  const stateMap = { 1: "New", 7: "Closed" };
+  const ctx = { membersByQueue: {}, fallbackMembers: [], tableName: "incident" };
+  const val = (s) => ({ display_value: s, value: s });
+
+  // Incident: u_priority present -> used.
+  const inc = { sys_id: "i1", number: "INC001", state: "Closed", opened_at: "2026-08-23 06:00:00",
+    u_priority: val("2 - High"), priority: val("3 - Moderate") };
+  const incRow = analyzeAll([inc], {}, stateMap, ctx).rows[0];
+  check("incident uses u_priority when present", incRow.priority, "2 - High");
+
+  // Problem: no u_priority field at all -> falls back to priority.
+  const prb = { sys_id: "p1", number: "PRB001", state: "Closed", opened_at: "2026-08-23 06:00:00",
+    priority: val("1 - Critical") };
+  const prbRow = analyzeAll([prb], {}, stateMap, { ...ctx, tableName: "problem" }).rows[0];
+  check("problem falls back to priority (no u_priority)", prbRow.priority, "1 - Critical");
+
+  // sc_task: no u_priority -> priority.
+  const sct = { sys_id: "t1", number: "SCTASK001", state: "Closed", opened_at: "2026-08-23 06:00:00",
+    priority: val("4 - Low") };
+  const sctRow = analyzeAll([sct], {}, stateMap, { ...ctx, tableName: "sc_task" }).rows[0];
+  check("sc_task falls back to priority (no u_priority)", sctRow.priority, "4 - Low");
+
+  // Requested-but-empty u_priority (empty object) must NOT shadow priority.
+  const emptyObj = { sys_id: "t2", number: "SCTASK002", state: "Closed", opened_at: "2026-08-23 06:00:00",
+    u_priority: { display_value: "", value: "" }, priority: val("2 - High") };
+  const emptyObjRow = analyzeAll([emptyObj], {}, stateMap, { ...ctx, tableName: "sc_task" }).rows[0];
+  check("empty-object u_priority falls back to priority", emptyObjRow.priority, "2 - High");
+
+  // Requested-but-empty u_priority (empty string) must NOT shadow priority.
+  const emptyStr = { sys_id: "t3", number: "SCTASK003", state: "Closed", opened_at: "2026-08-23 06:00:00",
+    u_priority: "", priority: val("3 - Moderate") };
+  const emptyStrRow = analyzeAll([emptyStr], {}, stateMap, { ...ctx, tableName: "sc_task" }).rows[0];
+  check("empty-string u_priority falls back to priority", emptyStrRow.priority, "3 - Moderate");
+})();
+
 console.log(`\nphase2: ${failed ? failed + " FAILED" : "all passed"}`);
 process.exit(failed ? 1 : 0);

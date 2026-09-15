@@ -49,6 +49,7 @@ export const DEFAULT_FIELDS = [
   "number",
   "state",
   "u_priority",
+  "priority",
   "assignment_group",
   "assigned_to",
   "opened_at",
