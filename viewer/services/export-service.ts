@@ -3,7 +3,7 @@ import { letterToColNum } from "../../lib/markup.ts";
 import { pad2 } from "../../lib/format.ts";
 import { computeDurations, type Durations } from "../../core/timeline/durations.ts";
 import { ReportService, type ReportFmt, type ReportChoices } from "./report-service.ts";
-import { displayNumber, priorityCell, isScTask } from "../../core/export/rowfields.ts";
+import { displayNumber, priorityCell, isRfs } from "../../core/export/rowfields.ts";
 
 /*
  * Export-BUILDING work for the viewer: the template column map, the field
@@ -223,7 +223,7 @@ export class ExportService {
       { letter: "D", get: r => MsrChoices.msrType(r.number) },
       { letter: "E", get: r => displayNumber(r) },
       { letter: "F", get: r => expStr(r.assignmentGroup) },
-      { letter: "G", get: r => isScTask(r) ? "RFS" : (String(r.priority ?? "").match(/\d+/)?.[0] ?? expStr(r.priority)) },
+      { letter: "G", get: r => isRfs(r) ? "RFS" : (String(r.priority ?? "").match(/\d+/)?.[0] ?? expStr(r.priority)) },
       { letter: "H", get: r => expStr(r.shortDescription) },
       { letter: "I", get: r => MsrChoices.msrStatus(expStr(r.state)) },
       { letter: "J", get: r => expStr(r.assignedTo) },

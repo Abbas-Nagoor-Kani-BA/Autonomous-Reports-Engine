@@ -95,6 +95,14 @@ check("MSR col G is RFS for sc_task", scTsv[6], "RFS");
 const scNoRitm = svc.buildMsrTsv([mkRow({ number: "SCTASK0005678", priority: "2 - High" })]).split("\t");
 check("MSR col E falls back to SCTASK number when no RITM", scNoRitm[4], "SCTASK0005678");
 check("MSR col G still RFS when no RITM", scNoRitm[6], "RFS");
+// Regression: REQ / RITM rows are RFS too. Their priority column must be "RFS",
+// not empty, even when the source priority is blank.
+const reqTsv = svc.buildMsrTsv([mkRow({ number: "REQ0001234", priority: "" })]).split("\t");
+check("MSR col G is RFS for a REQ row with empty priority", reqTsv[6], "RFS");
+const ritmTsv = svc.buildMsrTsv([mkRow({ number: "RITM0001234", priority: undefined })]).split("\t");
+check("MSR col G is RFS for a RITM row with no priority", ritmTsv[6], "RFS");
+check("export col 7 is RFS for a REQ row with empty priority", svc.tplColumns[6].get(mkRow({ number: "REQ0001234", priority: "" }), 0), "RFS");
+check("export col 7 is RFS for a RITM row with no priority", svc.tplColumns[6].get(mkRow({ number: "RITM0001234" }), 0), "RFS");
 // Non-sc_task unchanged: E = number, G = priority digit.
 const incTsv = svc.buildMsrTsv([mkRow({ number: "INC0001234", priority: "2 - High" })]).split("\t");
 check("MSR col E unchanged for incident", incTsv[4], "INC0001234");
