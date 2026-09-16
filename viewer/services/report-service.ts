@@ -14,13 +14,19 @@ import { buildSlaSummary, buildSlaSummaryRows, type SlaSummaryItem } from "../..
 export type ReportRow = Record<string, any>;
 export type ReportFmt = (utcIso: string, row: ReportRow) => string;
 
+/** Export-time report selections sourced from the MSR option lists. When
+ *  omitted, buildReport falls back to its "BA"/"AO" defaults. */
+export type ReportChoices = { opCo?: string; domain?: string };
+
 export type SlaSummaryResult = ReturnType<typeof buildSlaSummary>;
 
 export class ReportService {
-  rep(row: ReportRow, fmt: ReportFmt): Record<string, any> {
+  rep(row: ReportRow, fmt: ReportFmt, choices?: ReportChoices): Record<string, any> {
     return buildReport(
       row as WalkedRow,
-      fmt as unknown as MessageFormatter
+      fmt as unknown as MessageFormatter,
+      undefined,
+      choices ? { opCo: choices.opCo, domain: choices.domain } : undefined
     ) as Record<string, any>;
   }
 

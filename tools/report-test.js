@@ -210,5 +210,33 @@ console.log("== report cache invalidation on edited derivation columns ==");
   }
 })();
 
+console.log("== opCo/domain selection (issue: was hardcoded BA/AO) ==");
+(() => {
+  const id = v => v || "";
+  const mk = () => ({
+    number: "INC0010001", priority: "2 - High", state: "Resolved",
+    createdOn: "2026-08-10 09:00:00", resolvedAt: "2026-08-10 15:00:00",
+    assignTimeUtcIso: "2026-08-10T01:00:00.000Z", acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
+    rootCause: "Bad config", solutionType: "Permanent fix"
+  });
+  // Defaults preserved when no selection supplied.
+  check("default opCo is BA", R.buildReport(mk(), id).opCo, "BA");
+  check("default domain is AO", R.buildReport(mk(), id).domain, "AO");
+  // Selection applied.
+  const sel = R.buildReport(mk(), id, undefined, { opCo: "IB", domain: "SharePoint" });
+  check("selected opCo IB", sel.opCo, "IB");
+  check("selected domain SharePoint", sel.domain, "SharePoint");
+  // Empty/whitespace selection falls back to defaults.
+  const blank = R.buildReport(mk(), id, undefined, { opCo: "   ", domain: "" });
+  check("blank opCo falls back to BA", blank.opCo, "BA");
+  check("blank domain falls back to AO", blank.domain, "AO");
+  // Cache invalidation: switching the selection re-derives (opCo/domain are in the key).
+  const row = mk();
+  R.buildReport(row, id, undefined, { opCo: "BA", domain: "AO" });
+  const after = R.buildReport(row, id, undefined, { opCo: "EI", domain: "Mobile" });
+  check("changed opCo invalidates cache", after.opCo, "EI");
+  check("changed domain invalidates cache", after.domain, "Mobile");
+})();
+
 console.log(`\nreport: ${failed ? failed + " FAILED" : "all passed"}`);
 process.exit(failed ? 1 : 0);

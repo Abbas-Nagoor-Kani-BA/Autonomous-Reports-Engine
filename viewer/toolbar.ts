@@ -10,8 +10,10 @@ import type { ViewerRow } from "./core.ts";
 import { buildSlaSummaryRowsFor, buildSummaryDetailsFor } from "./core.ts";
 import { getSummaryNarrative } from "./summary-details.ts";
 import { dataStore } from "./store.ts";
+import { getMsrLists } from "./store.ts";
 import {
   getCiSplit, setCiSplit, getSavedMapPresent, setSavedMapPresent,
+  getReportChoices, setReportChoices,
   syncSplitRadio, closeConfigDialog, updateCiBtn, updateExportDots, setOnConfigChange
 } from "./config-state.ts";
 import { showToast } from "../lib/toast.ts";
@@ -82,6 +84,20 @@ export function initToolbar(): void {
   $("cfgMapBtn").addEventListener("click", () => openMapDialog());
   $("cfgCiBtn").addEventListener("click", () => openCiDialog());
 
+  $("cfgOpCo").addEventListener("change", () => {
+    const opCo = ($("cfgOpCo") as HTMLSelectElement).value;
+    setReportChoices({ ...getReportChoices(), opCo });
+    applyReportChoices();
+    chrome.storage.local.set({ [STORAGE.reportChoices]: getReportChoices() });
+  });
+
+  $("cfgDomain").addEventListener("change", () => {
+    const domain = ($("cfgDomain") as HTMLSelectElement).value;
+    setReportChoices({ ...getReportChoices(), domain });
+    applyReportChoices();
+    chrome.storage.local.set({ [STORAGE.reportChoices]: getReportChoices() });
+  });
+
   $("configClose").addEventListener("click", closeConfigDialog);
 
   $("configExport").addEventListener("click", runExport);
@@ -108,6 +124,7 @@ export function initToolbar(): void {
       setStatus("Nothing to copy — search filter matches no rows", true);
       return;
     }
+    applyReportChoices();
     copyText(buildMsrTsv(rows))
       .then(() => showToast(`Copied ${rows.length} row${rows.length === 1 ? "" : "s"} to clipboard`))
       .catch(() => showToast("Copy failed", "error"));
@@ -220,8 +237,45 @@ function filledFilename(templateName: string, groupLabel?: string): string {
 }
 
 function openConfigDialog(): void {
+  populateReportSelects();
+  applyReportChoices();
   updateConfigSummary();
   if (configModal) configModal.open();
+}
+
+/** Pushes the current opCo/domain selection into the shared ExportService so
+ *  the template fill and MSR clipboard both reflect the chosen values. */
+function applyReportChoices(): void {
+  const rc = getReportChoices();
+  exportSvc.setReportChoices({ opCo: rc.opCo, domain: rc.domain });
+}
+
+/** Fills the opCo/domain <select> options from the current MSR option lists and
+ *  restores the persisted selection (falling back to the first list value, or
+ *  the buildReport defaults "BA"/"AO" when the lists are empty). */
+function populateReportSelects(): void {
+  const lists = getMsrLists();
+  const rc = getReportChoices();
+  fillSelect($("cfgOpCo") as HTMLSelectElement, lists.opCo || [], rc.opCo, "BA");
+  fillSelect($("cfgDomain") as HTMLSelectElement, lists.domain || [], rc.domain, "AO");
+  // Persist the resolved selection so the fallback becomes the stored value.
+  setReportChoices({
+    opCo: ($("cfgOpCo") as HTMLSelectElement).value,
+    domain: ($("cfgDomain") as HTMLSelectElement).value
+  });
+}
+
+function fillSelect(sel: HTMLSelectElement, values: string[], current: string, fallback: string): void {
+  const opts = values.length ? values : [fallback];
+  sel.innerHTML = "";
+  for (const v of opts) {
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = v;
+    sel.appendChild(o);
+  }
+  const want = current && opts.includes(current) ? current : opts[0];
+  sel.value = want;
 }
 
 async function runExport(): Promise<void> {
@@ -233,6 +287,7 @@ async function runExport(): Promise<void> {
     closeConfigDialog();
     return;
   }
+  applyReportChoices();
   try {
     if (!tplInfo) {
       closeConfigDialog();

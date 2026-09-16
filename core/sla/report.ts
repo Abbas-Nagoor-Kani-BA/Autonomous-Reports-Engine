@@ -322,12 +322,19 @@ export function isSlaEligible(row: WalkedRow): boolean {
   return isIncident && terminal;
 }
 
-export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: Date = new Date(), opts?: { skipSlaGate?: boolean }): Report {
+export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: Date = new Date(), opts?: { skipSlaGate?: boolean; opCo?: string; domain?: string }): Report {
+  // opCo/domain are chosen at export time from the MSR option lists; they
+  // default to "BA"/"AO" when no selection is supplied. They are part of the
+  // cache key so switching the selection re-derives (rather than returning a
+  // stale cached row carrying the previous opCo/domain).
+  const opCo = opts?.opCo && String(opts.opCo).trim() ? String(opts.opCo).trim() : "BA";
+  const domain = opts?.domain && String(opts.domain).trim() ? String(opts.domain).trim() : "AO";
   const keyInputs = [
     row.number, row.priority, row.state, row.assignmentGroup,
     row.createdOn, row.assignTimeUtcIso, row.acknTimeUtcIso, row.resolvedAt,
     row.suspendTimeUtcIso, row.resumeTimeUtcIso,
-    row.solutionType, row.rootCause
+    row.solutionType, row.rootCause,
+    opCo, domain
   ].join("|");
   // The gated result is what every surface reads and is what we cache. The
   // ungated variant (skipSlaGate) is an internal-only path (SLA summary problem
@@ -363,8 +370,8 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
 
   const rep: Report = {
     type,
-    opCo: "BA",
-    domain: "AO",
+    opCo,
+    domain,
     created, assigned, ackn, resolved, susp, resumed,
     impactedApplication: String(row.configItem || ""),
     resolutionType: String(row.solutionType || ""),

@@ -242,6 +242,14 @@ const SKELETON = `
     <p class="mapHint"></p>
     <div class="cfgRows">
       <div class="cfgRow">
+        <span class="cfgLabel">Op co</span>
+        <span class="cfgActions"><select id="cfgOpCo"></select></span>
+      </div>
+      <div class="cfgRow">
+        <span class="cfgLabel">Domain</span>
+        <span class="cfgActions"><select id="cfgDomain"></select></span>
+      </div>
+      <div class="cfgRow">
         <span class="cfgLabel">Template</span>
         <span class="cfgValue" id="cfgTplLabel"></span>
         <span class="cfgActions">

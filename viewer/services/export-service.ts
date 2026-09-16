@@ -2,7 +2,7 @@ import * as MsrChoices from "../../core/classification/msrchoices.ts";
 import { letterToColNum } from "../../lib/markup.ts";
 import { pad2 } from "../../lib/format.ts";
 import { computeDurations, type Durations } from "../../core/timeline/durations.ts";
-import { ReportService, type ReportFmt } from "./report-service.ts";
+import { ReportService, type ReportFmt, type ReportChoices } from "./report-service.ts";
 import { displayNumber, priorityCell, isScTask } from "../../core/export/rowfields.ts";
 
 /*
@@ -81,56 +81,71 @@ export class ExportService {
   readonly msrColumns: MsrCol[];
   protected readonly rep: ReportService;
   protected readonly fmt: ReportFmt;
+  /** Export-time opCo/domain selection (from the MSR option lists). When empty,
+   *  buildReport applies its "BA"/"AO" defaults. Mutated via setReportChoices
+   *  so the single per-page ExportService instance reflects the current pick. */
+  protected reportChoices: ReportChoices = {};
+
+  setReportChoices(choices: ReportChoices | null | undefined): void {
+    this.reportChoices = {
+      opCo: choices?.opCo ? String(choices.opCo) : undefined,
+      domain: choices?.domain ? String(choices.domain) : undefined
+    };
+  }
+
+  getReportChoices(): ReportChoices {
+    return { ...this.reportChoices };
+  }
 
   constructor(fmt: ReportFmt) {
     this.fmt = fmt;
     this.rep = new ReportService();
 
     const expRaw = (key: string): ColGet => (r: Row) => expStr(r[key]);
-    const expRep = (key: string): ColGet => (r: Row) => this.rep.rep(r, this.fmt)[key] ?? "";
+    const expRep = (key: string): ColGet => (r: Row) => this.rep.rep(r, this.fmt, this.reportChoices)[key] ?? "";
     const durGet = (key: keyof Durations): ColGet => (r: Row) => computeDurations(r)[key];
 
     this.tplColumns = [
       { col: 1, get: (r, i) => String(i + 1) },
-      { col: 2, get: r => this.rep.rep(r, this.fmt).opCo },
-      { col: 3, get: r => this.rep.rep(r, this.fmt).domain },
-      { col: 4, get: r => this.rep.rep(r, this.fmt).type },
+      { col: 2, get: r => this.rep.rep(r, this.fmt, this.reportChoices).opCo },
+      { col: 3, get: r => this.rep.rep(r, this.fmt, this.reportChoices).domain },
+      { col: 4, get: r => this.rep.rep(r, this.fmt, this.reportChoices).type },
       { col: 5, get: r => displayNumber(r) },
       { col: 6, get: r => r.assignmentGroup },
       { col: 7, get: r => priorityCell(r) },
       { col: 8, get: r => r.shortDescription },
       { col: 9, get: r => r.state },
       { col: 10, get: r => r.assignedTo },
-      { col: 11, get: r => this.rep.rep(r, this.fmt).created },
-      { col: 12, get: r => this.rep.rep(r, this.fmt).assigned },
-      { col: 13, get: r => this.rep.rep(r, this.fmt).ackn },
-      { col: 14, get: r => this.rep.rep(r, this.fmt).resolved },
-      { col: 15, get: r => this.rep.rep(r, this.fmt).susp },
-      { col: 16, get: r => this.rep.rep(r, this.fmt).resumed },
-      { col: 17, get: r => this.rep.rep(r, this.fmt).impactedApplication },
+      { col: 11, get: r => this.rep.rep(r, this.fmt, this.reportChoices).created },
+      { col: 12, get: r => this.rep.rep(r, this.fmt, this.reportChoices).assigned },
+      { col: 13, get: r => this.rep.rep(r, this.fmt, this.reportChoices).ackn },
+      { col: 14, get: r => this.rep.rep(r, this.fmt, this.reportChoices).resolved },
+      { col: 15, get: r => this.rep.rep(r, this.fmt, this.reportChoices).susp },
+      { col: 16, get: r => this.rep.rep(r, this.fmt, this.reportChoices).resumed },
+      { col: 17, get: r => this.rep.rep(r, this.fmt, this.reportChoices).impactedApplication },
       { col: 18, get: () => "" },
-      { col: 19, get: r => this.rep.rep(r, this.fmt).rootCauseCategory },
-      { col: 20, get: r => this.rep.rep(r, this.fmt).resolutionType },
+      { col: 19, get: r => this.rep.rep(r, this.fmt, this.reportChoices).rootCauseCategory },
+      { col: 20, get: r => this.rep.rep(r, this.fmt, this.reportChoices).resolutionType },
       { col: 21, get: () => "" },
       { col: 22, get: () => "" },
       { col: 23, get: () => "" },
       { col: 24, get: () => "" },
       { col: 25, get: () => "" },
-      { col: 26, get: r => this.rep.rep(r, this.fmt).incidentHours },
-      { col: 27, get: r => this.rep.rep(r, this.fmt).incidentTotalAge },
-      { col: 28, get: r => this.rep.rep(r, this.fmt).incCurrentHours },
-      { col: 29, get: r => this.rep.rep(r, this.fmt).incidentCurrentAge },
-      { col: 30, get: r => this.rep.rep(r, this.fmt).responseSLA },
-      { col: 31, get: r => this.rep.rep(r, this.fmt).cumulativeSla },
-      { col: 32, get: r => this.rep.rep(r, this.fmt).cumulativeDays },
-      { col: 33, get: r => this.rep.rep(r, this.fmt).timeTaken },
-      { col: 34, get: r => this.rep.rep(r, this.fmt).metResponseSLA },
-      { col: 35, get: r => this.rep.rep(r, this.fmt).metMinResolutionSLA },
-      { col: 36, get: r => this.rep.rep(r, this.fmt).metMaxResolutionSLA },
+      { col: 26, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incidentHours },
+      { col: 27, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incidentTotalAge },
+      { col: 28, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incCurrentHours },
+      { col: 29, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incidentCurrentAge },
+      { col: 30, get: r => this.rep.rep(r, this.fmt, this.reportChoices).responseSLA },
+      { col: 31, get: r => this.rep.rep(r, this.fmt, this.reportChoices).cumulativeSla },
+      { col: 32, get: r => this.rep.rep(r, this.fmt, this.reportChoices).cumulativeDays },
+      { col: 33, get: r => this.rep.rep(r, this.fmt, this.reportChoices).timeTaken },
+      { col: 34, get: r => this.rep.rep(r, this.fmt, this.reportChoices).metResponseSLA },
+      { col: 35, get: r => this.rep.rep(r, this.fmt, this.reportChoices).metMinResolutionSLA },
+      { col: 36, get: r => this.rep.rep(r, this.fmt, this.reportChoices).metMaxResolutionSLA },
       { col: 37, get: () => "" },
       { col: 38, get: () => "" },
       { col: 39, get: () => "" },
-      { col: 40, get: r => this.rep.rep(r, this.fmt).analysedDate }
+      { col: 40, get: r => this.rep.rep(r, this.fmt, this.reportChoices).analysedDate }
     ];
 
     this.exportGroups = [
@@ -203,8 +218,8 @@ export class ExportService {
 
     this.msrColumns = [
       { letter: "A", get: (r, i) => i + 1 },
-      { letter: "B", get: r => this.rep.rep(r, this.fmt).opCo },
-      { letter: "C", get: r => this.rep.rep(r, this.fmt).domain },
+      { letter: "B", get: r => this.rep.rep(r, this.fmt, this.reportChoices).opCo },
+      { letter: "C", get: r => this.rep.rep(r, this.fmt, this.reportChoices).domain },
       { letter: "D", get: r => MsrChoices.msrType(r.number) },
       { letter: "E", get: r => displayNumber(r) },
       { letter: "F", get: r => expStr(r.assignmentGroup) },
@@ -234,7 +249,7 @@ export class ExportService {
 
   cellValue(row: Row, key: string, cls: string): string {
     if (key.startsWith("rep:")) {
-      return String(this.rep.rep(row, this.fmt)[key.slice(4)] ?? "");
+      return String(this.rep.rep(row, this.fmt, this.reportChoices)[key.slice(4)] ?? "");
     }
     if (key.startsWith("dur:")) {
       return String(computeDurations(row)[key.slice(4) as keyof Durations] ?? "");

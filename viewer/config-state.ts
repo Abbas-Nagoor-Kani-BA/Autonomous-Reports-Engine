@@ -3,12 +3,24 @@ import { $ } from "./core.ts";
 
 export type CiGroup = { name: string; items: string[] };
 export type CiSplit = { enabled: boolean; groups: CiGroup[] };
+export type ReportChoices = { opCo: string; domain: string };
 
 let ciSplit: CiSplit = { enabled: false, groups: [] };
+let reportChoices: ReportChoices = { opCo: "", domain: "" };
 let savedMapPresent = false;
 let onConfigChange: () => void = () => {};
 
 const getCiSplit = (): CiSplit => ciSplit;
+
+const getReportChoices = (): ReportChoices => reportChoices;
+
+function setReportChoices(v: unknown): void {
+  const src = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
+  reportChoices = {
+    opCo: typeof src.opCo === "string" ? src.opCo : "",
+    domain: typeof src.domain === "string" ? src.domain : ""
+  };
+}
 
 function normalizeGroups(groups: unknown[]): CiGroup[] {
   return groups
@@ -76,9 +88,18 @@ chrome.storage.local.get([STORAGE.exportColMap], ({ exportColMap }: { exportColM
   notifyConfigChange();
 });
 
+chrome.storage.local.get([STORAGE.reportChoices], ({ reportChoices: rc }: { reportChoices?: unknown }) => {
+  if (rc && typeof rc === "object") {
+    setReportChoices(rc);
+    notifyConfigChange();
+  }
+});
+
 export {
   getCiSplit,
   setCiSplit,
+  getReportChoices,
+  setReportChoices,
   getSavedMapPresent,
   setSavedMapPresent,
   setOnConfigChange,

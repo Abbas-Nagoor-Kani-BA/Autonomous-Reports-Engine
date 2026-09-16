@@ -176,6 +176,29 @@ check("sanitizeFilePart strips edge dashes and falls back to 'group'", [sanitize
 check("cellValue rep: branch uses the report", svc.cellValue(mkRow(), "rep:incCurrentHours", ""), "8:00:00");
 check("cellValue inst branch formats a value", svc.cellValue(mkRow({ assignTimeUtcIso: "2026-01-05T09:00:00Z" }), "assignTimeUtcIso", "inst"), "2026-01-05T09:00:00Z");
 
+console.log("== ExportService — selectable opCo/domain (was hardcoded BA/AO) ==");
+(() => {
+  const svc2 = new ExportService(identity);
+  // Defaults before any selection.
+  check("template col B defaults to BA", svc2.tplColumns[1].get(mkRow(), 0), "BA");
+  check("template col C defaults to AO", svc2.tplColumns[2].get(mkRow(), 0), "AO");
+  check("MSR col B defaults to BA", svc2.buildMsrTsv([mkRow()]).split("\t")[1], "BA");
+  check("MSR col C defaults to AO", svc2.buildMsrTsv([mkRow()]).split("\t")[2], "AO");
+  // Apply a selection sourced from the MSR option lists.
+  svc2.setReportChoices({ opCo: "IB", domain: "SharePoint" });
+  check("getReportChoices reflects the selection", svc2.getReportChoices(), { opCo: "IB", domain: "SharePoint" });
+  check("template col B follows the selection", svc2.tplColumns[1].get(mkRow(), 0), "IB");
+  check("template col C follows the selection", svc2.tplColumns[2].get(mkRow(), 0), "SharePoint");
+  check("MSR col B follows the selection", svc2.buildMsrTsv([mkRow()]).split("\t")[1], "IB");
+  check("MSR col C follows the selection", svc2.buildMsrTsv([mkRow()]).split("\t")[2], "SharePoint");
+  check("cellValue rep:opCo follows the selection", svc2.cellValue(mkRow(), "rep:opCo", ""), "IB");
+  check("cellValue rep:domain follows the selection", svc2.cellValue(mkRow(), "rep:domain", ""), "SharePoint");
+  // Clearing falls back to the buildReport defaults.
+  svc2.setReportChoices(null);
+  check("clearing restores BA default", svc2.tplColumns[1].get(mkRow(), 0), "BA");
+  check("clearing restores AO default", svc2.tplColumns[2].get(mkRow(), 0), "AO");
+})();
+
 console.log("== ExportService — base64 helpers ==");
 
 check("bufferFromB64 decodes", new TextDecoder().decode(bufferFromB64("SGVsbG8=")), "Hello");

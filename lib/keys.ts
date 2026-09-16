@@ -11,6 +11,7 @@ export const STORAGE = Object.freeze({
   viewerActionRail: "viewerActionRail",
   exportColMap: "exportColMap",
   ciSplit: "ciSplit",
+  reportChoices: "reportChoices",
   snXlsxTemplate: "snXlsxTemplate",
   snFilterList: "snFilterList",
   snFilterPresets: "snFilterPresets",
