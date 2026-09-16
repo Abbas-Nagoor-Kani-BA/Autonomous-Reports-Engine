@@ -156,10 +156,10 @@ export class ExportService {
       {
         name: "Ticket fields",
         items: [
-          ["number", "Number", expRaw("number")],
+          ["number", "Number", (r) => displayNumber(r)],
           ["shortDescription", "Short description", expRaw("shortDescription")],
           ["state", "State", expRaw("state")],
-          ["priority", "Priority", expRaw("priority")],
+          ["priority", "Priority", (r) => priorityCell(r)],
           ["assignmentGroup", "Group", expRaw("assignmentGroup")],
           ["assignedTo", "Assigned to", expRaw("assignedTo")]
         ]
@@ -254,6 +254,10 @@ export class ExportService {
     if (key.startsWith("dur:")) {
       return String(computeDurations(row)[key.slice(4) as keyof Durations] ?? "");
     }
+    // priority/number are derived for display+export (RFS priority, RITM number)
+    // — match the grid and the filled template rather than the raw row field.
+    if (key === "priority") return priorityCell(row);
+    if (key === "number") return displayNumber(row);
     let v = row[key];
     if (cls === "inst") v = this.fmt(String(v), row);
     return v === null || v === undefined ? "" : String(v);

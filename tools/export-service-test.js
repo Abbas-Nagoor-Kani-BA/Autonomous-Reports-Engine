@@ -103,6 +103,22 @@ const ritmTsv = svc.buildMsrTsv([mkRow({ number: "RITM0001234", priority: undefi
 check("MSR col G is RFS for a RITM row with no priority", ritmTsv[6], "RFS");
 check("export col 7 is RFS for a REQ row with empty priority", svc.tplColumns[6].get(mkRow({ number: "REQ0001234", priority: "" }), 0), "RFS");
 check("export col 7 is RFS for a RITM row with no priority", svc.tplColumns[6].get(mkRow({ number: "RITM0001234" }), 0), "RFS");
+
+// The map-dialog field group is what a SAVED CUSTOM MAP resolves through
+// (tplColumnsFromMap -> fieldById). Regression: this used the raw row field, so
+// a custom-mapped priority column came out empty for RFS. It must match the
+// default column: "RFS" for SCTASK/REQ/RITM, and the RITM number for sc_task.
+check("field 'priority' is RFS for SCTASK regardless of value", svc.fieldById.get("priority")?.get(mkRow({ number: "SCTASK0001", priority: "1 - Critical" }), 0), "RFS");
+check("field 'priority' is RFS for RITM with empty priority", svc.fieldById.get("priority")?.get(mkRow({ number: "RITM0001", priority: "" }), 0), "RFS");
+check("field 'priority' passes through for incident", svc.fieldById.get("priority")?.get(mkRow({ number: "INC0001", priority: "2 - High" }), 0), "2 - High");
+check("field 'number' is the RITM number for sc_task", svc.fieldById.get("number")?.get(mkRow({ number: "SCTASK0001", requestItem: "RITM0009999" }), 0), "RITM0009999");
+// A custom map that routes priority to some column must also emit RFS.
+const custPrio = svc.tplColumnsFromMap({ "priority": "A" });
+check("custom-mapped priority column is RFS for SCTASK", custPrio[0].get(mkRow({ number: "SCTASK0001", priority: "3 - Moderate" }), 0), "RFS");
+
+// cellValue (grid/search/copy) matches the displayed+exported value.
+check("cellValue priority is RFS for SCTASK", svc.cellValue(mkRow({ number: "SCTASK0001", priority: "3 - Moderate" }), "priority", ""), "RFS");
+check("cellValue number is the RITM for sc_task", svc.cellValue(mkRow({ number: "SCTASK0001", requestItem: "RITM0009999" }), "number", ""), "RITM0009999");
 // Non-sc_task unchanged: E = number, G = priority digit.
 const incTsv = svc.buildMsrTsv([mkRow({ number: "INC0001234", priority: "2 - High" })]).split("\t");
 check("MSR col E unchanged for incident", incTsv[4], "INC0001234");
