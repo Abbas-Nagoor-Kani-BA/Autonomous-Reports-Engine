@@ -16,9 +16,22 @@ extension's options page. This page documents every control.
 | **Team members** | One full **name** per chip. Used **only** to detect acknowledgement dates (when a ticket is assigned to one of these people). Leave empty to skip acknowledgement detection. |
 
 Queues and members are plain names because the tool never reads `sys_user`,
-`sys_choice`, `sys_user_group`, or `sys_user_grmember` — so restricted accounts
-still work. See [Authentication Chain](Authentication-Chain) for the
-no-permission design.
+`sys_choice`, `sys_user_group`, or `sys_user_grmember` during a pull — so
+restricted accounts still work. See
+[Authentication Chain](Authentication-Chain) for the no-permission design.
+
+The one exception is the optional **Resolve queues** button below the Team
+members list. When pressed it fills the Queues list from your assignment-group
+memberships; each queue row then has a small **resolve members** button that
+lists that group's active members in a confirmation dialog so you pick which to
+add to Team members. These are the only features that read the group tables,
+run only on demand, and if your account cannot read them they say so and ask you
+to add the names manually. Very large groups are read one page at a time and the
+dialog shows a truncation notice rather than silently dropping members. Each
+queue also has a **resolve CIs** button that lists the Configuration Items that
+group supports (`cmdb_ci.support_group`) in the same dialog; the chosen items are
+saved to a **Configuration items** list and reused in the Data View's CI split
+and export so you pick/search resolved CIs instead of typing them.
 
 ## Pull parameters
 

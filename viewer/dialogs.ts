@@ -2,8 +2,9 @@ import { STORAGE } from "../lib/keys.ts";
 import { $, setStatus } from "./core.ts";
 import { iconize } from "../lib/icons.ts";
 import { Modal, hasOpenModal } from "../common/components/modal.ts";
-import { CiDialog } from "./components/ci-dialog.ts";
+import { CiDialog, ciAvailablePool } from "./components/ci-dialog.ts";
 import { MapDialog } from "./components/map-dialog.ts";
+import { getStoredConfigItems, refreshStoredConfigItems } from "./config-items.ts";
 import { DEFAULT_EXPORT_MAP, EXPORT_FIELD_BY_ID, EXPORT_GROUPS } from "./exporter.ts";
 import { getCiSplit, setCiSplit, setSavedMapPresent, syncSplitRadio, updateCiBtn, updateExportDots, closeConfigDialog } from "./config-state.ts";
 import { clearSelection, hasSelection } from "./selection.ts";
@@ -31,6 +32,7 @@ let mapEditor: MapDialog | null = null;
 let ciEditor: CiDialog | null = null;
 
 export function initDialogs(): void {
+  refreshStoredConfigItems();
   iconize($("mapClose"), "x-circle", { mode: "icon", tip: "Close" });
   iconize($("mapReset"), "rotate-ccw");
   iconize($("mapSave"), "check");
@@ -130,18 +132,16 @@ async function openMapDialog(): Promise<void> {
 
 function openCiDialog(): void {
   const rows = dataStore.getState().data?.rows ?? [];
-  const seen = new Set<string>();
-  const available: string[] = [];
+  const dataItems: string[] = [];
   for (const r of rows) {
     const ci = String((r as { configItem?: unknown }).configItem ?? "").trim();
-    if (!ci) continue;
-    const k = ci.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    available.push(ci);
+    if (ci) dataItems.push(ci);
   }
+  const available = ciAvailablePool(dataItems, getStoredConfigItems());
   if (ciEditor) ciEditor.show(getCiSplit(), available);
   if (ciModal) ciModal.open();
+  // Refresh for the next open in case Settings changed while the viewer is open.
+  refreshStoredConfigItems();
 }
 
 function hideLetterPop(): void {

@@ -74,7 +74,8 @@ export function createSettings(hooks?: { onSettingsChange?: () => void; onMsrCha
 
   const chips: Record<string, ChipList> = {
     queues: chip("queuesChips", onSettingsChange),
-    teamMembers: chip("teamMembersChips", onSettingsChange)
+    teamMembers: chip("teamMembersChips", onSettingsChange),
+    configItems: chip("configItemsChips", onSettingsChange)
   };
   for (const [, id] of MSR_LIST_FIELDS) chips[id] = chip(id, onMsrChange);
   for (const [, id] of MSR_RC_FIELDS) chips[id] = chip(id, onMsrChange);

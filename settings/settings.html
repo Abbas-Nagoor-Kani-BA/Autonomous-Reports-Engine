@@ -34,7 +34,20 @@
     <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Team members (one full name per chip)</label>
     <div id="teamMembersChips"></div>
     <div class="hint mt-1">Used ONLY to detect acknowledgement dates (when a ticket gets assigned to one of these people). Names must match how ServiceNow displays the user. Type a name and press Enter — paste several separated by commas or new lines. Leave empty to skip acknowledgement detection.</div>
+
+    <h3 class="secTitle">Configuration items</h3>
+    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Configuration items (one CI name per chip)</label>
+    <div id="configItemsChips"></div>
+    <div class="hint mt-1">Optional list of Configuration Items used for CI grouping and export. Use each queue's <em>resolve CIs</em> button to pull the CIs supported by that group (their ServiceNow <code>support_group</code>), or type names manually.</div>
+
+    <div class="flex items-center gap-2 mt-3">
+      <button id="resolveScopeBtn" type="button" class="btn py-1.5 px-3 text-xs">Resolve queues</button>
+      <span id="resolveScopeStatus" class="text-dim text-[11px]"></span>
+    </div>
+    <div class="hint mt-1">Optional: fill the Queues list from your ServiceNow assignment-group memberships (your logged-in session). Then use each queue's <em>resolve members</em> button to pick that group's members into Team members. Requires an open, logged-in ServiceNow tab. If your account cannot read the group tables, add names manually.</div>
   </div>
+
+  <div id="memberPicker"></div>
 
   <div class="card-settings paramsCard">
     <h2 class="cardTitle">Pull parameters</h2>

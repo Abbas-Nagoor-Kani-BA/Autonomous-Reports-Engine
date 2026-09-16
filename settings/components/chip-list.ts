@@ -12,6 +12,12 @@ export type ChipListDeps = {
   /** Renders as a collapsed card with an Edit button instead of inline chips. */
   collapsible?: boolean;
   placeholder?: string;
+  /**
+   * Optional per-row action buttons (collapsible mode only). When set, each row
+   * gets one small button per action; clicking calls `onClick(value)` with that
+   * row's value. Default none, so every other ChipList usage is unchanged.
+   */
+  rowActions?: Array<{ label: string; title?: string; onClick: (value: string) => void }>;
 };
 
 export type ChipListRefs = {
@@ -149,7 +155,7 @@ export class ChipList extends Component<ChipListState, ComponentProps, ChipListD
 
     stack.innerHTML = "";
     for (const value of state.values) {
-      stack.appendChild(el("div", "chipRow bg-bg border border-line rounded px-2.5 py-[5px] text-[12.5px] text-text whitespace-normal break-words hover:border-dim", value));
+      stack.appendChild(this.renderCollapsibleRow(value));
     }
 
     stack.hidden = state.editing;
@@ -167,6 +173,25 @@ export class ChipList extends Component<ChipListState, ComponentProps, ChipListD
     for (const value of state.values) {
       list.appendChild(this.renderChip(value));
     }
+  }
+
+  protected renderCollapsibleRow(value: string): HTMLElement {
+    const actions = this.deps.rowActions;
+    if (!actions || !actions.length) {
+      return el("div", "chipRow bg-bg border border-line rounded px-2.5 py-[5px] text-[12.5px] text-text whitespace-normal break-words hover:border-dim", value);
+    }
+    const row = el("div", "chipRow flex items-center justify-between gap-2 bg-bg border border-line rounded px-2.5 py-[5px] text-[12.5px] text-text hover:border-dim");
+    const label = el("span", "chipRowLabel whitespace-normal break-words min-w-0", value);
+    const btns = el("div", "chipRowActions flex items-center gap-2 shrink-0");
+    for (const action of actions) {
+      const btn = el("button", "chipRowAction bg-transparent text-accent text-[11px] font-semibold px-1.5 underline underline-offset-[3px] cursor-pointer hover:brightness-125", action.label);
+      (btn as HTMLButtonElement).type = "button";
+      if (action.title) setTip(btn, action.title);
+      btn.addEventListener("click", () => action.onClick(value));
+      btns.appendChild(btn);
+    }
+    row.append(label, btns);
+    return row;
   }
 
   protected renderChip(value: string): HTMLElement {
@@ -203,6 +228,13 @@ export class ChipList extends Component<ChipListState, ComponentProps, ChipListD
 
   getValues(): string[] {
     return this.getState().values.slice();
+  }
+
+  /** Wires (or replaces) the per-row action buttons in collapsible mode after
+   *  construction, then re-renders so the buttons appear immediately. */
+  setRowActions(actions: ChipListDeps["rowActions"]): void {
+    this.deps.rowActions = actions;
+    if (this.deps.collapsible) this.patchCollapsible(this.getState());
   }
 
   /** Normalises on the way in: legacy `{name, sysId}` objects collapse to their

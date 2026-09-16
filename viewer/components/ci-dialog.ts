@@ -54,6 +54,26 @@ export function unassignedItems(available: string[], groups: { items: string[] }
 }
 
 /**
+ * The CI universe for the split dialog's Ungrouped pool: the configuration
+ * items found in the pulled data unioned with the CIs resolved from ServiceNow
+ * and stored in settings. De-duplicated case-insensitively, keeping first
+ * spelling. Pure.
+ */
+export function ciAvailablePool(dataItems: string[] | null | undefined, storedItems: string[] | null | undefined): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of [...(dataItems || []), ...(storedItems || [])]) {
+    const text = String(raw ?? "").trim();
+    if (!text) continue;
+    const k = norm(text);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(text);
+  }
+  return out;
+}
+
+/**
  * The "separate files per configuration item" editor.
  *
  * Edits a draft copy and only commits on Save. An Ungrouped pool lists the

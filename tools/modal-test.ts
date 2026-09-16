@@ -12,7 +12,7 @@ globalThis.MouseEvent = win.MouseEvent;
 globalThis.Node = win.Node;
 
 const { Modal, hasOpenModal, closeAllModals } = await import("../common/components/modal.ts");
-const { CiDialog, unassignedItems } = await import("../viewer/components/ci-dialog.ts");
+const { CiDialog, unassignedItems, ciAvailablePool } = await import("../viewer/components/ci-dialog.ts");
 
 /*
  * Modal stack and Escape cascade.
@@ -330,6 +330,18 @@ test("unassignedItems returns available minus grouped, deduped and sorted", () =
     [{ items: ["gamma"] }]
   );
   assert.deepEqual(out, ["alpha", "Beta"]);
+});
+
+test("ciAvailablePool unions data CIs with stored (resolved) CIs, deduped", () => {
+  const out = ciAvailablePool(["Payment Gateway", "Web"], ["Billing API", "payment gateway", "RMS (prd)"]);
+  // Data items first, then new stored ones; case-insensitive dedupe keeps first spelling.
+  assert.deepEqual(out, ["Payment Gateway", "Web", "Billing API", "RMS (prd)"]);
+});
+
+test("ciAvailablePool handles empty/nullish sides", () => {
+  assert.deepEqual(ciAvailablePool([], ["Only Stored"]), ["Only Stored"]);
+  assert.deepEqual(ciAvailablePool(["Only Data"], []), ["Only Data"]);
+  assert.deepEqual(ciAvailablePool(null, null), []);
 });
 
 test("show renders an Ungrouped pool of the unassigned data CIs", () => {

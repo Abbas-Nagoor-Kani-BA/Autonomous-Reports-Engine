@@ -10,6 +10,7 @@ export type SettingsDraft = {
     ticketType: string;
     queues: string[];
     teamMembers: string[];
+    configItems: string[];
   };
   params: {
     tablePageSize: number;
@@ -32,7 +33,8 @@ export const SETTINGS_DEFAULTS: SettingsDraft = {
   defaults: {
     ticketType: "incident",
     queues: [],
-    teamMembers: []
+    teamMembers: [],
+    configItems: []
   },
   params: {
     tablePageSize: 1000,
@@ -80,6 +82,10 @@ export function normaliseSettings(raw: unknown): SettingsDraft {
     }
   }
   if (!TICKET_TYPES.includes(merged.defaults.ticketType)) merged.defaults.ticketType = "incident";
+
+  // Lists are stored as raw arrays (normalised at chip setValues); just make
+  // sure the newer configItems field is always an array for older settings.
+  if (!Array.isArray(merged.defaults.configItems)) merged.defaults.configItems = [];
 
   if (s.params && typeof s.params === "object") Object.assign(merged.params, s.params);
 

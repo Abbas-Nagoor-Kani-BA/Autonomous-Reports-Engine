@@ -67,6 +67,52 @@ test("run sends RUN with filterSets and resolves", async () => {
   });
 });
 
+test("resolveScope sends RESOLVE_SCOPE and resolves with the reply", async () => {
+  const bridge = new RemoteBridge();
+  const res = await bridge.resolveScope({ instanceUrl: "https://x.service-now.com", currentUserId: "u1" });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.resolveScope,
+    instanceUrl: "https://x.service-now.com",
+    currentUserId: "u1"
+  });
+});
+
+test("resolveScope rejects when chrome.runtime.lastError is set", async () => {
+  const bridge = new RemoteBridge();
+  fakeChrome.runtime.lastError = new Error("sendResponseError: channel closed");
+  try {
+    await bridge.resolveScope({ instanceUrl: "https://x" });
+    assert.fail("should have rejected");
+  } catch (err) {
+    assert.match((err as Error).message, /channel closed/);
+  } finally {
+    fakeChrome.runtime.lastError = null;
+  }
+});
+
+test("resolveGroupMembers sends RESOLVE_GROUP_MEMBERS with the group and resolves", async () => {
+  const bridge = new RemoteBridge();
+  const res = await bridge.resolveGroupMembers({ instanceUrl: "https://x.service-now.com", group: "Network Ops" });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.resolveGroupMembers,
+    instanceUrl: "https://x.service-now.com",
+    group: "Network Ops"
+  });
+});
+
+test("resolveGroupCis sends RESOLVE_GROUP_CIS with the group and resolves", async () => {
+  const bridge = new RemoteBridge();
+  const res = await bridge.resolveGroupCis({ instanceUrl: "https://x.service-now.com", group: "Network Ops" });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.resolveGroupCis,
+    instanceUrl: "https://x.service-now.com",
+    group: "Network Ops"
+  });
+});
+
 test("request rejects when chrome.runtime.lastError is set", async () => {
   const bridge = new RemoteBridge();
   fakeChrome.runtime.lastError = new Error("sendResponseError: channel closed");

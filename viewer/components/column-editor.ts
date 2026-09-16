@@ -24,6 +24,13 @@ export type ColumnEditorDeps = {
   displayFor?: (key: string, sysId: string, cls: string) => string;
   /** Option list for a choice column, or null if it is not a choice column. */
   optionsFor?: (key: string, sysId: string) => string[] | null;
+  /**
+   * Open suggestion list for a free-text column (e.g. configuration items),
+   * rendered as a datalist-backed autocomplete: the user can type freely or
+   * pick a suggestion. Null when the column has no suggestions. Distinct from
+   * `optionsFor`, which forces a closed <select>.
+   */
+  autocompleteFor?: (key: string) => string[] | null;
   /** Parse a local-date input string; null if unparseable. */
   parseValue?: (v: string, key: string) => Date | null;
   /** Persist an edited value: raw string in, component formats display via displayFor. */
@@ -158,9 +165,12 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
     row.appendChild(num);
 
     const options = this.deps.optionsFor?.(next.colKey, entry.sysId) ?? null;
+    const suggestions = options && options.length ? null : (this.deps.autocompleteFor?.(next.colKey) ?? null);
     const control = options && options.length
       ? this.selectControl(next, entry, options)
-      : this.textControl(next, entry);
+      : suggestions && suggestions.length
+        ? this.autocompleteControl(next, entry, suggestions, i)
+        : this.textControl(next, entry);
     row.appendChild(control);
 
     row.addEventListener("focusin", () => this.focusTo(i));
@@ -221,6 +231,104 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
     entry.value = value;
     this.deps.onCommit?.(entry.sysId, next.colKey, value);
     this.setState({ dirtyCount: this.getState().dirtyCount + 1 });
+  }
+
+  /**
+   * A free-text input with a custom, fully themed suggestion dropdown. The
+   * native <datalist> popup is browser chrome that cannot be themed (it renders
+   * white on dark UIs), so we render and control the menu ourselves: type to
+   * filter, click or Enter to pick, Arrow keys to move the highlight, Escape or
+   * blur to close. Free typing is preserved (commit on change/blur). Used for
+   * open columns like the configuration item.
+   */
+  protected autocompleteControl(next: ColumnEditorState, entry: ColumnEntry, suggestions: string[], _i: number): HTMLElement {
+    const wrap = el("div", "ce-ac");
+    const input = el("input", "ce-input") as HTMLInputElement;
+    input.type = "text";
+    input.spellcheck = false;
+    input.autocomplete = "off";
+    input.value = entry.value;
+
+    const menu = el("div", "ce-ac-menu hidden");
+
+    // De-duplicated suggestion pool (case-insensitive, first spelling wins).
+    const pool: string[] = [];
+    const seen = new Set<string>();
+    for (const s of suggestions) {
+      const text = String(s ?? "").trim();
+      if (!text || seen.has(text.toLowerCase())) continue;
+      seen.add(text.toLowerCase());
+      pool.push(text);
+    }
+
+    const MAX = 50;
+    let active = -1;
+    let filtered: string[] = [];
+
+    const closeMenu = (): void => {
+      menu.classList.add("hidden");
+      menu.innerHTML = "";
+      active = -1;
+    };
+
+    const pick = (value: string): void => {
+      input.value = value;
+      closeMenu();
+      this.commit(next, entry, value);
+    };
+
+    const renderMenu = (): void => {
+      const q = input.value.trim().toLowerCase();
+      filtered = (q ? pool.filter((p) => p.toLowerCase().includes(q)) : pool).slice(0, MAX);
+      menu.innerHTML = "";
+      if (!filtered.length) {
+        closeMenu();
+        return;
+      }
+      filtered.forEach((text, idx) => {
+        const opt = el("div", "ce-ac-opt", text);
+        if (idx === active) opt.classList.add("active");
+        // mousedown (not click) so it fires before the input blur closes the menu.
+        opt.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          pick(text);
+        });
+        menu.appendChild(opt);
+      });
+      menu.classList.remove("hidden");
+    };
+
+    const highlight = (delta: number): void => {
+      if (menu.classList.contains("hidden")) {
+        renderMenu();
+        if (menu.classList.contains("hidden")) return;
+      }
+      if (!filtered.length) return;
+      active = (active + delta + filtered.length) % filtered.length;
+      const opts = menu.querySelectorAll<HTMLElement>(".ce-ac-opt");
+      opts.forEach((o, idx) => o.classList.toggle("active", idx === active));
+      opts[active]?.scrollIntoView({ block: "nearest" });
+    };
+
+    input.addEventListener("focus", () => renderMenu());
+    input.addEventListener("click", () => renderMenu());
+    input.addEventListener("input", () => { active = -1; renderMenu(); });
+    input.addEventListener("change", () => this.commit(next, entry, input.value));
+    input.addEventListener("blur", () => setTimeout(closeMenu, 120));
+    input.addEventListener("keydown", (e) => {
+      const key = (e as KeyboardEvent).key;
+      const open = !menu.classList.contains("hidden");
+      if (key === "ArrowDown") { e.preventDefault(); e.stopPropagation(); highlight(1); }
+      else if (key === "ArrowUp") { e.preventDefault(); e.stopPropagation(); highlight(-1); }
+      else if (key === "Enter") {
+        if (open && active >= 0 && filtered[active]) { e.preventDefault(); e.stopPropagation(); pick(filtered[active]); }
+      } else if (key === "Escape") {
+        if (open) { e.preventDefault(); e.stopPropagation(); closeMenu(); }
+      }
+    });
+
+    wrap.append(input, menu);
+    return wrap;
   }
 
   protected onFilterInput(v: string): void {

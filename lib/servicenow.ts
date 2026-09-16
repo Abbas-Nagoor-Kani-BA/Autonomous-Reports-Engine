@@ -140,6 +140,128 @@ class ServiceNowClient {
     return total;
   }
 
+  /**
+   * Single-page metadata read used by the opt-in scope resolver.
+   *
+   * Unlike `fetchAllRecords` (built for large ticket pulls) this is a bounded,
+   * single-request read for the small membership tables. Rows come back with
+   * `sysparm_display_value=all`, so reference fields are `{display_value,value}`
+   * objects — exactly the shape `core/scope/resolve-scope.ts` expects.
+   */
+  async fetchRecords(
+    table: string,
+    encodedQuery: string,
+    fields: string[],
+    limit = 1000
+  ): Promise<Record<string, any>[]> {
+    const res = await this.#request(`/api/now/table/${table}`, {
+      sysparm_query: encodedQuery,
+      sysparm_limit: limit,
+      sysparm_fields: fields.join(","),
+      sysparm_display_value: "all"
+    });
+    const data = await res.json();
+    return (data.result || []) as Record<string, any>[];
+  }
+
+  /**
+   * The current session user's sys_id via the UI current-user endpoint.
+   *
+   * Returns `{ userID, isImpersonating }`; the endpoint gives ONLY the sys_id
+   * (no user_name), which is all the scope resolver needs to key the membership
+   * queries. Returns null if the endpoint is unavailable so the caller can fall
+   * back to a page global.
+   */
+  async currentUserId(): Promise<string | null> {
+    try {
+      const res = await this.#request("/api/now/ui/user/current_user");
+      const data = await res.json();
+      const id = data?.result?.userID ?? data?.userID ?? null;
+      return typeof id === "string" && id ? id : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * The full name (sys_user.name) for a user sys_id, or null. Used to guarantee
+   * the current user appears in the resolved team members even if the group
+   * membership read omits them (e.g. role/manager-based access without an
+   * explicit sys_user_grmember row for that person).
+   */
+  async userNameById(userId: string): Promise<string | null> {
+    if (!userId) return null;
+    try {
+      const rows = await this.fetchRecords("sys_user", `sys_id=${userId}`, ["name"], 1);
+      const cell = rows?.[0]?.name;
+      const name = cell && typeof cell === "object" ? cell.display_value ?? cell.value : cell;
+      const s = String(name ?? "").trim();
+      return s || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Active member rows of a single group by group NAME, for the per-queue
+   * "resolve members" button.
+   *
+   * Resolves the group's sys_id from its name, then reads one page of
+   * `sys_user_grmember` (fields dot-walked to `user.name` / `user.active`).
+   * Deliberately single-page: the caller flags `truncated` when the row count
+   * hits the page cap so the UI can warn instead of silently dropping members
+   * (large "assigned to everyone" groups are expected to overflow and are not
+   * paginated by design).
+   */
+  async fetchGroupMemberRows(groupName: string): Promise<{ rows: Record<string, any>[]; truncated: boolean }> {
+    const name = String(groupName ?? "").trim();
+    if (!name) return { rows: [], truncated: false };
+    const groups = await this.fetchRecords("sys_user_group", `name=${name}`, ["sys_id", "name"], 1);
+    const groupId = (() => {
+      const cell = groups?.[0]?.sys_id;
+      const v = cell && typeof cell === "object" ? cell.value ?? cell.display_value : cell;
+      return String(v ?? "").trim();
+    })();
+    if (!groupId) return { rows: [], truncated: false };
+    const cap = this.pageSize;
+    const rows = await this.fetchRecords(
+      "sys_user_grmember",
+      `group=${groupId}^user.active=true`,
+      ["user", "user.name", "user.active", "group"],
+      cap
+    );
+    return { rows, truncated: rows.length >= cap };
+  }
+
+  /**
+   * Configuration items supported by a single group by NAME, for the per-queue
+   * "resolve CIs" button.
+   *
+   * Resolves the group's sys_id from its name, then reads one page of `cmdb_ci`
+   * where `support_group` is that group. Single-page like the member read: the
+   * caller flags `truncated` when the row count hits the page cap so the UI can
+   * warn instead of silently dropping items.
+   */
+  async fetchGroupCiRows(groupName: string): Promise<{ rows: Record<string, any>[]; truncated: boolean }> {
+    const name = String(groupName ?? "").trim();
+    if (!name) return { rows: [], truncated: false };
+    const groups = await this.fetchRecords("sys_user_group", `name=${name}`, ["sys_id", "name"], 1);
+    const groupId = (() => {
+      const cell = groups?.[0]?.sys_id;
+      const v = cell && typeof cell === "object" ? cell.value ?? cell.display_value : cell;
+      return String(v ?? "").trim();
+    })();
+    if (!groupId) return { rows: [], truncated: false };
+    const cap = this.pageSize;
+    const rows = await this.fetchRecords(
+      "cmdb_ci",
+      `support_group=${groupId}`,
+      ["sys_id", "name"],
+      cap
+    );
+    return { rows, truncated: rows.length >= cap };
+  }
+
   async fetchAllRecords(
     table: string,
     encodedQuery: string,

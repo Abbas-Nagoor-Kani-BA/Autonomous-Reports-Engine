@@ -32,6 +32,19 @@ test("normaliseSettings keeps valid values", () => {
   assert.equal(draft.params.debugResponses, true);
 });
 
+test("normaliseSettings defaults configItems to an empty array", () => {
+  assert.deepEqual(normaliseSettings(null).defaults.configItems, []);
+  assert.deepEqual(normaliseSettings({ defaults: {} }).defaults.configItems, []);
+});
+
+test("normaliseSettings preserves and coerces configItems", () => {
+  assert.deepEqual(
+    normaliseSettings({ defaults: { configItems: ["RMS (prd)", "Billing API"] } }).defaults.configItems,
+    ["RMS (prd)", "Billing API"]
+  );
+  assert.deepEqual(normaliseSettings({ defaults: { configItems: "nope" } }).defaults.configItems, []);
+});
+
 test("normaliseSettings migrates the legacy single queueName", () => {
   const draft = normaliseSettings({ defaults: { queueName: "Legacy Queue" } });
   assert.deepEqual(draft.defaults.queues, ["Legacy Queue"]);

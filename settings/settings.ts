@@ -6,6 +6,8 @@ import { initTooltips } from "../lib/tooltip.ts";
 import { createSettings, fillMsrLists, collectMsrLists } from "./index.ts";
 import { norm as normHintKey } from "../core/classification/msrcategorize.ts";
 import { normaliseSettings } from "../common/services/settings-service.ts";
+import { mergeSortedNames, subtractNames } from "../core/scope/resolve-scope.ts";
+import { MemberPicker } from "./components/member-picker.ts";
 
 import type { SettingsDraft } from "../common/services/settings-service.ts";
 import type { MlModelOption } from "../data/ml-model-repository.ts";
@@ -38,7 +40,8 @@ function collect(): SettingsDraft {
     defaults: {
       ticketType: $("ticketType").value,
       queues: page.chips.queues.getValues(),
-      teamMembers: page.chips.teamMembers.getValues()
+      teamMembers: page.chips.teamMembers.getValues(),
+      configItems: page.chips.configItems.getValues()
     },
     params: {
       tablePageSize: $("tablePageSize").value,
@@ -60,6 +63,7 @@ function fill(s: unknown): void {
   $("ticketType").value = merged.defaults.ticketType;
   page.chips.queues.setValues(merged.defaults.queues);
   page.chips.teamMembers.setValues(merged.defaults.teamMembers);
+  page.chips.configItems.setValues(merged.defaults.configItems);
   $("tablePageSize").value = merged.params.tablePageSize;
   $("debugResponses").checked = merged.params.debugResponses;
   $("cacheTtlMinutes").value = merged.params.cacheTtlMinutes;
@@ -145,6 +149,122 @@ $("clearCacheBtn").addEventListener("click", async () => {
     showToast((e as Error).message, "error");
   }
 });
+
+function currentInstanceUrl(): string {
+  return $("instanceUrl").value.trim().replace(/\/+$/, "");
+}
+
+$("resolveScopeBtn").addEventListener("click", async () => {
+  const btn = $("resolveScopeBtn") as HTMLButtonElement;
+  const status = $("resolveScopeStatus");
+  const instanceUrl = currentInstanceUrl();
+  if (!instanceUrl) {
+    showToast("Set your ServiceNow instance URL first", "error");
+    return;
+  }
+  btn.disabled = true;
+  if (status) status.textContent = "Resolving\u2026";
+  try {
+    const res = await page.bridge.resolveScope({ instanceUrl });
+    if (!res.ok) throw new Error(res.error || "Could not resolve your queues");
+    const queues = mergeSortedNames(page.chips.queues.getValues(), res.queues || []);
+    page.chips.queues.setValues(queues);
+    savePluginSettings();
+    if (status) status.textContent = "";
+    showToast(`Resolved ${res.queues?.length || 0} queue(s)`);
+  } catch (e) {
+    if (status) status.textContent = "";
+    showToast((e as Error).message, "error");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Per-queue "resolve members": each queue row gets a button that fetches that
+// group's members and opens a picker so the user chooses which to add to the
+// Team members list.
+const memberPicker = new MemberPicker($("memberPicker"), {}, {});
+page.chips.queues.setRowActions([{
+  label: "resolve members",
+  title: "Resolve this group's members",
+  onClick: async (group: string) => {
+    const instanceUrl = currentInstanceUrl();
+    if (!instanceUrl) {
+      showToast("Set your ServiceNow instance URL first", "error");
+      return;
+    }
+    try {
+      const res = await page.bridge.resolveGroupMembers({ instanceUrl, group });
+      if (!res.ok) throw new Error(res.error || "Could not resolve this group's members");
+      const members = res.members || [];
+      if (!members.length) {
+        showToast(`No active members found for "${group}"`);
+        return;
+      }
+      // Only offer members not already in the Team members list — the picker
+      // consolidates against what is already configured.
+      const newMembers = subtractNames(members, page.chips.teamMembers.getValues());
+      if (!newMembers.length) {
+        showToast(`All ${members.length} member(s) of "${group}" are already in Team members`);
+        return;
+      }
+      memberPicker.openFor({
+        group,
+        members: newMembers,
+        truncated: res.truncated,
+        onConfirm: (chosen) => {
+          if (!chosen.length) return;
+          const merged = mergeSortedNames(page.chips.teamMembers.getValues(), chosen);
+          page.chips.teamMembers.setValues(merged);
+          savePluginSettings();
+          showToast(`Added ${chosen.length} member(s) from "${group}"`);
+        }
+      });
+    } catch (e) {
+      showToast((e as Error).message, "error");
+    }
+  }
+}, {
+  label: "resolve CIs",
+  title: "Resolve this group's configuration items",
+  onClick: async (group: string) => {
+    const instanceUrl = currentInstanceUrl();
+    if (!instanceUrl) {
+      showToast("Set your ServiceNow instance URL first", "error");
+      return;
+    }
+    try {
+      const res = await page.bridge.resolveGroupCis({ instanceUrl, group });
+      if (!res.ok) throw new Error(res.error || "Could not resolve this group's configuration items");
+      const items = res.items || [];
+      if (!items.length) {
+        showToast(`No configuration items found for "${group}"`);
+        return;
+      }
+      // Only offer CIs not already in the Configuration items list.
+      const newItems = subtractNames(items, page.chips.configItems.getValues());
+      if (!newItems.length) {
+        showToast(`All ${items.length} configuration item(s) of "${group}" are already listed`);
+        return;
+      }
+      memberPicker.openFor({
+        group,
+        members: newItems,
+        truncated: res.truncated,
+        title: `Configuration items of "${group}"`,
+        onConfirm: (chosen) => {
+          if (!chosen.length) return;
+          const merged = mergeSortedNames(page.chips.configItems.getValues(), chosen);
+          page.chips.configItems.setValues(merged);
+          savePluginSettings();
+          showToast(`Added ${chosen.length} configuration item(s) from "${group}"`);
+        }
+      });
+    } catch (e) {
+      showToast((e as Error).message, "error");
+    }
+  }
+}]);
 
 function selectedModel(): MlModelOption {
   const id = $("mlModel").value;

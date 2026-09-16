@@ -1,15 +1,16 @@
 import { MSG } from "../lib/keys.ts";
 import { broadcast } from "../lib/storage.ts";
 import * as Analysis from "../core/timeline/phase2.ts";
-import { createSmartTransport } from "../data/datasource/sn-transport.ts";
+import { createSmartTransport, findServiceNowTab, getPageUser } from "../data/datasource/sn-transport.ts";
 import { createServiceNowRemote } from "../data/datasource/sn-remote.ts";
-import { PULL_SERVICE, CONNECTION_SERVICE, SETTINGS_REPO, SN_REMOTE_FACTORY } from "../di/tokens.ts";
+import { PULL_SERVICE, CONNECTION_SERVICE, SCOPE_RESOLVE_SERVICE, SETTINGS_REPO, SN_REMOTE_FACTORY } from "../di/tokens.ts";
 import { createBackgroundContainer } from "../di/register-background.ts";
 import { ConnectionService } from "../services/connection-service.ts";
 import { PullService } from "../services/pull-service.ts";
-import type { MsgRun, MsgCount } from "../types/global.d.ts";
+import { ScopeResolveService } from "../services/scope-resolve-service.ts";
+import type { MsgRun, MsgCount, MsgResolveScope, MsgResolveGroupMembers, MsgResolveGroupCis } from "../types/global.d.ts";
 
-type WorkerRequest = MsgRun | MsgCount | { type: typeof MSG.ping };
+type WorkerRequest = MsgRun | MsgCount | MsgResolveScope | MsgResolveGroupMembers | MsgResolveGroupCis | { type: typeof MSG.ping };
 type SendResponse = (response: unknown) => void;
 
 /*
@@ -37,12 +38,38 @@ container.registerValue(SN_REMOTE_FACTORY, async (instanceUrl, onDiagnostic) => 
 
 container.registerClass(PULL_SERVICE, PullService, { singleton: true });
 container.registerClass(CONNECTION_SERVICE, ConnectionService, { singleton: true });
+container.registerClass(SCOPE_RESOLVE_SERVICE, ScopeResolveService, { singleton: true });
 
 let running = false;
 
 function clampNum(value: unknown, lo: number, hi: number): number | null {
   const n = Math.round(Number(value));
   return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : null;
+}
+
+/**
+ * Best-effort current-user sys_id for the opt-in scope resolver.
+ *
+ * Prefers an id the caller already has, else reads the ServiceNow tab's MAIN
+ * world (`NOW.user` / `g_user` / `g_user_id`). Returns undefined when no page
+ * global is available, so the remote falls back to the current-user REST
+ * endpoint. Never throws — identity is best-effort here.
+ */
+async function resolveCurrentUserId(
+  instanceUrl: string,
+  provided?: string | null
+): Promise<string | undefined> {
+  const passed = String(provided ?? "").trim();
+  if (passed) return passed;
+  try {
+    const origin = new URL(instanceUrl).origin;
+    const tab = await findServiceNowTab(origin);
+    if (!tab?.id) return undefined;
+    const user = await getPageUser(tab.id);
+    return user.userId ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function progress(stage: string, detail: string, extra: Record<string, unknown> = {}) {
@@ -90,6 +117,45 @@ chrome.runtime.onMessage.addListener((msg: WorkerRequest, _sender: unknown, send
       .then((result) => sendResponse({ ok: true, ...result }))
       .catch((err) => {
         progress("diag", `${MSG.count} failed: ${err.message}`);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
+
+  if (msg.type === MSG.resolveScope) {
+    resolveCurrentUserId(msg.instanceUrl, msg.currentUserId)
+      .then((currentUserId) =>
+        container
+          .resolve(SCOPE_RESOLVE_SERVICE)
+          .resolve({ instanceUrl: msg.instanceUrl, currentUserId, onDiagnostic })
+      )
+      .then((scope) => sendResponse({ ok: true, queues: scope.queues, members: scope.members, userId: scope.userId }))
+      .catch((err) => {
+        progress("diag", `${MSG.resolveScope} failed: ${err.message}`);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
+
+  if (msg.type === MSG.resolveGroupMembers) {
+    container
+      .resolve(SCOPE_RESOLVE_SERVICE)
+      .resolveGroupMembers({ instanceUrl: msg.instanceUrl, group: msg.group, onDiagnostic })
+      .then((res) => sendResponse({ ok: true, members: res.members, truncated: res.truncated }))
+      .catch((err) => {
+        progress("diag", `${MSG.resolveGroupMembers} failed: ${err.message}`);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
+
+  if (msg.type === MSG.resolveGroupCis) {
+    container
+      .resolve(SCOPE_RESOLVE_SERVICE)
+      .resolveGroupConfigItems({ instanceUrl: msg.instanceUrl, group: msg.group, onDiagnostic })
+      .then((res) => sendResponse({ ok: true, items: res.items, truncated: res.truncated }))
+      .catch((err) => {
+        progress("diag", `${MSG.resolveGroupCis} failed: ${err.message}`);
         sendResponse({ ok: false, error: err.message });
       });
     return true;

@@ -19,6 +19,8 @@ import { timelinePaneEl } from "./activity.ts";
 import { computeAttention, flagsForColumn } from "../core/attention/attention.ts";
 import { ColumnEditor } from "./components/column-editor.ts";
 import type { ColumnFlag } from "./components/column-editor.ts";
+import { ciAvailablePool } from "./components/ci-dialog.ts";
+import { getStoredConfigItems, refreshStoredConfigItems } from "./config-items.ts";
 import { iconize } from "../lib/icons.ts";
 
 let editor: ColumnEditor | null = null;
@@ -47,8 +49,16 @@ function flagsFor(sysId: string, key: string): ColumnFlag[] {
     .map((f) => ({ label: f.label }));
 }
 
+/** Suggestions for the configuration-item column autocomplete: the CIs present
+ *  in the current view unioned with the CIs resolved in Settings. */
+function ciSuggestions(): string[] {
+  const dataItems = currentRows().map((r) => String((r as { configItem?: unknown }).configItem ?? "").trim());
+  return ciAvailablePool(dataItems, getStoredConfigItems());
+}
+
 function openFor(key: string, focusSysId: string): void {
   if (!editor) return;
+  if (key === "configItem") refreshStoredConfigItems();
   const rows = currentRows();
   const entries = columnEntries(rows, key);
   if (!entries.length) return;
@@ -60,6 +70,7 @@ function openFor(key: string, focusSysId: string): void {
 export function initColumnEditor(): void {
   const btn = $("editModeBtn");
   if (!btn) return;
+  refreshStoredConfigItems();
   btn.textContent = "Edit column";
   iconize(btn, "square-pen");
 
@@ -86,6 +97,7 @@ export function initColumnEditor(): void {
         const row = findRowBySysId(sysId);
         return row ? columnOptionList(key, row) : null;
       },
+      autocompleteFor: (key) => (key === "configItem" ? ciSuggestions() : null),
       parseValue: (v) => parseLocalInput(v),
       onCommit: (sysId, key, value) => {
         const row = findRowBySysId(sysId);

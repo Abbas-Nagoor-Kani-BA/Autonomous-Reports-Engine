@@ -645,6 +645,11 @@
   .ce-val { @apply flex-1 min-w-0 text-[12px] text-text; }
   .ce-input { @apply flex-1 min-w-0 bg-card border border-line rounded px-2 py-1 text-[12.5px] text-text; }
   .ce-input.invalid { @apply border-bad; }
+  .ce-ac { @apply relative flex-1 min-w-0 flex; }
+  .ce-ac .ce-input { @apply w-full; }
+  .ce-ac-menu { @apply absolute left-0 right-0 top-full mt-1 z-20 max-h-[200px] overflow-y-auto bg-card border border-line rounded shadow-[0_8px_24px_rgba(17,17,27,.55)]; }
+  .ce-ac-opt { @apply px-2 py-1 text-[12.5px] text-text cursor-pointer truncate; }
+  .ce-ac-opt:hover, .ce-ac-opt.active { @apply bg-line; }
   .ce-derived-note { @apply mt-2 text-[11.5px] text-peach; }
   .ce-empty { @apply text-dim text-[12px] p-2; }
   .tlCard { @apply bg-card2 border border-line rounded p-2 mb-1.5; }

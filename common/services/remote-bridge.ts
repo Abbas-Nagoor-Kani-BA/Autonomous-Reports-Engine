@@ -1,6 +1,6 @@
 import { MSG } from "../../lib/keys.ts";
 import { broadcast } from "../../lib/storage.ts";
-import type { MsgCount, MsgProgress, MsgRun } from "../../types/global.d.ts";
+import type { MsgCount, MsgProgress, MsgResolveScope, MsgResolveGroupMembers, MsgResolveGroupCis, MsgRun } from "../../types/global.d.ts";
 
 /*
  * Page-side proxy for the service worker's message API.
@@ -26,6 +26,28 @@ export type RunReply = {
   error?: string;
 };
 
+export type ResolveScopeReply = {
+  ok: boolean;
+  queues?: string[];
+  members?: string[];
+  userId?: string;
+  error?: string;
+};
+
+export type ResolveGroupMembersReply = {
+  ok: boolean;
+  members?: string[];
+  truncated?: boolean;
+  error?: string;
+};
+
+export type ResolveGroupCisReply = {
+  ok: boolean;
+  items?: string[];
+  truncated?: boolean;
+  error?: string;
+};
+
 export type BridgeMsg = {
   type?: unknown;
   [key: string]: unknown;
@@ -39,7 +61,7 @@ export class RemoteBridge {
    * Uses the callback form so `chrome.runtime.lastError` is checked in one
    * place; pages that awaited a raw sendMessage would miss it.
    */
-  private request(msg: MsgCount | MsgRun): Promise<unknown> {
+  private request(msg: MsgCount | MsgRun | MsgResolveScope | MsgResolveGroupMembers | MsgResolveGroupCis): Promise<unknown> {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(msg, (res: unknown) => {
         if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
@@ -56,6 +78,33 @@ export class RemoteBridge {
   /** Kicks off a pull in the worker. Fire-and-forget from the page's side. */
   run(req: Omit<MsgRun, "type">): Promise<RunReply> {
     return this.request({ type: MSG.run, ...req }) as Promise<RunReply>;
+  }
+
+  /**
+   * Opt-in: resolves the current user's groups (queues) and each group's active
+   * members from ServiceNow, for the Settings Resolve button. Never used by the
+   * default COUNT/RUN pull path.
+   */
+  resolveScope(req: Omit<MsgResolveScope, "type">): Promise<ResolveScopeReply> {
+    return this.request({ type: MSG.resolveScope, ...req }) as Promise<ResolveScopeReply>;
+  }
+
+  /**
+   * Opt-in: resolves the active members of ONE group by name, for the per-queue
+   * "resolve members" button. Reply carries a `truncated` flag when the group
+   * exceeded the single-page read.
+   */
+  resolveGroupMembers(req: Omit<MsgResolveGroupMembers, "type">): Promise<ResolveGroupMembersReply> {
+    return this.request({ type: MSG.resolveGroupMembers, ...req }) as Promise<ResolveGroupMembersReply>;
+  }
+
+  /**
+   * Opt-in: resolves the configuration items supported by ONE group by name
+   * (`cmdb_ci.support_group`), for the per-queue "resolve CIs" button. Reply
+   * carries a `truncated` flag when the group exceeded the single-page read.
+   */
+  resolveGroupCis(req: Omit<MsgResolveGroupCis, "type">): Promise<ResolveGroupCisReply> {
+    return this.request({ type: MSG.resolveGroupCis, ...req }) as Promise<ResolveGroupCisReply>;
   }
 
   /** Broadcasts that the dataset changed (e.g. a clear-cache, an export view). */

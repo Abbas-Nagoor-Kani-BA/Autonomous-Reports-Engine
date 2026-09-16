@@ -24,5 +24,8 @@ export const MSG = Object.freeze({
   ping: "PING",
   progress: "PROGRESS",
   dataUpdated: "DATA_UPDATED",
-  snFetch: "SN_FETCH"
+  snFetch: "SN_FETCH",
+  resolveScope: "RESOLVE_SCOPE",
+  resolveGroupMembers: "RESOLVE_GROUP_MEMBERS",
+  resolveGroupCis: "RESOLVE_GROUP_CIS"
 } as const);

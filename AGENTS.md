@@ -91,6 +91,33 @@ Only the selected ticket table plus the per-ticket activity feed
 (`list_history.do`) are read during pulls. COUNT/RUN are the only server
 operations; the panel's Connect is local-only validation.
 
+**One opt-in exception (never on the default path):** the Settings scope
+resolvers. A **"Resolve queues"** button reads the current user's active group
+memberships (`sys_user_grmember` joined to `sys_user_group`) and fills the
+Queues list. Each queue row then has a per-queue **"resolve members"** button
+that reads that one group's active members (`sys_user_grmember` joined to
+`sys_user`, dot-walked `user.name`/`user.active`) and opens a confirmation
+dialog (checkbox list) so the user picks which names to merge into Team members.
+A second per-queue **"resolve CIs"** button reads the configuration items that
+group supports (`cmdb_ci` where `support_group` is that group, dot-walked
+`name`) and opens the same picker so the user merges chosen CIs into a
+**Configuration items** settings list (`defaults.configItems`); the viewer's CI
+split dialog unions that stored list into its available pool so users pick/search
+resolved CIs instead of hand-typing.
+The per-group member/CI reads are deliberately single-page: when they hit the
+page cap the dialog shows a truncation notice instead of silently dropping rows
+(large "assigned to everyone" groups overflow and are not paginated). These are
+driven by `services/scope-resolve-service.ts` (`resolve` / `resolveGroupMembers`
+/ `resolveGroupConfigItems`) → `SnRemote.resolveUserScope` /
+`resolveGroupMembers` / `resolveGroupConfigItems`
+(`data/datasource/sn-remote.ts`) → the metadata queries in `lib/servicenow.ts`
+(`fetchRecords` / `fetchGroupMemberRows` / `fetchGroupCiRows` / `currentUserId`),
+with the current-user identity read from the tab's MAIN world (`getPageUser` in
+`data/datasource/sn-transport.ts`, reading `NOW.user` / `g_user` / `g_user_id`)
+or the current-user REST endpoint. On any permission failure (401/403) it fails
+gracefully with an "add them manually" message and changes nothing. COUNT/RUN
+never call them, so restricted users who never press the buttons are unaffected.
+
 ### The four timeline rules (business requirements — never change semantics without asking)
 
 Computed in `core/phase2.ts` from timeline events (`assignment_group`,
@@ -193,12 +220,18 @@ Regression suites (`npm test` runs all of them):
 | `calclens-highlights-menu-test.ts` | Calclens highlight-toggle dropdown UI (checkbox list, Show/Hide all, button indicator) |
 | `msrchoices-test.js`, `msrcategorize-test.js` | MSR choice maps and categorization |
 | `classifier-service-test.js`, `classification-cache-test.js`, `classify-cache-test.js`, `classify-fallback-test.js`, `ml-model-repository-test.js` | ML classification services, cache, and model repository |
-| `remote-bridge-test.ts` | the remote bridge |
+| `remote-bridge-test.ts` | the remote bridge (preview, run, resolveScope, resolveGroupMembers, resolveGroupCis, progress) |
+| `resolve-scope-test.js` | pure scope-shaping helpers (group/member/CI extraction, active filtering, name merge/subtract/sort/dedupe) |
+| `user-identity-test.ts` | current-user id selection (`pickUserId`: REST → page global → user_name → table) |
+| `resolve-user-scope-test.ts` | `SnRemote.resolveUserScope` / `resolveGroupMembers` / `resolveGroupConfigItems` query sequence and shaping (incl. truncation flag) |
+| `scope-resolve-service-test.ts` | `ScopeResolveService` success + graceful permission/empty failure mapping (scope + per-group members + per-group CIs) |
+| `settings-scope-merge-test.js` | the Settings resolve merge helpers (merge/subtract/sort A–Z, dedupe, idempotent) |
+| `member-picker-test.ts` | per-queue member/CI confirmation dialog (checkbox list, select all/none, truncation notice, title override, Add returns checked only) |
 | `ci-split-test.js`, `pick-exact-test.js`, `path-from-url-test.js`, `store-test.js`, `icons-test.ts` | assorted units |
 | `action-rail-test.ts` | draggable/foldable action rail (clamp helper + fold/drag persistence) |
 | `edit-mode-state-test.js` | edit-mode session toggle owner |
 | `column-editor-data-test.js` | pure column-values selector (entries + focused index) |
-| `column-editor-test.ts` | column editor component (right list, type-aware inputs, arrow nav, Calclens highlight, find filter) |
+| `column-editor-test.ts` | column editor component (right list, type-aware inputs, CI datalist autocomplete, arrow nav, Calclens highlight, find filter) |
 | `panel-components-test.ts`, `data-grid-test.ts`, `search-picker-test.ts`, `modal-test.ts`, `map-dialog-test.ts`, `settings-chips-test.js` | components |
 | `viewer-dom-test.ts` | end-to-end viewer flow (happy-dom) |
 | `search-state-test.ts`, `search-match-test.ts` | column-scoped search: state owner + pure matcher (modes, case, all/single-column, displayed-value match) |

@@ -7,6 +7,8 @@ declare global {
   var chrome: any;
   var fflate: any;
   var g_ck: any;
+  var g_user_id: any;
+  var g_user: any;
   var Analysis: any;
   var AiExtract: any;
   var Markup: any;
@@ -59,9 +61,28 @@ export type MsgSnFetch = {
   method?: string;
   body?: unknown;
 };
+export type MsgResolveScope = {
+  type: "RESOLVE_SCOPE";
+  instanceUrl: string;
+  /** Optional current-user sys_id; the worker resolves one when omitted. */
+  currentUserId?: string | null;
+};
+export type MsgResolveGroupMembers = {
+  type: "RESOLVE_GROUP_MEMBERS";
+  instanceUrl: string;
+  group: string;
+};
+export type MsgResolveGroupCis = {
+  type: "RESOLVE_GROUP_CIS";
+  instanceUrl: string;
+  group: string;
+};
 export type BackgroundMessage =
   | MsgRun
   | MsgCount
   | MsgProgress
   | MsgDataUpdated
-  | MsgSnFetch;
+  | MsgSnFetch
+  | MsgResolveScope
+  | MsgResolveGroupMembers
+  | MsgResolveGroupCis;

@@ -8,6 +8,7 @@ globalThis.document = win.document;
 globalThis.HTMLElement = win.HTMLElement;
 globalThis.HTMLInputElement = win.HTMLInputElement;
 globalThis.HTMLSelectElement = win.HTMLSelectElement;
+globalThis.HTMLDataListElement = win.HTMLDataListElement;
 globalThis.KeyboardEvent = win.KeyboardEvent;
 globalThis.MouseEvent = win.MouseEvent;
 globalThis.Event = win.Event;
@@ -150,4 +151,98 @@ test("close hides the modal", () => {
   editor.show({ colKey: "assignedTo", colLabel: "Assigned to", cls: "", entries, focusIdx: 0 });
   editor.close();
   assert.equal(host.classList.contains("hidden"), true);
+});
+
+test("autocompleteFor renders a text input with a themed suggestion menu on focus", () => {
+  const { host, editor } = mount({
+    autocompleteFor: (key) => (key === "configItem" ? ["RMS (prd)", "Billing API", "Web Portal"] : null)
+  });
+  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  const row0 = rows(host)[0];
+  const input = row0.querySelector(".ce-input");
+  assert.equal(input.tagName, "INPUT", "an editable text input, not a closed select");
+  assert.equal(input.getAttribute("list"), null, "no native datalist is used");
+  const menu = row0.querySelector(".ce-ac-menu");
+  assert.ok(menu, "a custom themed menu element exists");
+  assert.ok(menu.classList.contains("hidden"), "menu starts hidden");
+  input.value = "";
+  input.dispatchEvent(new win.Event("input", { bubbles: true }));
+  assert.equal(menu.classList.contains("hidden"), false, "menu opens when the field is focused/typed");
+  assert.deepEqual([...menu.querySelectorAll(".ce-ac-opt")].map((o) => o.textContent), ["RMS (prd)", "Billing API", "Web Portal"]);
+});
+
+test("typing filters the suggestion menu (case-insensitive substring)", () => {
+  const { host, editor } = mount({ autocompleteFor: () => ["RMS (prd)", "Billing API", "Web Portal"] });
+  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  const input = rows(host)[0].querySelector(".ce-input");
+  input.dispatchEvent(new win.Event("input", { bubbles: true }));
+  input.value = "bil";
+  input.dispatchEvent(new win.Event("input", { bubbles: true }));
+  const menu = rows(host)[0].querySelector(".ce-ac-menu");
+  assert.deepEqual([...menu.querySelectorAll(".ce-ac-opt")].map((o) => o.textContent), ["Billing API"]);
+});
+
+test("clicking a suggestion commits it and closes the menu", () => {
+  const committed = [];
+  const { host, editor } = mount({
+    autocompleteFor: () => ["RMS (prd)", "Billing API"],
+    onCommit: (s, k, v) => committed.push([s, k, v])
+  });
+  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  const row0 = rows(host)[0];
+  const input = row0.querySelector(".ce-input");
+  input.value = "";
+  input.dispatchEvent(new win.Event("input", { bubbles: true }));
+  const opt = [...row0.querySelectorAll(".ce-ac-opt")].find((o) => o.textContent === "Billing API");
+  opt.dispatchEvent(new win.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+  assert.deepEqual(committed, [["s1", "configItem", "Billing API"]]);
+  assert.equal(input.value, "Billing API");
+  assert.ok(row0.querySelector(".ce-ac-menu").classList.contains("hidden"), "menu closed after pick");
+});
+
+test("autocomplete commits a typed value (free text still allowed)", () => {
+  const committed = [];
+  const { host, editor } = mount({
+    autocompleteFor: () => ["RMS (prd)", "Billing API"],
+    onCommit: (s, k, v) => committed.push([s, k, v])
+  });
+  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  const input = rows(host)[0].querySelector(".ce-input");
+  input.value = "Brand New CI";
+  input.dispatchEvent(new win.Event("change", { bubbles: true }));
+  assert.deepEqual(committed, [["s1", "configItem", "Brand New CI"]]);
+});
+
+test("ArrowDown + Enter picks a highlighted suggestion", () => {
+  const committed = [];
+  const { host, editor } = mount({
+    autocompleteFor: () => ["RMS (prd)", "Billing API"],
+    onCommit: (s, k, v) => committed.push(v)
+  });
+  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  const input = rows(host)[0].querySelector(".ce-input");
+  input.value = "";
+  input.dispatchEvent(new win.Event("input", { bubbles: true }));
+  input.dispatchEvent(new win.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }));
+  input.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  assert.deepEqual(committed, ["RMS (prd)"]);
+});
+
+test("a closed optionsFor list wins over autocompleteFor (select, not menu)", () => {
+  const { host, editor } = mount({
+    optionsFor: () => ["A", "B"],
+    autocompleteFor: () => ["X", "Y"]
+  });
+  editor.show({ colKey: "solutionType", colLabel: "Solution type", cls: "", entries, focusIdx: 0 });
+  const row0 = rows(host)[0];
+  assert.equal(row0.querySelector(".ce-input").tagName, "SELECT");
+  assert.equal(row0.querySelector(".ce-ac-menu"), null);
+});
+
+test("no suggestions and no options renders a plain text input (unchanged)", () => {
+  const { host, editor } = mount({ autocompleteFor: () => null });
+  editor.show({ colKey: "assignedTo", colLabel: "Assigned to", cls: "", entries, focusIdx: 0 });
+  const row0 = rows(host)[0];
+  assert.equal(row0.querySelector(".ce-input").tagName, "INPUT");
+  assert.equal(row0.querySelector(".ce-ac-menu"), null, "no autocomplete menu");
 });

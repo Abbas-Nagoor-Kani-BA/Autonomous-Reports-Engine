@@ -18,8 +18,9 @@ ServiceNow browser session (no API keys).
   optional local machine-learning model (Transformers.js) that is downloaded
   once and then runs entirely offline.
 - **Data viewer** — column-scoped search, a column editor for fast bulk edits of
-  a single column across the current view, CI split preview, ticket stats, and
-  Calclens, which explains how each derived value was computed.
+  a single column across the current view (with autocomplete for the
+  Configuration item column from your resolved CI list), CI split preview, ticket
+  stats, and Calclens, which explains how each derived value was computed.
 - **Excel export** — fills a template MSR workbook and offers a Copy-for-MSR
   action for pasting into an existing sheet.
 
@@ -88,7 +89,20 @@ All configuration lives in **Settings**:
 
 - **Instance & scope** — instance URL, ticket type, queues, and team members.
   Queues and members are plain names (case-insensitive); the tool never reads
-  `sys_user`/`sys_choice` tables, so restricted accounts still work.
+  `sys_user`/`sys_choice` tables during a pull, so restricted accounts still
+  work. Optionally, the **Resolve queues** button fills the Queues list from
+  your logged-in session (your ServiceNow assignment-group memberships), and
+  each queue then has a small **resolve members** button that lists that group's
+  active members in a confirmation dialog so you pick which to add to Team
+  members. These are the only features that read the group tables, they run only
+  when you press them, and if your account cannot read those tables they report
+  the problem and ask you to add the names manually. Very large groups are read
+  a single page at a time; the dialog shows a truncation notice rather than
+  silently dropping members. Each queue also has a **resolve CIs** button that
+  lists the Configuration Items that group supports (their ServiceNow
+  `support_group`) in the same confirmation dialog; the chosen items are saved
+  to a **Configuration items** list and reused as suggestions in the Data View's
+  CI split and export, so you pick/search resolved CIs instead of typing them.
 - **Classification** — mode (Heuristic only / Hybrid / ML only), the ML model to
   download, and whether to cache classification results. Switching the mode
   re-classifies the loaded data automatically.

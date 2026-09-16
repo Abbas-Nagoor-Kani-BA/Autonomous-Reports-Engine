@@ -145,6 +145,37 @@ test("Escape in the textarea exits edit mode without saving", () => {
   assert.deepEqual(chip.getValues(), ["Alpha"], "typed text discarded on Escape");
 });
 
+test("collapsible rowActions render a button per action per row and call back with the row value", () => {
+  const members = [];
+  const cis = [];
+  const { root, chip } = makeChip({
+    collapsible: true,
+    rowActions: [
+      { label: "resolve members", title: "Members", onClick: (v) => members.push(v) },
+      { label: "resolve CIs", title: "CIs", onClick: (v) => cis.push(v) }
+    ]
+  });
+  chip.setValues(["Network Ops", "Service Desk"]);
+  const rows = root.querySelectorAll(".chipRow");
+  assert.equal(rows.length, 2);
+  // Two action buttons per row.
+  assert.equal(rows[0].querySelectorAll(".chipRowAction").length, 2);
+  assert.deepEqual([...root.querySelectorAll(".chipRowLabel")].map((s) => s.textContent), ["Network Ops", "Service Desk"]);
+  // Click "resolve CIs" (second button) on the second row.
+  rows[1].querySelectorAll(".chipRowAction")[1].click();
+  assert.deepEqual(cis, ["Service Desk"]);
+  // Click "resolve members" (first button) on the first row.
+  rows[0].querySelectorAll(".chipRowAction")[0].click();
+  assert.deepEqual(members, ["Network Ops"]);
+});
+
+test("collapsible without rowActions renders plain text rows (unchanged)", () => {
+  const { root, chip } = makeChip({ collapsible: true });
+  chip.setValues(["Alpha"]);
+  assert.equal(root.querySelector(".chipRowAction"), null);
+  assert.equal(root.querySelector(".chipRow").textContent, "Alpha");
+});
+
 test("chip list fires the change hook on commit (drives settings auto-save)", () => {
   let fired = 0;
   const root = document.createElement("div");

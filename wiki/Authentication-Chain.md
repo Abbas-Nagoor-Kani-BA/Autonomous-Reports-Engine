@@ -51,6 +51,23 @@ Only the selected ticket table plus the per-ticket activity feed
 (`list_history.do`) are read during pulls. **COUNT** and **RUN** are the only
 server operations; the panel's **Connect** is local-only validation.
 
+**Opt-in exception — the Settings scope resolvers.** A **"Resolve queues"**
+button reads `sys_user_grmember` (joined to `sys_user_group`) to fill the Queues
+list from the current user's active group memberships. Each queue row then has a
+per-queue **"resolve members"** button that reads that one group's active
+members (`sys_user_grmember` joined to `sys_user`) and opens a confirmation
+dialog so the user picks which names to add to Team members. A second per-queue
+**"resolve CIs"** button reads the configuration items that group supports
+(`cmdb_ci.support_group`) and opens the same dialog so the user merges chosen
+CIs into a **Configuration items** settings list, reused by the Data View's CI
+split and export. The per-group reads are single-page; when they hit the page
+cap the dialog shows a truncation notice
+rather than silently dropping members. The current user is identified from the
+tab's MAIN world (`NOW.user` / `g_user` / `g_user_id`) or the current-user REST
+endpoint. Any permission failure (401/403) fails gracefully with an "add them
+manually" message and changes nothing. COUNT/RUN never invoke these, so
+restricted users who never press the buttons are unaffected.
+
 ## Security notes
 
 - Never log or store full token values — diagnostics carry only the first 8

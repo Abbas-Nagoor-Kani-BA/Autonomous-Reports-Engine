@@ -76,6 +76,12 @@ MSR dropdown columns (Root cause category, Solution type, etc.) are constrained
 to the values configured under **MSR option lists** in
 [Configuration](Configuration), so edited values always validate against export.
 
+The **Configuration item** column is a free-text field with autocomplete: as you
+type, it suggests values from the Configuration Items resolved in Settings
+(see the per-queue **resolve CIs** button in [Configuration](Configuration))
+unioned with the CIs already present in the current view. You can pick a
+suggestion or type any value.
+
 ## CI split preview
 
 Preview how a ticket's configuration items split into rows before committing, so
