@@ -744,15 +744,17 @@
   .ciAddRow button { @apply px-2.5 py-0.75 text-xs; }
   #addGroupBtn { @apply self-start; }
 
-  .cfgRows { @apply flex flex-col; }
+  .cfgRows { @apply flex flex-col min-h-0 overflow-y-auto; }
   .cfgRow { @apply flex items-center gap-2.5 py-2 border-b border-line last:border-0; }
   .cfgLabel { @apply w-[130px] text-dim text-xs flex-shrink-0; }
   .cfgValue { @apply flex-1 text-[12.5px] overflow-hidden text-ellipsis whitespace-nowrap; }
   .cfgActions { @apply inline-flex gap-1.5 flex-shrink-0; }
   button.cfgEdit { @apply px-2.5 py-1 text-xs font-normal bg-card2 text-text border border-line rounded hover:bg-line hover:filter-none; }
+  select.cfgSelect { @apply cursor-pointer; }
   #cfgTplClear { @apply text-bad; }
-  #configCard .radioRow { @apply border-t border-line px-0.5 py-2.5; }
-  #cfgSplitPreview { @apply px-0.5 pb-2 text-[12.5px] leading-relaxed; }
+  #configCard .radioRow { @apply border-t border-line px-0.5 py-2.5 flex-shrink-0; }
+  #configCard .mapFoot { @apply flex-shrink-0; }
+  #cfgSplitPreview { @apply px-0.5 pb-2 text-[12.5px] leading-relaxed max-h-[30vh] overflow-y-auto flex-shrink-0; }
   #cfgSplitPreview .pvRow { @apply flex justify-between gap-2.5 px-1 py-0.5 rounded; }
   #cfgSplitPreview .pvRow:nth-child(odd) { background: rgba(137, 180, 250, 0.06); }
   #cfgSplitPreview .pvRow.hint { @apply text-dim bg-transparent pt-1.5; }
