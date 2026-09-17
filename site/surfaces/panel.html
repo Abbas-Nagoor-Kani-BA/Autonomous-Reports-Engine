@@ -31,7 +31,11 @@
         </p>
       </section>
 
-      <div class="surface-frame">
+      <div class="surface-split">
+        <div class="surface-rail">
+          <div class="surface-stage" style="--anno-scale: 0.82">
+            <p class="surface-stage-label">Live sample · Side panel</p>
+            <div class="surface-scale">
         <!-- BEGIN copied panel markup (from panel/panel.html), adapted to a static mockup -->
         <div
           class="panel m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]"
@@ -294,16 +298,25 @@
           </footer>
         </div>
         <!-- END copied panel markup -->
-      </div>
+            </div><!-- /.surface-scale -->
+          </div><!-- /.surface-stage -->
+          <p class="surface-hint">
+            Hover or focus a card on the right — the arrow points to that control.
+            Use <kbd>Tab</kbd> to move between cards.
+          </p>
+        </div><!-- /.surface-rail -->
 
-      <section id="feature-reference" class="feature-reference">
-        <h2 class="section-title">Every control, explained</h2>
-        <p class="section-sub">
-          A numbered tour of every interactive control on the side panel. These
-          descriptions mirror the real extension behaviour; the panel above is a
-          static sample.
-        </p>
-      </section>
+        <div class="surface-notes">
+          <section id="feature-reference" class="feature-reference">
+            <h2 class="section-title">Every control, explained</h2>
+            <p class="section-sub">
+              A numbered tour of every interactive control on the side panel.
+              These descriptions mirror the real extension behaviour; the panel
+              on the left is a static sample.
+            </p>
+          </section>
+        </div><!-- /.surface-notes -->
+      </div><!-- /.surface-split -->
     </main>
 
     <div id="site-footer"></div>
@@ -312,6 +325,8 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         Annotations.init({
+          layout: "beside",
+          stageRef: ".surface-stage",
           mountRef: "#feature-reference",
           items: [
             {

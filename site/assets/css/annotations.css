@@ -281,8 +281,7 @@
   color: var(--anno-dim);
 }
 
-/* ── Reduced motion ──────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
+/* ── Reduced motion ──────────────────────────────────────────────────────── */@media (prefers-reduced-motion: reduce) {
   .anno-marker,
   .anno-popover,
   .anno-reference-btn,
@@ -299,5 +298,152 @@
   }
   .anno-marker.is-flash {
     animation: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BESIDE LAYOUT — compact mockup on the left, explanation cards on the right,
+   connected by an SVG arrow. Used by the surface pages so the mockup stays
+   small and the explanations have room.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Two-column split. The mockup rail is sticky so the arrow target stays on
+   screen while you scan the explanation cards. */
+.surface-split {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 28px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+/* Wider mockup column for inherently wide surfaces (data viewer, settings). */
+.surface-split--wide {
+  grid-template-columns: minmax(440px, 620px) 1fr;
+}
+
+.surface-intro {
+  margin-bottom: 8px;
+}
+
+.surface-rail {
+  position: sticky;
+  top: 84px; /* clears the sticky site header */
+  align-self: start;
+}
+
+/* The stage frames the scaled mockup. The mockup is rendered at its natural
+   size then scaled down with transform, so the real component CSS is untouched
+   and it stays crisp. */
+.surface-stage {
+  position: relative;
+  border: 1px solid var(--anno-line);
+  border-radius: 14px;
+  background:
+    radial-gradient(900px 400px at 70% -20%, rgba(137, 180, 250, 0.08), transparent 60%),
+    #16161f;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.surface-stage-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--anno-dim);
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+/* The scaler shrinks the embedded UI. transform-origin top-left keeps it in the
+   corner; the wrapper height is reduced to match so layout doesn't leave a gap.
+   Pages set --anno-scale (default 0.82). */
+.surface-scale {
+  transform: scale(var(--anno-scale, 0.82));
+  transform-origin: top left;
+  width: calc(100% / var(--anno-scale, 0.82));
+}
+
+/* When the mockup is a fixed-height frame (the viewer), let it size naturally
+   inside the scaler. */
+.surface-scale .viewer-frame {
+  margin: 0;
+}
+
+.surface-hint {
+  margin: 10px 2px 0;
+  font-size: 12.5px;
+  color: var(--anno-dim);
+}
+.surface-hint kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--anno-bg);
+  border: 1px solid var(--anno-line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+/* Explanation column: the feature reference cards get more room and a scannable
+   rhythm. Cards live in .surface-notes which wraps the mount element. */
+.surface-notes .anno-reference {
+  gap: 12px;
+}
+.surface-notes .anno-reference-btn {
+  padding: 13px 16px;
+}
+
+/* Active card (the one the arrow points from). */
+.anno-reference-item.is-active .anno-reference-btn {
+  border-color: var(--anno-accent);
+  background: rgba(137, 180, 250, 0.1);
+  box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.4);
+}
+.anno-reference-item.is-active .anno-reference-chip {
+  background: #b4befe;
+}
+
+/* ── SVG arrow overlay ─────────────────────────────────────────────────────── */
+.anno-arrow-layer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 8800;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+.anno-arrow-layer.is-visible {
+  opacity: 1;
+}
+.anno-arrow-path {
+  stroke: var(--anno-accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+.anno-arrowhead {
+  fill: var(--anno-accent);
+}
+.anno-arrow-ring {
+  fill: rgba(137, 180, 250, 0.12);
+  stroke: var(--anno-accent);
+  stroke-width: 2;
+}
+
+/* ── Responsive: stack on narrow screens ───────────────────────────────────── */
+@media (max-width: 900px) {
+  .surface-split {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .surface-rail {
+    position: static;
+  }
+  /* On stacked layouts the arrow is less useful; hide it and rely on the
+     active-card highlight + the target ring is still drawn where possible. */
+  .anno-arrow-layer .anno-arrow-path {
+    display: none;
   }
 }

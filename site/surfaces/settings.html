@@ -25,13 +25,18 @@
           pull parameters, classification behaviour, the MSR option lists and
           classifier keywords, and backup/transfer. In the real extension these
           values live in <code>chrome.storage.local</code> and the chips are
-          injected by JavaScript. Everything below is a sample and inert. Use the
-          numbered callouts for a guided tour, or read the
+          injected by JavaScript. Everything below is a sample and inert. Hover
+          or focus a card on the right for a guided tour, or read the
           <a href="../docs.html?p=Configuration">Configuration</a> and
           <a href="../docs.html?p=Classification">Classification</a> docs.
         </p>
       </section>
 
+      <div class="surface-split surface-split--wide">
+        <div class="surface-rail">
+          <div class="surface-stage" style="--anno-scale: 0.6">
+            <p class="surface-stage-label">Live sample · Settings</p>
+            <div class="surface-scale">
       <!-- ORIGINAL settings body classes carried on this wrapper so the
            component CSS (.cards, .card-settings, .cpill, .chip, etc.) applies. -->
       <div class="font-sans text-[13px] bg-bg text-text">
@@ -511,8 +516,24 @@
         </div>
       </div>
       <!-- /settings body -->
+            </div><!-- /.surface-scale -->
+          </div><!-- /.surface-stage -->
+          <p class="surface-hint">
+            Hover or focus a card on the right — the arrow points to that control.
+            Use <kbd>Tab</kbd> to move between cards.
+          </p>
+        </div><!-- /.surface-rail -->
 
-      <section id="feature-reference"></section>
+        <div class="surface-notes">
+          <section id="feature-reference" class="feature-reference">
+            <h2 class="section-title">Every control, explained</h2>
+            <p class="section-sub">
+              A tour of every setting. These descriptions mirror the real
+              extension; the page on the left is a static sample.
+            </p>
+          </section>
+        </div><!-- /.surface-notes -->
+      </div><!-- /.surface-split -->
     </main>
 
     <div id="site-footer"></div>
@@ -521,6 +542,8 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         Annotations.init({
+          layout: "beside",
+          stageRef: ".surface-stage",
           mountRef: "#feature-reference",
           items: [
             {

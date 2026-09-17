@@ -69,10 +69,16 @@
       </p>
       <p class="viewer-note">
         Below is a faithful, static recreation of the viewer with a realistic
-        sample dataset. Every control is annotated — click a numbered marker, or
-        read the feature reference beneath the frame. Nothing here is live.
+        sample dataset, scaled to fit. Every control is explained on the right —
+        hover or focus a card and the arrow points to that control. Nothing here
+        is live.
       </p>
 
+      <div class="surface-split surface-split--wide">
+        <div class="surface-rail">
+          <div class="surface-stage" style="--anno-scale: 0.62">
+            <p class="surface-stage-label">Live sample · Data viewer</p>
+            <div class="surface-scale">
       <!-- ============================ VIEWER FRAME ============================ -->
       <div class="viewer-frame">
         <div id="slaBar">
@@ -648,8 +654,25 @@
         </div>
       </div>
       <!-- ========================== /VIEWER FRAME =========================== -->
+            </div><!-- /.surface-scale -->
+          </div><!-- /.surface-stage -->
+          <p class="surface-hint">
+            Hover or focus a card on the right — the arrow points to that control.
+            Use <kbd>Tab</kbd> to move between cards.
+          </p>
+        </div><!-- /.surface-rail -->
 
-      <section id="feature-reference"></section>
+        <div class="surface-notes">
+          <section id="feature-reference" class="feature-reference">
+            <h2 class="section-title">Every control, explained</h2>
+            <p class="section-sub">
+              A tour of every feature in the data viewer. These descriptions
+              mirror the real extension; the viewer on the left is a static
+              sample.
+            </p>
+          </section>
+        </div><!-- /.surface-notes -->
+      </div><!-- /.surface-split -->
     </main>
 
     <div id="site-footer"></div>
@@ -658,6 +681,8 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         Annotations.init({
+          layout: "beside",
+          stageRef: ".surface-stage",
           mountRef: "#feature-reference",
           items: [
             {

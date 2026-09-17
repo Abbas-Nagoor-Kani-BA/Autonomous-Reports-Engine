@@ -74,8 +74,7 @@ diagrams. New pages must be added to `wiki/_Sidebar.md` and linked from
 
 The site also recreates the extension's three UI surfaces (side panel, data
 viewer, settings) with annotated callouts; that part lives under `site/`. See
-[`site/README.md`](../site/README.md) for how to preview and build the site
-locally.
+`site/README.md` for how to preview and build the site locally.
 
 > The old GitHub **Wiki tab** and its `Sync Wiki` workflow have been retired in
 > favor of the Pages site. Don't edit the Wiki tab.

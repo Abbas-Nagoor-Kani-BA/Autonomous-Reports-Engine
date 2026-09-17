@@ -33,10 +33,17 @@
  *   options.mountRef  : string|Element (optional)  — where to render the feature
  *                                                    reference list. If omitted, no
  *                                                    list is rendered.
- *   options.toggleRef : string|Element (optional)  — an existing toggle button.
- *                                                    Defaults to "#toggle-callouts";
- *                                                    if not found, a floating toggle
- *                                                    is auto-created.
+ *   options.layout    : "markers"|"beside" (optional, default "markers")
+ *                                                  — "markers": floating numbered
+ *                                                    badges + popovers over the UI.
+ *                                                    "beside": compact mockup beside
+ *                                                    explanation cards, connected by
+ *                                                    an SVG arrow that points from the
+ *                                                    active card to its target control.
+ *   options.stageRef  : string|Element (optional)  — the element wrapping the mockup
+ *                                                    (beside layout; used for context).
+ *   options.toggleRef : string|Element (optional)  — an existing toggle button
+ *                                                    (markers layout only).
  *
  *   Item = {
  *     sel   : string      // CSS selector; the FIRST match is the marker target.
@@ -129,6 +136,14 @@
     this._visible = true;
     this._instanceId = "anno-" + ++idSeq;
 
+    // Layout: "markers" (default — floating numbered badges + popovers) or
+    // "beside" (compact mockup on one side, explanation cards on the other,
+    // connected by an SVG arrow that points from the active card to its target).
+    this._layout = opts.layout === "beside" ? "beside" : "markers";
+    this._stage = resolveEl(opts.stageRef) || null; // the box holding the mockup
+    this._arrowSvg = null;
+    this._activeEntry = null;
+
     this._boundReposition = this._reposition.bind(this);
     this._boundKeydown = this._onKeydown.bind(this);
     this._boundDocClick = this._onDocClick.bind(this);
@@ -157,8 +172,9 @@
         refItem: null,
       };
 
-      // A marker is created only when a visible target exists.
-      if (target && isVisible(target)) {
+      // Floating numbered markers are only used in the default "markers"
+      // layout. In "beside" layout the arrow + card carry the numbering.
+      if (self._layout === "markers" && target && isVisible(target)) {
         entry.marker = self._makeMarker(entry);
         document.body.appendChild(entry.marker);
       }
@@ -169,8 +185,12 @@
     // Feature reference list (always render every item if a mount is given).
     this._buildReference(opts.mountRef);
 
-    // Toggle control.
-    this._buildToggle(opts.toggleRef);
+    if (this._layout === "beside") {
+      this._buildArrowLayer();
+    } else {
+      // Toggle control (markers layout only — nothing to hide in beside mode).
+      this._buildToggle(opts.toggleRef);
+    }
 
     // Global listeners.
     window.addEventListener("resize", this._boundReposition, { passive: true });
@@ -236,8 +256,19 @@
       li.appendChild(btn);
 
       btn.addEventListener("click", function () {
-        self._highlight(entry);
+        if (self._layout === "beside") self._activate(entry);
+        else self._highlight(entry);
       });
+
+      if (self._layout === "beside") {
+        // Point the arrow whenever the card is hovered or focused, so both
+        // pointer and keyboard users get the connector.
+        var activate = function () {
+          self._activate(entry);
+        };
+        btn.addEventListener("mouseenter", activate);
+        btn.addEventListener("focus", activate);
+      }
 
       entry.refItem = li;
       list.appendChild(li);
@@ -245,6 +276,17 @@
 
     mount.appendChild(list);
     this._referenceList = list;
+
+    // In beside mode, point at the first control by default so the arrow is
+    // visible on load rather than only after interaction.
+    if (this._layout === "beside" && this._entries.length) {
+      var first = this._entries[0];
+      var self2 = this;
+      // Defer until layout settles (fonts, scaling) for an accurate first draw.
+      (window.requestAnimationFrame || window.setTimeout)(function () {
+        self2._activate(first);
+      });
+    }
   };
 
   Controller.prototype._buildToggle = function (toggleRef) {
@@ -278,9 +320,127 @@
     this._toggle.setAttribute("aria-pressed", this._visible ? "true" : "false");
   };
 
+  // ── Beside layout: SVG arrow connectors ─────────────────────────────────────
+  //
+  // A full-page SVG overlay draws a single arrow from the active explanation
+  // card to the control it describes on the (scaled) mockup. The arrow is
+  // recomputed on activate, resize, and scroll so it tracks both ends.
+  Controller.prototype._buildArrowLayer = function () {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "anno-arrow-layer");
+    svg.setAttribute("aria-hidden", "true");
+
+    var defs = document.createElementNS(NS, "defs");
+    var marker = document.createElementNS(NS, "marker");
+    marker.setAttribute("id", "anno-arrowhead-" + this._instanceId);
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "10");
+    marker.setAttribute("refX", "7");
+    marker.setAttribute("refY", "3");
+    marker.setAttribute("orient", "auto");
+    marker.setAttribute("markerUnits", "strokeWidth");
+    var head = document.createElementNS(NS, "path");
+    head.setAttribute("d", "M0,0 L7,3 L0,6 Z");
+    head.setAttribute("class", "anno-arrowhead");
+    marker.appendChild(head);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("class", "anno-arrow-path");
+    path.setAttribute("fill", "none");
+    path.setAttribute("marker-end", "url(#anno-arrowhead-" + this._instanceId + ")");
+    svg.appendChild(path);
+
+    // A small ring drawn over the target control.
+    var ring = document.createElementNS(NS, "rect");
+    ring.setAttribute("class", "anno-arrow-ring");
+    ring.setAttribute("rx", "6");
+    svg.appendChild(ring);
+
+    document.body.appendChild(svg);
+    this._arrowSvg = svg;
+    this._arrowPath = path;
+    this._arrowRing = ring;
+  };
+
+  Controller.prototype._activate = function (entry) {
+    if (this._layout !== "beside" || !entry) return;
+    // Update active styling on the cards.
+    this._entries.forEach(function (e) {
+      if (e.refItem) e.refItem.classList.toggle("is-active", e === entry);
+    });
+    this._activeEntry = entry;
+    this._drawArrow(entry);
+  };
+
+  Controller.prototype._drawArrow = function (entry) {
+    if (!this._arrowSvg || !entry) return;
+    var card = entry.refItem;
+    var target = entry.target;
+    if (!card || !target || !isVisible(target)) {
+      this._arrowSvg.classList.remove("is-visible");
+      return;
+    }
+
+    var doc = document.documentElement;
+    var vw = doc.clientWidth;
+    var vh = doc.clientHeight;
+    // Size the overlay to the viewport; it is position:fixed.
+    this._arrowSvg.setAttribute("width", String(vw));
+    this._arrowSvg.setAttribute("height", String(vh));
+    this._arrowSvg.setAttribute("viewBox", "0 0 " + vw + " " + vh);
+
+    var cr = card.getBoundingClientRect();
+    var tr = target.getBoundingClientRect();
+
+    // Start at the card edge nearest the mockup. The mockup sits to the LEFT of
+    // the cards in the split, so arrows start at the card's left-middle and end
+    // at the target's right-middle. If the target is actually to the right of
+    // the card (narrow screens stack), fall back to the card's top.
+    var targetIsLeft = tr.left + tr.width / 2 < cr.left + cr.width / 2;
+
+    var startX, startY, endX, endY;
+    endX = targetIsLeft ? tr.right : tr.left;
+    endY = tr.top + tr.height / 2;
+
+    if (targetIsLeft) {
+      startX = cr.left;
+      startY = cr.top + Math.min(cr.height / 2, 26);
+    } else {
+      startX = cr.right;
+      startY = cr.top + Math.min(cr.height / 2, 26);
+    }
+
+    // A gentle cubic curve between the two ends.
+    var dx = endX - startX;
+    var c1x = startX + dx * 0.45;
+    var c1y = startY;
+    var c2x = endX - dx * 0.45;
+    var c2y = endY;
+    var d =
+      "M" + startX + "," + startY +
+      " C" + c1x + "," + c1y + " " + c2x + "," + c2y + " " + endX + "," + endY;
+    this._arrowPath.setAttribute("d", d);
+
+    // Ring around the target control.
+    var pad = 3;
+    this._arrowRing.setAttribute("x", String(tr.left - pad));
+    this._arrowRing.setAttribute("y", String(tr.top - pad));
+    this._arrowRing.setAttribute("width", String(tr.width + pad * 2));
+    this._arrowRing.setAttribute("height", String(tr.height + pad * 2));
+
+    this._arrowSvg.classList.add("is-visible");
+  };
+
   // ── Positioning ────────────────────────────────────────────────────────────
   Controller.prototype._reposition = function () {
     if (this._destroyed) return;
+    if (this._layout === "beside") {
+      if (this._activeEntry) this._drawArrow(this._activeEntry);
+      return;
+    }
     var self = this;
     this._entries.forEach(function (entry) {
       if (!entry.marker) return;
@@ -492,6 +652,9 @@
     });
     if (this._referenceList && this._referenceList.parentNode) {
       this._referenceList.parentNode.removeChild(this._referenceList);
+    }
+    if (this._arrowSvg && this._arrowSvg.parentNode) {
+      this._arrowSvg.parentNode.removeChild(this._arrowSvg);
     }
     if (this._createdToggle && this._createdToggle.parentNode) {
       this._createdToggle.parentNode.removeChild(this._createdToggle);
