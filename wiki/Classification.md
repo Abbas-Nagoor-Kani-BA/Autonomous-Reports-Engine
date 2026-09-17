@@ -29,7 +29,7 @@ flowchart TD
 **Label-directed:** if the note has an explicit `Root Cause Category:` or
 `Resolution Type:` section, that value is categorized first; if it resolves to a
 category it wins. Otherwise the whole note is categorized
-(`categorizeField` in `core/msrcategorize.ts`).
+(`categorizeField` in `core/classification/msrcategorize.ts`).
 
 **Three-stage cascade** (`classifyMsr`): the **first** stage with a clear winner
 decides — they are not blended.
@@ -55,7 +55,8 @@ is stamped with the stage that produced it (`regex` / `keyword` / `cosine`), so
 ## Which rows are classified
 
 Auto-classification runs only on rows that are **note-bearing** and
-**eligible** — a **closed Incident or RFS** ticket (`isClassifyEligible`).
+**eligible** — an Incident or RFS ticket whose state is **closed or resolved**
+(`isClassifyEligible` in `core/classification/msrchoices.ts`).
 Problem/change tickets and still-open tickets are never auto-scored, and any
 value already on them is left untouched. Note-less and non-eligible rows are
 counted as "not classifiable" in the progress tally.
@@ -104,7 +105,7 @@ model cache, and [Configuration](Configuration) for the download control.
 
 ML inference runs in a **Web Worker** (`worker/classifier-worker.ts` →
 `worker/ml-classify.ts`), driven from the viewer by
-`surfaces/viewer/worker-client.ts`. The worker loads the cached model files
+`viewer/worker-client.ts`. The worker loads the cached model files
 (verifying they match the selected model spec) and runs zero-shot NLI under
 Transformers.js WebAssembly — which is why the extension's CSP allows
 `wasm-unsafe-eval` (see [Architecture](Architecture)). Running off the main

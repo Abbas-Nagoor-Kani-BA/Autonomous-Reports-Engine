@@ -50,7 +50,7 @@ one filter set per (table, state), with closed states scoped to **last week** by
 
 Ticking **Pull change requests for Weekly Summary** adds data for the WSR
 workbook's Summary sheet. Weeks are **Monday–Sunday**, and the derivation
-(`core/summarydetails.ts`) buckets rows into:
+(`core/summary/summarydetails.ts`) buckets rows into:
 
 | Summary section         | Source                       | Rule                                                                                 |
 | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------ |

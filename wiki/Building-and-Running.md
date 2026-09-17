@@ -15,8 +15,14 @@ so you always run a **built** folder.
 | `npm run css` / `css:watch` | Build the Tailwind CSS to `styles/output.css`.               |
 | `npm run typecheck`         | `tsc` against `tsconfig.json` + `tsconfig.strict.json`.      |
 | `npm run lint`              | ESLint.                                                      |
+| `npm run format`            | Format with Prettier (writes) — `prettier --write .`.        |
+| `npm run format:check`      | Verify formatting without writing — `prettier --check .`.    |
 | `npm test`                  | Offline test suites — see [Testing](Testing).                |
-| `npm run release`           | typecheck + lint + test + build.                             |
+| `npm run release`           | format:check + typecheck + lint + test + build.              |
+
+Code style is enforced by **Prettier** (config `.prettierrc.json`, exclusions in
+`.prettierignore`). `eslint-config-prettier` is the last entry in
+`eslint.config.mjs`, so ESLint never fights the formatter.
 
 ## Loading the extension
 
@@ -35,7 +41,7 @@ to root would overwrite `panel/panel.js` and friends with their own output.
 ## Quick verify after a change
 
 ```bash
-node --check platform/background.ts core/*.ts lib/*.ts surfaces/viewer/*.ts panel/*.ts settings/*.ts content/content.js && \
+node --check platform/background.ts core/*.ts lib/*.ts viewer/*.ts panel/*.ts settings/*.ts content/content.js && \
 node -e "JSON.parse(require('fs').readFileSync('manifest.json'))"
 ```
 

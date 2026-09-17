@@ -14,6 +14,7 @@ extension's options page. This page documents every control.
 | **Default ticket type** | Incident, Change Request, Problem, Requested Item (RITM), or Catalog Task (SCTASK).                                                                                                                                                                 |
 | **Queues**              | One assignment-group **name** per chip. Every pull is scoped to these groups by name (must match the group's display name in ServiceNow; matching is case-insensitive). Type a name and press Enter, or paste several separated by commas/newlines. |
 | **Team members**        | One full **name** per chip. Used **only** to detect acknowledgement dates (when a ticket is assigned to one of these people). Leave empty to skip acknowledgement detection.                                                                        |
+| **Configuration items** | Optional list of CI **names**, one per chip. Used for CI grouping and reused as suggestions in the Data View's CI split and export. Type names manually, or fill it with a queue's **resolve CIs** button (see below).                              |
 
 Queues and members are plain names because the tool never reads `sys_user`,
 `sys_choice`, `sys_user_group`, or `sys_user_grmember` during a pull — so
@@ -52,13 +53,13 @@ The caching behaviour behind these controls is detailed in
 
 ![Settings — Classification card](images/placeholder.png)
 
-| Control                          | Purpose                                                                                                                                                                            |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| **Classification mode**          | **Hybrid** (offline scorer first, then ML when it finds a better answer), **ML only** (machine learning for every ticket), or **Heuristic only** (built-in offline scorer, no ML). |
-| **Model**                        | Which classifier to download: MobileBERT (25.7 MB), DistilBERT (64.5 MB), or NLI DeBERTa v3 (233 MB). Larger models are more accurate but take longer to download.                 |
-| **Download model**               | Fetches and caches the selected model's files locally for offline use.                                                                                                             |
-| **Cache classification results** | Stores each classified note's outcome so an unchanged note is never re-inferred on reload or across datasets. Turn off to always re-classify.                                      |
-| **Clear classification cache**   | button                                                                                                                                                                             | Empties the per-note result cache. |
+| Control                          | Purpose                                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| **Classification mode**          | **Hybrid** (offline scorer is authoritative and runs first; the ML model then fills only cells the scorer left blank and never overrides or erases a value), **ML only** (the ML model is authoritative for every eligible ticket), or **Heuristic only** (built-in offline scorer, no ML). |
+| **Model**                        | Which classifier to download: MobileBERT (25.7 MB), DistilBERT (64.5 MB), or NLI DeBERTa v3 (233 MB). Larger models are more accurate but take longer to download.                                                                                                                          |
+| **Download model**               | Fetches and caches the selected model's files locally for offline use.                                                                                                                                                                                                                      |
+| **Cache classification results** | Stores each classified note's outcome so an unchanged note is never re-inferred on reload or across datasets. Turn off to always re-classify.                                                                                                                                               |
+| **Clear classification cache**   | button                                                                                                                                                                                                                                                                                      | Empties the per-note result cache. |
 
 See [Classification](Classification) for how the modes and cascade work, and
 [Caching](Caching) for the classification and model caches.
@@ -89,9 +90,9 @@ data view. **Restore default keywords** resets them.
 
 ## Backup / transfer
 
-Exports one JSON file with the instance URL, queues, team members, pull params,
-saved filters, column mapping, CI split groups, hidden view columns, MSR option
-lists, and the cached Excel template. Import replaces all of those with the
+Exports one JSON file with the instance URL, queues, team members, configuration
+items, pull params, saved filters, column mapping, CI split groups, hidden view
+columns, MSR option lists, and the cached Excel template. Import replaces all of those with the
 file's values. See [Backup and Transfer](Backup-and-Transfer).
 
 ## Reset

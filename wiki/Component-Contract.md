@@ -1,13 +1,16 @@
 # Component Contract
 
-UI units extend `components/component.ts`. Two rules are load-bearing and were
-both found the hard way — do not regress them.
+UI units extend `common/components/component.ts` (the base `Component<S, P, D>`;
+`el()` is a small DOM helper exported alongside it). Two rules are load-bearing
+and were both found the hard way — do not regress them.
 
 ## build() runs once; patch() runs on every state change
 
 `build()` constructs the DOM **once**; `patch()` applies **every** subsequent
 state change. A full rebuild per change destroys input focus and caret
-position.
+position. The base constructor runs `initialState()`, then `build()`, then the
+**first** `patch(state, null)` — after that, every `setState()` computes the
+next state and calls `patch(next, prev)`.
 
 - The condition builder compares row **shapes**, not values, so typing never
   re-renders its rows.

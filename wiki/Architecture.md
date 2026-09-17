@@ -9,38 +9,59 @@ code; it is the standalone expansion of `docs/architecture.md`.
 ```mermaid
 flowchart TD
     core[core/ — pure domain] --> data[data/ — storage + network]
-    data --> services[services/ — business logic]
-    services --> components[components/ — UI units]
-    components --> surfaces[surfaces/ — composition roots]
-    di[di/ — container + tokens] -.wires.-> services
-    di -.wires.-> data
+    data --> common[common/ — shared UI + services]
+    common --> surfaces["viewer/ | panel/ | settings/ — surfaces"]
+    di[di/ — container + tokens] -.wires.-> data
+    di -.wires.-> services[services/ — platform services]
 ```
+
+Dependency direction is strictly downward:
+`core/ → data/ → common/ → viewer/ | panel/ | settings/`. This is the standalone
+expansion of `docs/architecture.md` — the two must agree.
+
+There is no top-level `services/`, `components/`, or `surfaces/` layer as a
+single UI stack. Instead:
+
+- **`services/`** (top level) holds platform-level services not owned by any
+  surface (`PullService`, `ConnectionService`, `ScopeResolveService`,
+  `QueueScope`, `ClassifierService`).
+- **`common/`** holds shared UI units (`Component` base, `Modal`) and shared
+  services (`RemoteBridge`, `SettingsService`).
+- **Each surface** (`viewer/`, `panel/`, `settings/`) is a top-level folder that
+  is self-contained: its HTML page, entry module, composition root, and its own
+  surface-specific `components/` and `services/`.
 
 All application source is TypeScript (`.ts`); esbuild strips the types. The only
 `.js` sources are `content/content.js` and the `tools/` scripts.
 
 ## Directory map
 
-| Layer         | Contents                                                                                                                                                                                                                                                                                                                                      |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core/`       | Pure domain. No DOM, no `chrome.*`, no I/O. Runs standalone in node. `phase2` (the four timeline rules), `report`, `slasummary`, `durations`, `aiextract`, `querybuilder`, `sntime`, `statechoices`, `names`, `msrchoices`, `msrcategorize`, `rowmerge`, `journal`, `templatexml`, `attention`, `calclens`.                                   |
-| `data/`       | Everything that touches storage or the network. `repositories/` (ticket, timeline, settings, dataset, run-state, export-config, viewer-prefs, template, filter-list, msr-lists), `datasource/` (`sn-transport` session auth, `sn-remote` client), `idb.ts`, key-value stores, `classification-cache-repository.ts`, `ml-model-repository.ts`. |
-| `services/`   | Business logic. No DOM; depends on repositories, never on components. `pull`, `connection`, `settings`, `queue-scope`, `classifier`, `report`, `extract`, `export`, `remote-bridge`.                                                                                                                                                          |
-| `components/` | OOP UI units that own their state and DOM: `Component` (base), `Modal`, `DataGrid`, `SearchPicker`, `MapDialog`, `CiDialog`, `LogCard`, `ProgressCard`, `ConditionBuilder`, `FilterSetList`, `ChipList`, `CalclensPanel`. Never touch `chrome.*`, `indexedDB`, or `fetch` — call a service.                                                   |
-| `surfaces/`   | Composition roots: `panel`, `settings`, `viewer`. The only place that knows both the container and the components.                                                                                                                                                                                                                            |
-| `di/`         | Container, tokens, and per-surface registration functions.                                                                                                                                                                                                                                                                                    |
-| `lib/`        | Platform and UI helpers: keys, storage, store, markup, picklist, servicenow, toast, tooltip, format, icons, icons-data.                                                                                                                                                                                                                       |
-| `worker/`     | Off-thread ML classification: `classifier-worker`, `ml-classify`.                                                                                                                                                                                                                                                                             |
-| `platform/`   | The service worker (`background.ts`).                                                                                                                                                                                                                                                                                                         |
+| Layer       | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/`     | Pure domain, grouped into subfolders. No DOM, no `chrome.*`, no I/O. Runs standalone in node. `timeline/` (`phase2` — the four rules —, `durations`, `journal`, `rowmerge`, `sntime`), `sla/` (`report`, `slasummary`, `ticketstats`, `statechoices`), `query/` (`querybuilder`, `wsrpreset`, `preset-controller`), `classification/` (`msrchoices`, `msrcategorize`, `aiextract`), `attention/` (`attention`, `calclens`), `export/` (`templatexml`, `rowfields`), `scope/` (`resolve-scope`), `summary/` (`summarydetails`, `names`, `change-summary-filter`).                                                                                                                                                                                     |
+| `data/`     | Everything that touches storage or the network. `repositories/` (ticket, timeline, settings, dataset, run-state, export-config, viewer-prefs, template, filter-list, preset, msr-lists, change-summary), `datasource/` (`sn-transport` session auth, `sn-remote` client), `idb.ts`, `key-value-store.ts`, `chrome-key-value-store.ts`, `classification-cache-repository.ts`, `ml-model-repository.ts`.                                                                                                                                                                                                                                                                                                                                               |
+| `common/`   | Shared UI and services used by more than one surface. `components/` (`Component` base, `Modal`); `services/` (`RemoteBridge`, `SettingsService`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `services/` | Platform-level services not owned by any surface: `PullService`, `ConnectionService`, `ScopeResolveService`, `QueueScope`, `ClassifierService`. No DOM; depends on repositories, never on components.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `viewer/`   | The data-view surface, self-contained: `viewer.html`, `index.ts` (composition root), its modules (`core`, `store`, `grid`, `grid-data`, `cols`, `col-order`, `config-state`, `config-items`, `exporter`, `clipboard`, `summary`, `summary-details`, `toolbar`, `dialogs`, `selection`, `activity`, `classify`, `calclens`, `calclens-state`, `calclens-highlights`, `worker-client`, `shared`, `interactions`, `search-state`, `search-match`, `split-filter`, `split-preview`, `edit-mode-state`, `ticketstats`, `attention-filter`, `column-editor`), plus surface-only `components/` (`DataGrid`, `SearchPicker`, `ColumnEditor`, `CalclensPanel`, `CiDialog`, `MapDialog`) and `services/` (`ExportService`, `ReportService`, `ExtractService`). |
+| `panel/`    | The side-panel surface, self-contained: `panel.html`, `panel.ts` (entry), `index.ts` (composition root), and surface-only `components/` (`LogCard`, `ProgressCard`, `ConditionBuilder`, `FilterSetList`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `settings/` | The options-page surface, self-contained: `settings.html`, `settings.ts` (entry), `index.ts` (composition root), and surface-only `components/` (`ChipList`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `di/`       | Container, tokens, and per-surface registration functions (`container`, `token`, `tokens`, `register-core`, `register-background`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `lib/`      | Platform and UI helpers: keys, storage, store, markup, picklist, servicenow, toast, tooltip, format, icons, icons-data.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `worker/`   | Off-thread ML classification: `classifier-worker`, `ml-classify`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `platform/` | The service worker (`background.ts`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
-### surfaces/viewer/
+### viewer/
 
-The viewer page's own composition root plus its modules (`core`, `store`,
-`grid-data`, `cols`, `config-state`, `exporter`, `clipboard`, `summary`,
-`toolbar`, `dialogs`, `grid`, `selection`, `activity`, `classify`, `calclens`,
-`calclens-state`, `worker-client`, `shared`, `interactions`).
-`surfaces/viewer/index.ts` calls each module's `init*()` in a fixed order and
-then boots.
+The viewer page's own composition root (`viewer/index.ts`) plus its modules
+(`core`, `store`, `grid`, `grid-data`, `cols`, `col-order`, `config-state`,
+`config-items`, `exporter`, `clipboard`, `summary`, `summary-details`,
+`toolbar`, `dialogs`, `selection`, `activity`, `classify`, `calclens`,
+`calclens-state`, `calclens-highlights`, `worker-client`, `shared`,
+`interactions`, `search-state`, `search-match`, `split-filter`,
+`split-preview`, `edit-mode-state`, `ticketstats`, `attention-filter`,
+`column-editor`). `viewer/index.ts` calls each module's `init*()` in a fixed
+order and then boots. The viewer's own UI components live in
+`viewer/components/` and its own services in `viewer/services/`.
 
 **Nothing binds DOM handlers at module scope.** Every module exports an
 `init*()` and the composition root decides when it runs. Adding top-level wiring
@@ -48,14 +69,14 @@ to a viewer module re-introduces the invisible ordering this replaced.
 
 ## Layering rules
 
-| Layer         | May use                              | Must never                                     |
-| ------------- | ------------------------------------ | ---------------------------------------------- |
-| `core/`       | only `core/`                         | `chrome.*`, `indexedDB`, `fetch`, DOM          |
-| `lib/`        | `core/`                              | other layers                                   |
-| `data/`       | `core/`, `lib/`, platform APIs       | DOM, `services/`, `components/`                |
-| `services/`   | `core/`, `lib/`, `data/`             | DOM, `components/`                             |
-| `components/` | `core/`, `lib/`, services via `deps` | repositories, `chrome.*`, `indexedDB`, `fetch` |
-| `surfaces/`   | everything                           | containing business logic                      |
+| Layer                            | May use                              | Must never                                     |
+| -------------------------------- | ------------------------------------ | ---------------------------------------------- |
+| `core/`                          | only `core/`                         | `chrome.*`, `indexedDB`, `fetch`, DOM          |
+| `lib/`                           | `core/`                              | other layers                                   |
+| `data/`                          | `core/`, `lib/`, platform APIs       | DOM, `services/`, `common/`, surfaces          |
+| `services/`                      | `core/`, `lib/`, `data/`             | DOM, `common/components/`                      |
+| `common/components/`             | `core/`, `lib/`, services via `deps` | repositories, `chrome.*`, `indexedDB`, `fetch` |
+| `viewer/`, `panel/`, `settings/` | everything                           | containing business logic                      |
 
 ## Download path (MV3 constraint)
 

@@ -12,6 +12,26 @@ it is never overwritten — you paste into it instead.
 
 ![The export flow](images/placeholder.png)
 
+## The export configuration dialog
+
+**Export** opens a small **Export configuration** dialog before it writes
+anything. From here you choose the template, the report header values, the CI
+split, and the column map, then press **Export** to fill and download.
+
+At the top, **Op co** and **Domain** sit **side by side** in one row (Op co is
+the narrow field). Each is an **editable combobox** — a text input with a
+themed suggestion menu, **not** a native `<select>` or `<datalist>` (the browser
+datalist popup can't be styled to match the dark UI, so the extension builds its
+own menu). Typing filters the suggestions; ArrowUp/ArrowDown move the highlight
+and Enter picks it; clicking a suggestion fills the field.
+
+The suggestions come from your **MSR option lists** for Op co and Domain (see
+[Configuration](Configuration)), but you are **not limited to them** — you can
+type any custom value in place, and that free-typed value flows straight into
+the export. Your choice is remembered between exports; when a field is left
+empty the report falls back to its built-in defaults (`BA` for Op co, `AO` for
+Domain). The same Op co / Domain values also feed **Copy for MSR**.
+
 ## WSR export (the workbook)
 
 The exporter loads your cached **WSR template**, patches **only** the target
@@ -19,7 +39,8 @@ sheet's cells with the current view's rows, and downloads the result as an
 `.xlsx` file. The template's formatting and formulas are preserved — the
 workbook is not regenerated from scratch. Column values come from the view, with
 dropdown columns restricted to your configured **MSR option lists** (see
-[Configuration](Configuration)).
+[Configuration](Configuration)); the chosen Op co / Domain populate the report's
+opCo and domain columns.
 
 ## Copy for MSR (preserve history and formulas)
 

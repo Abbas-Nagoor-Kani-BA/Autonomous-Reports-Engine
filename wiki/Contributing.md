@@ -52,8 +52,13 @@ JS. Keep both at **0 errors**.
 Run the full gate and add a test for anything new:
 
 ```bash
-npm run typecheck && npm run lint && npm test && npm run build
+npm run format:check && npm run typecheck && npm run lint && npm test && npm run build
 ```
+
+Code style is enforced by **Prettier** — run `npm run format` to write and
+`npm run format:check` to verify (config `.prettierrc.json`, exclusions
+`.prettierignore`). `eslint-config-prettier` is the last entry in
+`eslint.config.mjs`, so ESLint never fights the formatter.
 
 Every component needs its own test — see [Testing](Testing).
 

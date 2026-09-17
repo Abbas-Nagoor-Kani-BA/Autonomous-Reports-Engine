@@ -1,7 +1,7 @@
 # Timeline and SLA Rules
 
 These are **business requirements** — never change the semantics without asking.
-They are computed in `core/phase2.ts` from timeline events
+They are computed in `core/timeline/phase2.ts` from timeline events
 (`assignment_group`, `assigned_to`, `state`), replayed in chronological order,
 and expanded here from `docs/timeline.md`.
 
@@ -29,7 +29,7 @@ The **LAST** time `assigned_to` became a member of the queue's team, counted
 The **FIRST** transition **INTO** "On Hold" while the current group equals the
 queue.
 
-- State labels come from `core/statechoices.ts`.
+- State labels come from `core/sla/statechoices.ts`.
 - Feed events carry **display labels** ("On Hold"); legacy `sys_audit` rows
   carried raw values ("3") — both are accepted.
 
@@ -46,8 +46,8 @@ the first post-suspend "Resolved". Null if never resumed.
 ## Derived durations
 
 Derived durations (assign→ackn, assign→resolve, suspend total) are computed in
-`core/durations.ts` from these four **UTC** timestamps. Because they derive from
-the four rules, changing a rule changes the durations.
+`core/timeline/durations.ts` from these four **UTC** timestamps. Because they
+derive from the four rules, changing a rule changes the durations.
 
 ## Auditability
 

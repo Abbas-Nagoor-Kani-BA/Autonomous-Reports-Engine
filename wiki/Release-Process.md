@@ -11,7 +11,8 @@ Releases are **tag-driven**. Pushing a `v*` tag runs the release workflow
 1. Checks out the repo.
 2. Sets up **Node 22**.
 3. `npm ci`.
-4. `npm run release` — the full gate: `typecheck && lint && test && build`.
+4. `npm run release` — the full gate:
+   `format:check && typecheck && lint && test && build`.
 5. `npm run zip` — packages `dist/`.
 6. Creates a GitHub Release with the `.zip` attached.
 

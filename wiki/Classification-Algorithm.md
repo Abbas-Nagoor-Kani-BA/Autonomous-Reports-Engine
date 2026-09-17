@@ -25,8 +25,8 @@ Two important rules keep it honest:
 
 - It **ignores negatives**: "no workaround needed" does **not** count as
   _Workaround_.
-- It only auto-classifies **closed Incident / RFS** tickets; everything else is
-  left untouched.
+- It only auto-classifies **closed or resolved Incident / RFS** tickets;
+  everything else is left untouched.
 
 ## The pipeline
 
@@ -52,14 +52,15 @@ Each field (root cause, solution type) runs through this independently, scored
 against **its own** candidate list. Root cause uses the list for the ticket's
 type (Incident / RFS / P-Ticket); solution type uses the resolution list.
 
-Source: `core/msrcategorize.ts` (`categorizeField` → `classifyMsr`),
-`core/aiextract.ts` (section extraction), `core/msrchoices.ts` (labels + hints),
+Source: `core/classification/msrcategorize.ts` (`categorizeField` → `classifyMsr`),
+`core/classification/aiextract.ts` (section extraction),
+`core/classification/msrchoices.ts` (labels + hints),
 `worker/ml-classify.ts` (the AI model).
 
 ## Step 1 — Find the explicit section (if any)
 
 Notes often contain a labelled section. The extractor
-(`core/aiextract.ts`) looks for a **header line** and captures its value.
+(`core/classification/aiextract.ts`) looks for a **header line** and captures its value.
 
 - A line "looks like a header" when it has an early colon (within 45 chars) or
   is short (≤ 60 chars) — so a normal sentence that merely starts with a word

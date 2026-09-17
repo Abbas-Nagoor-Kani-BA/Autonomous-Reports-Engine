@@ -10,11 +10,16 @@ npm test          # node --test "tools/*-test.*"  (the glob is required)
 The full gate is:
 
 ```bash
-npm run typecheck && npm run lint && npm test && npm run build
+npm run format:check && npm run typecheck && npm run lint && npm test && npm run build
 ```
 
 `npm run release` runs the exact same gate — it is what the release workflow
 invokes. See [Release Process](Release-Process).
+
+Code style is enforced by **Prettier**: `npm run format` writes, `npm run
+format:check` verifies (config `.prettierrc.json`, exclusions `.prettierignore`).
+`eslint-config-prettier` is the last entry in `eslint.config.mjs`, so ESLint
+never fights the formatter.
 
 ## Suites
 
@@ -22,6 +27,8 @@ invokes. See [Release Process](Release-Process).
 | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `phase2-unit-test.js`                                                                                                                              | the four timeline rules                                                                                                                                                  |
 | `querybuilder-test.js`                                                                                                                             | encoded-query construction                                                                                                                                               |
+| `change-summary-filter-test.ts`                                                                                                                    | Weekly Summary change-request window model (defaults from `weekRanges()`, override resolution, encode byte-identical to the legacy two-window queries)                   |
+| `change-summary-repository-test.ts`                                                                                                                | the persisted Weekly Summary filter override (`STORAGE.changeSummaryFilter`)                                                                                             |
 | `report-test.js`, `slasummary-test.js`                                                                                                             | report and SLA derivation                                                                                                                                                |
 | `durations-test.js`                                                                                                                                | derived durations from the four rules' UTC timestamps                                                                                                                    |
 | `ai-parse-test.js`                                                                                                                                 | closure-note regex extraction                                                                                                                                            |

@@ -28,7 +28,7 @@ flowchart TD
 For each filter set:
 
 1. Build the encoded query from the set plus the queue scope
-   (`core/querybuilder.ts`).
+   (`core/query/querybuilder.ts`).
 2. **COUNT** the matches. If a set exceeds **Max tickets per filter set**, it is
    **skipped with a warning** rather than pulled.
 3. **list** the records (paginated Table API, default 1000 rows/page). The
@@ -37,10 +37,16 @@ For each filter set:
 4. Records are unioned into a per-table bucket keyed by `sys_id`, so the same
    ticket matched by two sets is not duplicated.
 
-An optional **Weekly Summary** pass pulls change_request rows for last week and
-next week in two scoped requests (kept separate because OR'ing the queue scope
-makes the encoded query long enough for ServiceNow to reject with 400). These
-need no timelines.
+An optional **Weekly Summary** pass pulls change_request rows in two scoped
+requests: one keyed on `end_date` within **last week's** Monday–Sunday window
+(implemented changes) and one keyed on `start_date` within the **current
+week's** Monday–Sunday window (planned changes — this window is named `nextWeek`
+and labelled "next week" for historical reasons). They are kept as separate
+requests (rather than one OR'd query) because repeating the queue scope across
+OR branches makes the encoded query long enough for ServiceNow to reject it with 400. These rows need no timelines; they are bucketed in
+`core/summary/summarydetails.ts`. The windows come from
+`core/summary/change-summary-filter.ts` and any user override is persisted via
+`CHANGE_SUMMARY_REPO`.
 
 ## Phase 2 — per-ticket timelines
 
@@ -48,15 +54,15 @@ For each table's bucket, `CachedTimelineRepository.getMany` reads the per-ticket
 activity feed (`list_history.do`) — **one request per ticket, no batching** — and
 returns events keyed by `sys_id`. The **timeline cache** serves unchanged
 tickets without a request (`timelines reused from cache`). Then `analyzeAll`
-(`core/phase2.ts`) replays each ticket's events to compute the four timeline
-rules. See [Timeline and SLA Rules](Timeline-and-SLA-Rules).
+(`core/timeline/phase2.ts`) replays each ticket's events to compute the four
+timeline rules. See [Timeline and SLA Rules](Timeline-and-SLA-Rules).
 
 Because Phase 2 is per-ticket with no batching, **keep per-ticket progress
 reporting** and rely on the cache to make re-runs survivable.
 
 ## Merge and persist
 
-Analysed rows are merged with the existing dataset (`core/rowmerge.ts`),
+Analysed rows are merged with the existing dataset (`core/timeline/rowmerge.ts`),
 persisted, and a change is broadcast so the viewer refreshes. The run summary
 reports pulled, total, missing-audit counts, and any skipped sets.
 

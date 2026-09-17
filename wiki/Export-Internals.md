@@ -44,8 +44,8 @@ If formula rows get deleted during patching, strip `xl/calcChain.xml` and set
 The MSR (Monthly Status Report) sheet accumulates **historical data** across
 months and contains **formulas**, so it is never filled or overwritten. Instead,
 the **Copy for MSR** path serializes the current view's rows — **formatted** and
-in MSR column order — to the clipboard (`surfaces/viewer/clipboard.ts`, button
-label `"Copy for MSR"` in `surfaces/viewer/toolbar.ts`). The user pastes those
+in MSR column order — to the clipboard (`viewer/clipboard.ts`, button
+label `"Copy for MSR"` in `viewer/toolbar.ts`). The user pastes those
 rows into the existing MSR sheet, so its history and formulas stay intact. No
 file is written for this path.
 

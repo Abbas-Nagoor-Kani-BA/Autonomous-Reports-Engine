@@ -81,6 +81,8 @@ fixed number to everything.
   `fmtInstant` coupling.
 - [Timeline and SLA Rules](Timeline-and-SLA-Rules) — how the derived times are
   computed.
+- `core/timeline/sntime.ts` in the repository — the time-conversion helpers
+  (`parseUtc`, `parseSnDisplayMs`, offset detection, `fmtWithOffset`).
 - `docs/time-handling.md` in the repository — the full deep dive with worked
   examples.
 

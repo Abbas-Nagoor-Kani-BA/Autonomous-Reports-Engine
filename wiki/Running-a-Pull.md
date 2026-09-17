@@ -24,9 +24,12 @@ logged-in tab (see [Authentication Chain](Authentication-Chain)).
 - **Saved filter sets** — build a list with **+ Add to filter list**; a Run
   pulls every set in the list. **Load preset** replaces the list with a saved
   preset (WSR is the built-in Weekly Status Report preset).
-- **Pull change requests for Weekly Summary** — also pulls this week's change
-  requests to fill the Weekly Summary sheet (last week implemented/failed, next
-  week planned) plus P1/P2 incidents.
+- **Pull change requests for Weekly Summary** — also pulls change requests to
+  fill the Weekly Summary sheet: changes that **ended last week**
+  (implemented/failed, by `end_date`) and changes **planned to start this week**
+  (by `start_date`; this window is labelled "next week" in the UI), plus P1/P2
+  incidents resolved last week. The exact windows are shown below the checkbox
+  and can be edited — see [Filters and Presets](Filters-and-Presets).
 - **Advanced** — a raw encoded-query override and a preview of the generated
   query.
 

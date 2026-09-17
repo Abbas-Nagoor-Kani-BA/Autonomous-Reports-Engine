@@ -27,8 +27,8 @@ Possible future work:
 
 ## Shipped
 
-- Derived duration columns (Phase 11b, `core/durations.ts`).
-- Calclens "needs attention" row flags (Phase 11e, `core/attention.ts`), with a
+- Derived duration columns (Phase 11b, `core/timeline/durations.ts`).
+- Calclens "needs attention" row flags (Phase 11e, `core/attention/attention.ts`), with a
   per-rule highlight-toggle dropdown next to the Calclens button (persisted
   enabled set). Tooltips always list every flag; the toggles gate only the cell
   highlight. See [Calclens](Calclens).
