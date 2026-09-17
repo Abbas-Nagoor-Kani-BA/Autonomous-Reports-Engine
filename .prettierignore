@@ -1,0 +1,24 @@
+# Build outputs and dependencies
+dist/
+dev/
+node_modules/
+
+# Generated CSS
+styles/output.css
+
+# Vendored / third-party sources (keep upstream formatting)
+**/vendor/
+lib/vendor/
+worker/ml-wasm/
+
+# Large data fixtures
+tools/sample.json
+
+# Minified files
+*.min.js
+
+# Lockfile
+package-lock.json
+
+# CI workflow YAML (leave whitespace-sensitive pipeline files untouched)
+.github/

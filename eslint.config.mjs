@@ -1,4 +1,5 @@
 import tseslint from "typescript-eslint";
+import prettier from "eslint-config-prettier";
 
 const browserGlobals = {
   document: "readonly",
@@ -84,13 +85,17 @@ const baseRules = {
 const tsRules = {
   ...baseRules,
   "@typescript-eslint/no-explicit-any": "off",
-  "@typescript-eslint/no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_", caughtErrors: "none" }],
+  "@typescript-eslint/no-unused-vars": [
+    "warn",
+    { args: "none", varsIgnorePattern: "^_", caughtErrors: "none" }
+  ],
   "@typescript-eslint/parameter-properties": "error",
   "no-restricted-syntax": [
     "error",
     {
       selector: "TSEnumDeclaration",
-      message: "Node type-stripping cannot transform enum; use a union of string literals or a frozen const object."
+      message:
+        "Node type-stripping cannot transform enum; use a union of string literals or a frozen const object."
     },
     {
       selector: "TSModuleDeclaration",
@@ -106,12 +111,7 @@ const declarationRules = {
 
 export default [
   {
-    ignores: [
-      "dist/**",
-      "node_modules/**",
-      "**/vendor/**",
-      "*.min.js"
-    ]
+    ignores: ["dist/**", "node_modules/**", "**/vendor/**", "*.min.js"]
   },
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
@@ -177,5 +177,8 @@ export default [
       ...baseRules,
       "no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_", caughtErrors: "none" }]
     }
-  }
+  },
+  // Must stay LAST: disables ESLint stylistic rules that would conflict with
+  // Prettier so the formatter and linter never fight over the same code.
+  prettier
 ];

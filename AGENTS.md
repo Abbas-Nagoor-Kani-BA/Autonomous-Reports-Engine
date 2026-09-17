@@ -30,7 +30,7 @@ were found the hard way — see the file's own documentation:
 
 - **`build()` runs once; `patch()` runs on every state change.** A full rebuild
   per change destroys input focus and caret position. The condition builder
-  compares row *shapes*, not values, so typing never re-renders its rows.
+  compares row _shapes_, not values, so typing never re-renders its rows.
 - **Subclasses must not use instance fields or `#private` methods from `build()`
   or the first `patch()`.** Both are installed on the instance only after
   `super()` returns, but the base constructor calls `build()`. A field reads as
@@ -70,6 +70,7 @@ Requests MUST go through this order:
 4. Direct `fetch` from the service worker is last-resort only.
 
 Why this shape (hard-won):
+
 - MV3 service-worker fetches are cross-site: third-party cookie blocking breaks session cookies.
 - Content scripts run in an **isolated world** — they CANNOT see page globals like `g_ck`.
 - On current releases there is no reliable `g_ck` cookie; the token lives as a JS variable in page context.
@@ -182,12 +183,15 @@ node -e "JSON.parse(require('fs').readFileSync('manifest.json'))"
 
 `npm run typecheck` (tsconfig.json + tsconfig.strict.json) is meaningful — keep
 it at 0 errors; `npm run lint` likewise. `npm test` runs the offline suites
-(`node --test "tools/*-test.*"`; the glob is required).
+(`node --test "tools/*-test.*"`; the glob is required). Code style is enforced
+by Prettier: `npm run format` writes, `npm run format:check` verifies (config in
+`.prettierrc.json`, exclusions in `.prettierignore`). `eslint-config-prettier`
+is the last entry in `eslint.config.mjs` so ESLint never fights the formatter.
 
 Full gate:
 
 ```bash
-npm run typecheck && npm run lint && npm test && npm run build
+npm run format:check && npm run typecheck && npm run lint && npm test && npm run build
 ```
 
 `npm run release` runs the exact same gate — it is what the GitHub release
@@ -196,48 +200,48 @@ workflow (`.github/workflows/release.yaml`) invokes.
 Pure modules in `core/` are ES modules and run standalone in plain node, e.g.:
 
 ```js
-import { extractTimelines } from './core/phase2.ts';
+import { extractTimelines } from "./core/phase2.ts";
 ```
 
 Regression suites (`npm test` runs all of them):
 
-| Suite | Covers |
-|---|---|
-| `phase2-unit-test.js` | the four timeline rules |
-| `querybuilder-test.js` | encoded-query construction |
-| `change-summary-filter-test.ts` | Weekly Summary change-request window model (defaults from `weekRanges()`, override resolution, encode byte-identical to the legacy two-window queries) |
-| `change-summary-repository-test.ts` | the persisted Weekly Summary filter override (`STORAGE.changeSummaryFilter`) |
-| `report-test.js`, `slasummary-test.js` | report and SLA derivation |
-| `durations-test.js` | derived durations from the four rules' UTC timestamps |
-| `ai-parse-test.js` | closure-note regex extraction |
-| `activity-client-test.js`, `activity-parse-test.js` | activity feed source and parsing |
-| `journal-test.js`, `rowmerge-test.js`, `tz-unit-test.js` | journal parsing, row merge, timezone units |
-| `pull-cache-test.ts`, `per-row-cache-test.js` | cache policy through the repositories |
-| `idb-test.ts` | the real IndexedDB path via fake-indexeddb |
-| `di-test.ts`, `repository-test.ts`, `pull-service-test.ts`, `settings-service-test.ts` | DI and services against fakes |
-| `extract-service-test.js`, `report-service-test.js`, `export-service-test.js` | the viewer-bound services (fmt→SLA coupling, export building) |
-| `template-export-test.js` | template XML patching / sheet lookup |
-| `attention-test.js`, `calclens-test.js` | Calclens "needs attention" rule engine |
-| `calclens-highlights-test.ts` | Calclens highlight-toggle owner (persisted enabled set) |
-| `calclens-highlights-menu-test.ts` | Calclens highlight-toggle dropdown UI (checkbox list, Show/Hide all, button indicator) |
-| `msrchoices-test.js`, `msrcategorize-test.js` | MSR choice maps and categorization |
-| `classifier-service-test.js`, `classification-cache-test.js`, `classify-cache-test.js`, `classify-fallback-test.js`, `ml-model-repository-test.js` | ML classification services, cache, and model repository |
-| `remote-bridge-test.ts` | the remote bridge (preview, run, resolveScope, resolveGroupMembers, resolveGroupCis, progress) |
-| `resolve-scope-test.js` | pure scope-shaping helpers (group/member/CI extraction, active filtering, name merge/subtract/sort/dedupe) |
-| `user-identity-test.ts` | current-user id selection (`pickUserId`: REST → page global → user_name → table) |
-| `resolve-user-scope-test.ts` | `SnRemote.resolveUserScope` / `resolveGroupMembers` / `resolveGroupConfigItems` query sequence and shaping (incl. truncation flag) |
-| `scope-resolve-service-test.ts` | `ScopeResolveService` success + graceful permission/empty failure mapping (scope + per-group members + per-group CIs) |
-| `settings-scope-merge-test.js` | the Settings resolve merge helpers (merge/subtract/sort A–Z, dedupe, idempotent) |
-| `member-picker-test.ts` | per-queue member/CI confirmation dialog (checkbox list, select all/none, truncation notice, title override, Add returns checked only) |
-| `ci-split-test.js`, `pick-exact-test.js`, `path-from-url-test.js`, `store-test.js`, `icons-test.ts` | assorted units |
-| `action-rail-test.ts` | draggable/foldable action rail (clamp helper + fold/drag persistence) |
-| `edit-mode-state-test.js` | edit-mode session toggle owner |
-| `column-editor-data-test.js` | pure column-values selector (entries + focused index) |
-| `column-editor-test.ts` | column editor component (right list, type-aware inputs, CI datalist autocomplete, arrow nav, Calclens highlight, find filter) |
-| `panel-components-test.ts`, `data-grid-test.ts`, `search-picker-test.ts`, `modal-test.ts`, `map-dialog-test.ts`, `settings-chips-test.js` | components |
-| `viewer-dom-test.ts` | end-to-end viewer flow (happy-dom) |
-| `search-state-test.ts`, `search-match-test.ts` | column-scoped search: state owner + pure matcher (modes, case, all/single-column, displayed-value match) |
-| `col-order-test.ts` | pure column-order model (`orderColumns`/`reorderKeys`): drag-to-sort reordering, migration-safe merge, hidden-column compose |
+| Suite                                                                                                                                              | Covers                                                                                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `phase2-unit-test.js`                                                                                                                              | the four timeline rules                                                                                                                                |
+| `querybuilder-test.js`                                                                                                                             | encoded-query construction                                                                                                                             |
+| `change-summary-filter-test.ts`                                                                                                                    | Weekly Summary change-request window model (defaults from `weekRanges()`, override resolution, encode byte-identical to the legacy two-window queries) |
+| `change-summary-repository-test.ts`                                                                                                                | the persisted Weekly Summary filter override (`STORAGE.changeSummaryFilter`)                                                                           |
+| `report-test.js`, `slasummary-test.js`                                                                                                             | report and SLA derivation                                                                                                                              |
+| `durations-test.js`                                                                                                                                | derived durations from the four rules' UTC timestamps                                                                                                  |
+| `ai-parse-test.js`                                                                                                                                 | closure-note regex extraction                                                                                                                          |
+| `activity-client-test.js`, `activity-parse-test.js`                                                                                                | activity feed source and parsing                                                                                                                       |
+| `journal-test.js`, `rowmerge-test.js`, `tz-unit-test.js`                                                                                           | journal parsing, row merge, timezone units                                                                                                             |
+| `pull-cache-test.ts`, `per-row-cache-test.js`                                                                                                      | cache policy through the repositories                                                                                                                  |
+| `idb-test.ts`                                                                                                                                      | the real IndexedDB path via fake-indexeddb                                                                                                             |
+| `di-test.ts`, `repository-test.ts`, `pull-service-test.ts`, `settings-service-test.ts`                                                             | DI and services against fakes                                                                                                                          |
+| `extract-service-test.js`, `report-service-test.js`, `export-service-test.js`                                                                      | the viewer-bound services (fmt→SLA coupling, export building)                                                                                          |
+| `template-export-test.js`                                                                                                                          | template XML patching / sheet lookup                                                                                                                   |
+| `attention-test.js`, `calclens-test.js`                                                                                                            | Calclens "needs attention" rule engine                                                                                                                 |
+| `calclens-highlights-test.ts`                                                                                                                      | Calclens highlight-toggle owner (persisted enabled set)                                                                                                |
+| `calclens-highlights-menu-test.ts`                                                                                                                 | Calclens highlight-toggle dropdown UI (checkbox list, Show/Hide all, button indicator)                                                                 |
+| `msrchoices-test.js`, `msrcategorize-test.js`                                                                                                      | MSR choice maps and categorization                                                                                                                     |
+| `classifier-service-test.js`, `classification-cache-test.js`, `classify-cache-test.js`, `classify-fallback-test.js`, `ml-model-repository-test.js` | ML classification services, cache, and model repository                                                                                                |
+| `remote-bridge-test.ts`                                                                                                                            | the remote bridge (preview, run, resolveScope, resolveGroupMembers, resolveGroupCis, progress)                                                         |
+| `resolve-scope-test.js`                                                                                                                            | pure scope-shaping helpers (group/member/CI extraction, active filtering, name merge/subtract/sort/dedupe)                                             |
+| `user-identity-test.ts`                                                                                                                            | current-user id selection (`pickUserId`: REST → page global → user_name → table)                                                                       |
+| `resolve-user-scope-test.ts`                                                                                                                       | `SnRemote.resolveUserScope` / `resolveGroupMembers` / `resolveGroupConfigItems` query sequence and shaping (incl. truncation flag)                     |
+| `scope-resolve-service-test.ts`                                                                                                                    | `ScopeResolveService` success + graceful permission/empty failure mapping (scope + per-group members + per-group CIs)                                  |
+| `settings-scope-merge-test.js`                                                                                                                     | the Settings resolve merge helpers (merge/subtract/sort A–Z, dedupe, idempotent)                                                                       |
+| `member-picker-test.ts`                                                                                                                            | per-queue member/CI confirmation dialog (checkbox list, select all/none, truncation notice, title override, Add returns checked only)                  |
+| `ci-split-test.js`, `pick-exact-test.js`, `path-from-url-test.js`, `store-test.js`, `icons-test.ts`                                                | assorted units                                                                                                                                         |
+| `action-rail-test.ts`                                                                                                                              | draggable/foldable action rail (clamp helper + fold/drag persistence)                                                                                  |
+| `edit-mode-state-test.js`                                                                                                                          | edit-mode session toggle owner                                                                                                                         |
+| `column-editor-data-test.js`                                                                                                                       | pure column-values selector (entries + focused index)                                                                                                  |
+| `column-editor-test.ts`                                                                                                                            | column editor component (right list, type-aware inputs, CI datalist autocomplete, arrow nav, Calclens highlight, find filter)                          |
+| `panel-components-test.ts`, `data-grid-test.ts`, `search-picker-test.ts`, `modal-test.ts`, `map-dialog-test.ts`, `settings-chips-test.js`          | components                                                                                                                                             |
+| `viewer-dom-test.ts`                                                                                                                               | end-to-end viewer flow (happy-dom)                                                                                                                     |
+| `search-state-test.ts`, `search-match-test.ts`                                                                                                     | column-scoped search: state owner + pure matcher (modes, case, all/single-column, displayed-value match)                                               |
+| `col-order-test.ts`                                                                                                                                | pure column-order model (`orderColumns`/`reorderKeys`): drag-to-sort reordering, migration-safe merge, hidden-column compose                           |
 
 Manual test loop (user performs): reload extension at `chrome://extensions`
 → refresh the ServiceNow tab → Connect → Preview count → Run export.
@@ -259,7 +263,7 @@ JS. Always load a **built** folder:
 - `npm run zip` → packs `dist/`.
 
 `dev/` and `dist/` are both gitignored. Watch mode must never write into the
-repo root: the esbuild entries *are* the sources, so bundling to ROOT would
+repo root: the esbuild entries _are_ the sources, so bundling to ROOT would
 overwrite `panel/panel.js` and friends with their own output. `build.mjs`
 refuses to build into ROOT, and watch mode targets `dev/`.
 
@@ -300,10 +304,10 @@ component needs its own test; end-to-end coverage is not enough.
 
 ## Docs
 
-| File | Purpose |
-|---|---|
-| [`docs/architecture.md`](docs/architecture.md) | Layered architecture, directory map, layering rules, download path. Start here. |
-| [`docs/timeline.md`](docs/timeline.md) | The four timeline rules, timezone contract, export sheet lookup. |
-| [`docs/time-handling.md`](docs/time-handling.md) | How timestamps flow UTC→instance clock: representations, offset resolution, pitfalls, and how to test time behavior. |
-| [`docs/timeline-scenarios.md`](docs/timeline-scenarios.md) | Full assignTime/acknTime scenario catalogue (multi-queue, acked-stay-wins, equal timestamps). |
-| [`docs/roadmap.md`](docs/roadmap.md) | Known limits and forward-looking work. |
+| File                                                       | Purpose                                                                                                              |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| [`docs/architecture.md`](docs/architecture.md)             | Layered architecture, directory map, layering rules, download path. Start here.                                      |
+| [`docs/timeline.md`](docs/timeline.md)                     | The four timeline rules, timezone contract, export sheet lookup.                                                     |
+| [`docs/time-handling.md`](docs/time-handling.md)           | How timestamps flow UTC→instance clock: representations, offset resolution, pitfalls, and how to test time behavior. |
+| [`docs/timeline-scenarios.md`](docs/timeline-scenarios.md) | Full assignTime/acknTime scenario catalogue (multi-queue, acked-stay-wins, equal timestamps).                        |
+| [`docs/roadmap.md`](docs/roadmap.md)                       | Known limits and forward-looking work.                                                                               |

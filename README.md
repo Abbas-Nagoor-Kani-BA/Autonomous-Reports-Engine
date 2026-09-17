@@ -13,8 +13,8 @@ ServiceNow browser session (no API keys).
 - **Queue timelines & SLA** — reconstructs each ticket's assign, acknowledge,
   suspend and resume moments from its audit history and derives SLA metrics,
   always on the instance clock.
-- **Automatic classification** — fills the MSR *Root cause category* and
-  *Solution type* from closure notes using a built-in offline scorer, with an
+- **Automatic classification** — fills the MSR _Root cause category_ and
+  _Solution type_ from closure notes using a built-in offline scorer, with an
   optional local machine-learning model (Transformers.js) that is downloaded
   once and then runs entirely offline.
 - **Data viewer** — column-scoped search, a column editor for fast bulk edits of
@@ -122,7 +122,7 @@ label-directed cascade:
 
 The offline scorer combines exact-phrase (regex), fuzzy keyword, and TF-IDF
 cosine matching, ignores negated cues (for example "no workaround needed" does
-not score *Workaround*), and resolves competing matches by specificity.
+not score _Workaround_), and resolves competing matches by specificity.
 
 The classification **mode** decides how the offline scorer and the ML model
 combine:
@@ -138,15 +138,17 @@ combine:
 
 ## Development
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Build to `dev/` and rebuild on change |
-| `npm run build` | Production build to `dist/` |
-| `npm run zip` | Package `dist/` for distribution |
-| `npm run typecheck` | TypeScript checks (base + strict configs) |
-| `npm run lint` | ESLint |
-| `npm test` | Offline test suites (`node --test "tools/*-test.*"`) |
-| `npm run release` | typecheck + lint + test + build |
+| Command                | What it does                                         |
+| ---------------------- | ---------------------------------------------------- |
+| `npm run dev`          | Build to `dev/` and rebuild on change                |
+| `npm run build`        | Production build to `dist/`                          |
+| `npm run zip`          | Package `dist/` for distribution                     |
+| `npm run typecheck`    | TypeScript checks (base + strict configs)            |
+| `npm run lint`         | ESLint                                               |
+| `npm run format`       | Format with Prettier (writes)                        |
+| `npm run format:check` | Verify formatting (no writes)                        |
+| `npm test`             | Offline test suites (`node --test "tools/*-test.*"`) |
+| `npm run release`      | format:check + typecheck + lint + test + build       |
 
 Tests are plain `node --test` suites that run offline; each component has its
 own test, and `tools/viewer-dom-test.ts` drives the viewer end to end with

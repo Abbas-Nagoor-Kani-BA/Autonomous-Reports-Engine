@@ -6,6 +6,8 @@
   "description": "Chrome MV3 extension: pull ServiceNow incident timelines, analyze SLAs, export MSR workbook.",
   "scripts": {
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.strict.json",
     "css": "tailwindcss -i styles/tailwind.css -o styles/output.css --minify",
     "css:watch": "tailwindcss -i styles/tailwind.css -o styles/output.css --watch",
@@ -14,7 +16,7 @@
     "watch": "npm run css && node build.mjs --watch",
     "test": "node --test \"tools/*-test.*\"",
     "test:dom": "node --test tools/viewer-dom-test.js",
-    "release": "npm run typecheck && npm run lint && npm test && npm run build",
+    "release": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run build",
     "zip": "node tools/zip-dist.mjs"
   },
   "devDependencies": {
@@ -24,9 +26,11 @@
     "@types/chrome": "^0.0.270",
     "esbuild": "^0.23.1",
     "eslint": "^9.10.0",
+    "eslint-config-prettier": "9.1.0",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^15.7.4",
     "lucide-static": "^1.38.0",
+    "prettier": "3.6.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.68.0"
