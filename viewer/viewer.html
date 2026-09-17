@@ -330,16 +330,41 @@
           sort), including your edits.
         </p>
         <div class="cfgRows">
-          <div class="cfgRow">
-            <span class="cfgLabel">Op co</span>
-            <span class="cfgActions">
-              <select id="cfgOpCo" class="btn cfgEdit cfgSelect"></select>
+          <div class="cfgRow cfgRowSplit">
+            <span class="cfgHalf cfgHalfOpCo">
+              <span class="cfgLabel cfgLabelHalf">Op co</span>
+              <span class="cfgActions cfgActionsHalf">
+                <span class="cfgCombo cfgComboNarrow">
+                  <input
+                    id="cfgOpCo"
+                    type="text"
+                    class="ce-input"
+                    maxlength="8"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="Op co"
+                    aria-label="Op co"
+                  />
+                  <div id="cfgOpCoMenu" class="ce-ac-menu hidden"></div>
+                </span>
+              </span>
             </span>
-          </div>
-          <div class="cfgRow">
-            <span class="cfgLabel">Domain</span>
-            <span class="cfgActions">
-              <select id="cfgDomain" class="btn cfgEdit cfgSelect"></select>
+            <span class="cfgHalf">
+              <span class="cfgLabel cfgLabelHalf">Domain</span>
+              <span class="cfgActions cfgActionsHalf">
+                <span class="cfgCombo">
+                  <input
+                    id="cfgDomain"
+                    type="text"
+                    class="ce-input"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder="Domain"
+                    aria-label="Domain"
+                  />
+                  <div id="cfgDomainMenu" class="ce-ac-menu hidden"></div>
+                </span>
+              </span>
             </span>
           </div>
           <div class="cfgRow">

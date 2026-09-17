@@ -1408,6 +1408,30 @@
   .cfgActions {
     @apply inline-flex gap-1.5 flex-shrink-0;
   }
+  .cfgRowSplit {
+    @apply gap-4;
+  }
+  .cfgHalf {
+    @apply flex flex-1 min-w-0 items-center gap-2.5;
+  }
+  .cfgHalfOpCo {
+    @apply flex-none;
+  }
+  .cfgLabelHalf {
+    @apply w-auto;
+  }
+  .cfgActionsHalf {
+    @apply flex flex-1 min-w-0;
+  }
+  .cfgCombo {
+    @apply relative flex-1 min-w-0 flex;
+  }
+  .cfgCombo .ce-input {
+    @apply w-full;
+  }
+  .cfgComboNarrow {
+    @apply flex-none w-20;
+  }
   button.cfgEdit {
     @apply px-2.5 py-1 text-xs font-normal bg-card2 text-text border border-line rounded hover:bg-line hover:filter-none;
   }

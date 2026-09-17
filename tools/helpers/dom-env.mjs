@@ -260,11 +260,11 @@ const SKELETON = `
     <div class="cfgRows">
       <div class="cfgRow">
         <span class="cfgLabel">Op co</span>
-        <span class="cfgActions"><select id="cfgOpCo"></select></span>
+        <span class="cfgActions"><span class="cfgCombo"><input id="cfgOpCo" type="text" class="ce-input" /><div id="cfgOpCoMenu" class="ce-ac-menu hidden"></div></span></span>
       </div>
       <div class="cfgRow">
         <span class="cfgLabel">Domain</span>
-        <span class="cfgActions"><select id="cfgDomain"></select></span>
+        <span class="cfgActions"><span class="cfgCombo"><input id="cfgDomain" type="text" class="ce-input" /><div id="cfgDomainMenu" class="ce-ac-menu hidden"></div></span></span>
       </div>
       <div class="cfgRow">
         <span class="cfgLabel">Template</span>

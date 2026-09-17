@@ -32,6 +32,10 @@ import { copyText } from "./shared.ts";
 
 type TplInfo = { name: string; dataB64: string; savedAt: number };
 
+/** Suggestion pools for the Op co / Domain comboboxes, keyed by input id.
+ *  Refreshed from the MSR option lists each time the config dialog opens. */
+const comboPools: Record<string, string[]> = {};
+
 let tplInfo: TplInfo | null = null;
 
 export function initToolbar(): void {
@@ -90,15 +94,13 @@ export function initToolbar(): void {
   $("cfgMapBtn").addEventListener("click", () => openMapDialog());
   $("cfgCiBtn").addEventListener("click", () => openCiDialog());
 
-  $("cfgOpCo").addEventListener("change", () => {
-    const opCo = ($("cfgOpCo") as HTMLSelectElement).value;
+  initReportCombo("cfgOpCo", "cfgOpCoMenu", (opCo) => {
     setReportChoices({ ...getReportChoices(), opCo });
     applyReportChoices();
     chrome.storage.local.set({ [STORAGE.reportChoices]: getReportChoices() });
   });
 
-  $("cfgDomain").addEventListener("change", () => {
-    const domain = ($("cfgDomain") as HTMLSelectElement).value;
+  initReportCombo("cfgDomain", "cfgDomainMenu", (domain) => {
     setReportChoices({ ...getReportChoices(), domain });
     applyReportChoices();
     chrome.storage.local.set({ [STORAGE.reportChoices]: getReportChoices() });
@@ -261,37 +263,133 @@ function applyReportChoices(): void {
   exportSvc.setReportChoices({ opCo: rc.opCo, domain: rc.domain });
 }
 
-/** Fills the opCo/domain <select> options from the current MSR option lists and
- *  restores the persisted selection (falling back to the first list value, or
- *  the buildReport defaults "BA"/"AO" when the lists are empty). */
+/** Fills the opCo/domain suggestion pools from the current MSR option lists and
+ *  restores the persisted value into each combobox input (falling back to the
+ *  first list value, or the buildReport defaults "BA"/"AO" when lists are
+ *  empty). Values are free-text: a persisted custom value is shown as typed. */
 function populateReportSelects(): void {
   const lists = getMsrLists();
   const rc = getReportChoices();
-  fillSelect($("cfgOpCo") as HTMLSelectElement, lists.opCo || [], rc.opCo, "BA");
-  fillSelect($("cfgDomain") as HTMLSelectElement, lists.domain || [], rc.domain, "AO");
-  // Persist the resolved selection so the fallback becomes the stored value.
-  setReportChoices({
-    opCo: ($("cfgOpCo") as HTMLSelectElement).value,
-    domain: ($("cfgDomain") as HTMLSelectElement).value
-  });
+  const opCo = fillCombo("cfgOpCo", lists.opCo || [], rc.opCo, "BA");
+  const domain = fillCombo("cfgDomain", lists.domain || [], rc.domain, "AO");
+  // Persist the resolved value so the fallback becomes the stored value.
+  setReportChoices({ opCo, domain });
 }
 
-function fillSelect(
-  sel: HTMLSelectElement,
-  values: string[],
-  current: string,
-  fallback: string
-): void {
-  const opts = values.length ? values : [fallback];
-  sel.innerHTML = "";
-  for (const v of opts) {
-    const o = document.createElement("option");
-    o.value = v;
-    o.textContent = v;
-    sel.appendChild(o);
+/** Sets a combobox input's suggestion pool and current value, returning the
+ *  resolved value (the persisted value if non-empty, else the first suggestion
+ *  or the fallback). Custom values are kept verbatim. */
+function fillCombo(id: string, values: string[], current: string, fallback: string): string {
+  const input = $(id) as HTMLInputElement;
+  const pool = dedupePool(values.length ? values : [fallback]);
+  comboPools[id] = pool;
+  const resolved = current.trim() ? current : (pool[0] ?? fallback);
+  input.value = resolved;
+  return resolved;
+}
+
+/** De-duplicated suggestion pool (case-insensitive, first spelling wins). */
+function dedupePool(values: string[]): string[] {
+  const pool: string[] = [];
+  const seen = new Set<string>();
+  for (const v of values) {
+    const text = String(v ?? "").trim();
+    if (!text || seen.has(text.toLowerCase())) continue;
+    seen.add(text.toLowerCase());
+    pool.push(text);
   }
-  const want = current && opts.includes(current) ? current : opts[0];
-  sel.value = want;
+  return pool;
+}
+
+/**
+ * Wire one editable combobox: a free-text input plus a themed suggestion menu
+ * (the ce-ac look), rather than a native <select>/<datalist> — the native
+ * datalist popup is browser chrome that cannot be themed on a dark UI. The user
+ * types in place or picks a suggestion; free typing is preserved (custom values
+ * allowed). Type filters the list; ArrowUp/Down move the highlight; Enter picks
+ * the highlighted suggestion; Escape/blur closes. `onCommit` receives the
+ * trimmed value on every edit or pick.
+ */
+function initReportCombo(inputId: string, menuId: string, onCommit: (value: string) => void): void {
+  const input = $(inputId) as HTMLInputElement;
+  const menu = $(menuId) as HTMLElement;
+  let active = -1;
+  let filtered: string[] = [];
+
+  const closeMenu = (): void => {
+    menu.classList.add("hidden");
+    menu.innerHTML = "";
+    active = -1;
+  };
+
+  const commit = (): void => onCommit(input.value.trim());
+
+  const pick = (value: string): void => {
+    input.value = value;
+    closeMenu();
+    commit();
+  };
+
+  const renderMenu = (): void => {
+    const pool = comboPools[inputId] || [];
+    const q = input.value.trim().toLowerCase();
+    filtered = (q ? pool.filter((p) => p.toLowerCase().includes(q)) : pool).slice(0, 50);
+    menu.innerHTML = "";
+    if (!filtered.length) {
+      closeMenu();
+      return;
+    }
+    filtered.forEach((text, idx) => {
+      const opt = el("div", "ce-ac-opt");
+      opt.textContent = text;
+      if (idx === active) opt.classList.add("active");
+      // mousedown (not click) so it fires before the input blur closes the menu.
+      opt.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        pick(text);
+      });
+      menu.appendChild(opt);
+    });
+    menu.classList.remove("hidden");
+  };
+
+  const highlight = (delta: number): void => {
+    if (menu.classList.contains("hidden")) {
+      renderMenu();
+      if (menu.classList.contains("hidden")) return;
+    }
+    if (!filtered.length) return;
+    active = (active + delta + filtered.length) % filtered.length;
+    const opts = menu.querySelectorAll<HTMLElement>(".ce-ac-opt");
+    opts.forEach((o, idx) => o.classList.toggle("active", idx === active));
+    opts[active]?.scrollIntoView({ block: "nearest" });
+  };
+
+  input.addEventListener("focus", () => renderMenu());
+  input.addEventListener("click", () => renderMenu());
+  input.addEventListener("input", () => {
+    active = -1;
+    renderMenu();
+    commit();
+  });
+  input.addEventListener("blur", () => setTimeout(closeMenu, 120));
+  input.addEventListener("keydown", (e) => {
+    const key = e.key;
+    if (key === "ArrowDown") {
+      e.preventDefault();
+      highlight(1);
+    } else if (key === "ArrowUp") {
+      e.preventDefault();
+      highlight(-1);
+    } else if (key === "Enter") {
+      if (!menu.classList.contains("hidden") && active >= 0 && filtered[active]) {
+        e.preventDefault();
+        pick(filtered[active]);
+      }
+    } else if (key === "Escape") {
+      closeMenu();
+    }
+  });
 }
 
 async function runExport(): Promise<void> {
