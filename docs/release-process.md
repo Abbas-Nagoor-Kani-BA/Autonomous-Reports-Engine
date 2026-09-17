@@ -20,11 +20,11 @@ version bumping, tagging, and hands off to the build pipeline automatically.
 
 Controls which part of the version number is incremented.
 
-| Choice | Effect | Example (from `1.2.3`) |
-|---|---|---|
-| `patch` | Increment the third number | `1.2.3` → `1.2.4` |
-| `minor` | Increment the second number, reset patch to 0 | `1.2.3` → `1.3.0` |
-| `major` | Increment the first number, reset minor and patch to 0 | `1.2.3` → `2.0.0` |
+| Choice  | Effect                                                 | Example (from `1.2.3`) |
+| ------- | ------------------------------------------------------ | ---------------------- |
+| `patch` | Increment the third number                             | `1.2.3` → `1.2.4`      |
+| `minor` | Increment the second number, reset patch to 0          | `1.2.3` → `1.3.0`      |
+| `major` | Increment the first number, reset minor and patch to 0 | `1.2.3` → `2.0.0`      |
 
 The current version is read from `package.json` at runtime — no manual editing needed.
 
@@ -32,23 +32,23 @@ The current version is read from `package.json` at runtime — no manual editing
 
 Leave blank for a stable release. Enter a suffix string to publish a pre-release.
 
-| Input | Result |
-|---|---|
-| *(blank)* | Stable release, e.g. `v1.3.0` |
-| `beta.1` | Pre-release, e.g. `v1.3.0-beta.1` |
-| `rc.1` | Release candidate, e.g. `v1.3.0-rc.1` |
+| Input     | Result                                   |
+| --------- | ---------------------------------------- |
+| _(blank)_ | Stable release, e.g. `v1.3.0`            |
+| `beta.1`  | Pre-release, e.g. `v1.3.0-beta.1`        |
+| `rc.1`    | Release candidate, e.g. `v1.3.0-rc.1`    |
 | `alpha.2` | Alpha pre-release, e.g. `v1.3.0-alpha.2` |
 
 ---
 
 ## Examples
 
-| Starting version | Bump | Suffix | Result tag | Release type |
-|---|---|---|---|---|
-| `1.0.0` | `minor` | *(blank)* | `v1.1.0` | Stable |
-| `1.1.0` | `patch` | `beta.1` | `v1.1.1-beta.1` | Pre-release |
-| `1.1.1` | `patch` | *(blank)* | `v1.1.2` | Stable |
-| `1.1.2` | `major` | `rc.1` | `v2.0.0-rc.1` | Pre-release |
+| Starting version | Bump    | Suffix    | Result tag      | Release type |
+| ---------------- | ------- | --------- | --------------- | ------------ |
+| `1.0.0`          | `minor` | _(blank)_ | `v1.1.0`        | Stable       |
+| `1.1.0`          | `patch` | `beta.1`  | `v1.1.1-beta.1` | Pre-release  |
+| `1.1.1`          | `patch` | _(blank)_ | `v1.1.2`        | Stable       |
+| `1.1.2`          | `major` | `rc.1`    | `v2.0.0-rc.1`   | Pre-release  |
 
 ---
 
@@ -82,9 +82,9 @@ detection works the same way — a tag containing `-` is marked as pre-release.
 
 ## Versioned files
 
-| File | What is written |
-|---|---|
-| `package.json` | Full version including suffix — `1.1.0-beta.1` |
+| File            | What is written                                              |
+| --------------- | ------------------------------------------------------------ |
+| `package.json`  | Full version including suffix — `1.1.0-beta.1`               |
 | `manifest.json` | Numeric-only version — `1.1.0` (Chrome requires this format) |
 
 ---

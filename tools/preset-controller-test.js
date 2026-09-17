@@ -6,8 +6,24 @@ import { WSR_PRESET_VALUE } from "../data/repositories/preset-repository.ts";
 
 const NOW = new Date(2026, 8, 3, 10, 0, 0);
 const userPresets = [
-  { name: "My open incidents", sets: [{ table: "incident", conditions: [{ join: "AND", field: "state", oper: "eq", value: "2", value2: "" }] }] },
-  { name: "Closed problems", sets: [{ table: "problem", conditions: [{ join: "AND", field: "problem_state", oper: "eq", value: "157", value2: "" }] }] }
+  {
+    name: "My open incidents",
+    sets: [
+      {
+        table: "incident",
+        conditions: [{ join: "AND", field: "state", oper: "eq", value: "2", value2: "" }]
+      }
+    ]
+  },
+  {
+    name: "Closed problems",
+    sets: [
+      {
+        table: "problem",
+        conditions: [{ join: "AND", field: "problem_state", oper: "eq", value: "157", value2: "" }]
+      }
+    ]
+  }
 ];
 
 test("presetOptions lists WSR first, then user presets in order", () => {

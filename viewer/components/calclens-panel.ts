@@ -1,6 +1,11 @@
 import { Component, el } from "../../common/components/component.ts";
 import type { ComponentProps } from "../../common/components/component.ts";
-import type { Explanation, SlDigest, TimelineStep, TimelineMarker } from "../../core/attention/calclens.ts";
+import type {
+  Explanation,
+  SlDigest,
+  TimelineStep,
+  TimelineMarker
+} from "../../core/attention/calclens.ts";
 import { icon, iconButton } from "../../lib/icons.ts";
 import { SearchPicker } from "./search-picker.ts";
 
@@ -54,7 +59,12 @@ export type CalclensPanelDeps = {
 
 /** The only grid columns editable from the drawer (the derivation columns). */
 const EDITABLE_CHOICE = new Set(["solutionType", "rootCause"]);
-const EDITABLE_INST = new Set(["assignTimeUtcIso", "acknTimeUtcIso", "suspendTimeUtcIso", "resumeTimeUtcIso"]);
+const EDITABLE_INST = new Set([
+  "assignTimeUtcIso",
+  "acknTimeUtcIso",
+  "suspendTimeUtcIso",
+  "resumeTimeUtcIso"
+]);
 
 /**
  * The Calclens right-side drawer: shows how the currently-selected cell's value
@@ -62,7 +72,11 @@ const EDITABLE_INST = new Set(["assignTimeUtcIso", "acknTimeUtcIso", "suspendTim
  * Built once; `patch` swaps the explanation content when the selection changes,
  * so typing/scroll elsewhere is never disturbed.
  */
-export class CalclensPanel extends Component<CalclensPanelState, ComponentProps, CalclensPanelDeps> {
+export class CalclensPanel extends Component<
+  CalclensPanelState,
+  ComponentProps,
+  CalclensPanelDeps
+> {
   private timeInput: HTMLInputElement | null = null;
   private timeListEl: HTMLElement | null = null;
   private tlEvents: TimelineStep[] = [];
@@ -102,7 +116,9 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
   private renderBody(body: HTMLElement, ex: Explanation | null, edit: CalclensEdit | null): void {
     body.innerHTML = "";
     if (!ex) {
-      body.appendChild(el("div", "calclens-empty", "Select a cell to see how its value was derived."));
+      body.appendChild(
+        el("div", "calclens-empty", "Select a cell to see how its value was derived.")
+      );
       return;
     }
 
@@ -151,7 +167,12 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
     }
 
     if (ex.timeline && ex.timeline.length) {
-      body.appendChild(this.renderTimeline(ex.timeline, isInstEdit ? (ev) => this.pickTimeline(edit, ev) : undefined));
+      body.appendChild(
+        this.renderTimeline(
+          ex.timeline,
+          isInstEdit ? (ev) => this.pickTimeline(edit, ev) : undefined
+        )
+      );
     }
 
     if (ex.inputs && ex.inputs.length) {
@@ -227,26 +248,29 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
     input.placeholder = "Click to choose\u2026";
 
     input.addEventListener("focus", () => {
-      const aside = (EDITABLE_CHOICE.has(key) && this.deps.activityFor)
-        ? this.deps.activityFor(row)
-        : null;
-      new SearchPicker(document.body, {}, {
-        anchor: input,
-        options,
-        current: cur,
-        minWidth: aside ? 560 : 280,
-        aside,
-        repositionOn: this.root,
-        centered: true,
-        onPick: (value) => {
-          if (value !== String(row[key] ?? "")) {
-            row[key] = value;
-            this.deps.onCommit?.(key, String(value), row);
-            this.repatch();
-          }
-        },
-        onDismiss: () => undefined
-      });
+      const aside =
+        EDITABLE_CHOICE.has(key) && this.deps.activityFor ? this.deps.activityFor(row) : null;
+      new SearchPicker(
+        document.body,
+        {},
+        {
+          anchor: input,
+          options,
+          current: cur,
+          minWidth: aside ? 560 : 280,
+          aside,
+          repositionOn: this.root,
+          centered: true,
+          onPick: (value) => {
+            if (value !== String(row[key] ?? "")) {
+              row[key] = value;
+              this.deps.onCommit?.(key, String(value), row);
+              this.repatch();
+            }
+          },
+          onDismiss: () => undefined
+        }
+      );
     });
 
     const note = el("div", "calclens-edit-hint", "Pick from the MSR list for this column.");
@@ -258,7 +282,13 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
 
   /** Pending derived-time edit: set when the user picks a timeline row or types
    *  in the date input, persisted only on exit / moving to the next cell. */
-  private timeDraft: { row: Record<string, any>; key: string; cls: string; original: unknown; iso: string } | null = null;
+  private timeDraft: {
+    row: Record<string, any>;
+    key: string;
+    cls: string;
+    original: unknown;
+    iso: string;
+  } | null = null;
   /** Set true while pickTimeline updates the input value to suppress the input
    *  event handler, which would otherwise overwrite timeDraft.iso with a
    *  machine-local-time ISO (parseLocalInput) instead of the correct UTC atIso. */
@@ -297,11 +327,15 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
       if (this.suppressInputEvent) return;
       const v = input.value.trim();
       if (!v) {
-        if (this.timeDraft) { this.timeDraft.iso = ""; }
+        if (this.timeDraft) {
+          this.timeDraft.iso = "";
+        }
         input.classList.remove("invalid");
         return;
       }
-      const parsed = this.deps.parseValue ? this.deps.parseValue(v, this.timeDraft?.key ?? key) : null;
+      const parsed = this.deps.parseValue
+        ? this.deps.parseValue(v, this.timeDraft?.key ?? key)
+        : null;
       if (!parsed) {
         input.classList.add("invalid");
       } else {
@@ -310,7 +344,11 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
       }
     });
     input.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); cancel(); }
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        ev.stopPropagation();
+        cancel();
+      }
     });
     // Note: blur is intentionally NOT wired — only the Save button persists.
 
@@ -324,7 +362,11 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
     rowWrap.appendChild(input);
     rowWrap.appendChild(saveBtn);
 
-    const note = el("div", "calclens-edit-hint", "Enter a date/time in the instance clock, or click a row in the Timeline below. Click Save to apply.");
+    const note = el(
+      "div",
+      "calclens-edit-hint",
+      "Enter a date/time in the instance clock, or click a row in the Timeline below. Click Save to apply."
+    );
     const block = el("div", "calclens-edit-control");
     block.appendChild(rowWrap);
     block.appendChild(note);
@@ -334,7 +376,14 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
   /** User picked a timeline row: stage the exact event time (no write to the row,
    *  no persist) and highlight that row. Only Save commits. */
   private pickTimeline(edit: CalclensEdit, ev: TimelineStep): void {
-    if (!this.timeDraft) this.timeDraft = { row: edit.row, key: edit.key, cls: edit.cls, original: edit.row[edit.key] ?? "", iso: ev.atIso };
+    if (!this.timeDraft)
+      this.timeDraft = {
+        row: edit.row,
+        key: edit.key,
+        cls: edit.cls,
+        original: edit.row[edit.key] ?? "",
+        iso: ev.atIso
+      };
     const d = this.timeDraft;
     if (d.row !== edit.row) return;
     d.cls = edit.cls;
@@ -367,7 +416,10 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
           marks.push(m);
         }
       }
-      const row = el("div", `calclens-tl-row${selected ? " selected" : ""}${marks.length ? " has-marks" : ""}`);
+      const row = el(
+        "div",
+        `calclens-tl-row${selected ? " selected" : ""}${marks.length ? " has-marks" : ""}`
+      );
       const gutter = el("div", "calclens-tl-gutter");
       gutter.appendChild(icon("clock" as any, "calclens-tl-icn"));
       if (pickable) gutter.appendChild(icon("check-circle-2" as any, "calclens-tl-pick-icn"));
@@ -411,7 +463,8 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
   /** One change line inside a grouped timestamp: field icon + label: from → to. */
   private renderChange(ev: TimelineStep): HTMLElement {
     const wrap = el("div", "calclens-tl-change");
-    const icnName: string = ev.fieldIcon === "group" ? "building-2" : ev.fieldIcon === "assignee" ? "user" : "flag";
+    const icnName: string =
+      ev.fieldIcon === "group" ? "building-2" : ev.fieldIcon === "assignee" ? "user" : "flag";
     wrap.appendChild(icon(icnName as any, "calclens-tl-change-icn"));
     wrap.appendChild(this.renderDesc(ev));
     return wrap;
@@ -427,7 +480,10 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
     return wrap;
   }
 
-  private renderTimeline(events: TimelineStep[], pickable?: (ev: TimelineStep) => void): HTMLElement {
+  private renderTimeline(
+    events: TimelineStep[],
+    pickable?: (ev: TimelineStep) => void
+  ): HTMLElement {
     const wrap = el("div", "calclens-section calclens-timeline");
     wrap.appendChild(el("div", "calclens-section-title", "Timeline"));
     const list = el("div", "calclens-tl");
@@ -463,7 +519,11 @@ export class CalclensPanel extends Component<CalclensPanelState, ComponentProps,
 
   private renderCounts(c: { assignments: number; states: number; groups: number }): HTMLElement {
     const wrap = el("div", "calclens-counts");
-    const parts: Array<[string, number]> = [["Assignments", c.assignments], ["State", c.states], ["Group", c.groups]];
+    const parts: Array<[string, number]> = [
+      ["Assignments", c.assignments],
+      ["State", c.states],
+      ["Group", c.groups]
+    ];
     for (const [label, n] of parts) {
       const s = el("span", "calclens-count");
       s.appendChild(el("b", "", String(n)));
@@ -555,16 +615,23 @@ function fieldBlock(label: string, value: string): HTMLElement {
 
 function kindIconName(kind: string): string {
   switch (kind) {
-    case "timeline": return "alarm-clock";
-    case "duration": return "timer";
-    case "report": return "chart-line";
-    case "classification": return "tag";
-    default: return "file-text";
+    case "timeline":
+      return "alarm-clock";
+    case "duration":
+      return "timer";
+    case "report":
+      return "chart-line";
+    case "classification":
+      return "tag";
+    default:
+      return "file-text";
   }
 }
 
 /** Groups a flat, chronological list of timeline events by their timestamp. */
-function groupByTimestamp(events: TimelineStep[]): Array<{ atIso: string; atLabel: string; steps: TimelineStep[] }> {
+function groupByTimestamp(
+  events: TimelineStep[]
+): Array<{ atIso: string; atLabel: string; steps: TimelineStep[] }> {
   const out: Array<{ atIso: string; atLabel: string; steps: TimelineStep[] }> = [];
   for (const ev of events) {
     const last = out[out.length - 1];

@@ -1,5 +1,9 @@
 import { deterministicClassify } from "../services/classifier-service.ts";
-import type { ClassifyMode, ClassifyRowInput, ClassifyCell } from "../services/classifier-service.ts";
+import type {
+  ClassifyMode,
+  ClassifyRowInput,
+  ClassifyCell
+} from "../services/classifier-service.ts";
 import { resolveOutcome } from "./ml-classify.ts";
 import type { CellPicks, EnginePick } from "./ml-classify.ts";
 import { ClassificationCacheStore } from "../data/classification-cache-repository.ts";
@@ -54,7 +58,10 @@ function isRequest(msg: unknown): msg is ClassifyRequest {
   return !!msg && typeof msg === "object" && (msg as any).type === "classify";
 }
 
-type PickFn = (input: ClassifyRowInput) => Promise<{ solutionType: import("./ml-classify.ts").CellPicks; rootCause: import("./ml-classify.ts").CellPicks }>;
+type PickFn = (input: ClassifyRowInput) => Promise<{
+  solutionType: import("./ml-classify.ts").CellPicks;
+  rootCause: import("./ml-classify.ts").CellPicks;
+}>;
 
 let mlPicker: PickFn | null = null;
 
@@ -93,12 +100,21 @@ function postChunk(
   total: number,
   notClassified: number
 ): void {
-  (self as unknown as Worker).postMessage({ type: "chunk", done, total, notClassified, results } satisfies ChunkResult);
+  (self as unknown as Worker).postMessage({
+    type: "chunk",
+    done,
+    total,
+    notClassified,
+    results
+  } satisfies ChunkResult);
 }
 
 /** A row is unclassifiable when the classifier found no label at all — no notes,
  *  or both solutionType and rootCause came back null. */
-function isUnclassifiable(r: { solutionType: { value: string | null }; rootCause: { value: string | null } }): boolean {
+function isUnclassifiable(r: {
+  solutionType: { value: string | null };
+  rootCause: { value: string | null };
+}): boolean {
   return !r.solutionType.value && !r.rootCause.value;
 }
 
@@ -161,7 +177,18 @@ async function classifyCached(
   cache: ClassificationCacheStore | null,
   modelId: string,
   mode: ClassifyMode
-): Promise<{ solutionType: { value: string | null; confidence: number; source: "ml" | "heuristic" | "regex" | "keyword" | "cosine" }; rootCause: { value: string | null; confidence: number; source: "ml" | "heuristic" | "regex" | "keyword" | "cosine" } }> {
+): Promise<{
+  solutionType: {
+    value: string | null;
+    confidence: number;
+    source: "ml" | "heuristic" | "regex" | "keyword" | "cosine";
+  };
+  rootCause: {
+    value: string | null;
+    confidence: number;
+    source: "ml" | "heuristic" | "regex" | "keyword" | "cosine";
+  };
+}> {
   const key = keyFor(input, modelId, mode);
   // ML mode ("always") is ML-authoritative: the ML pick wins and a null pick
   // clears the cell. Hybrid ("fallback") keeps the heuristic cascade
@@ -186,7 +213,14 @@ async function classifyCached(
     const detSame = (c: ClassifyCell): EnginePick => ({
       value: c.value,
       confidence: c.confidence,
-      source: c.level === "regex" ? "regex" : c.level === "keyword" ? "keyword" : c.level === "cosine" ? "cosine" : "heuristic"
+      source:
+        c.level === "regex"
+          ? "regex"
+          : c.level === "keyword"
+            ? "keyword"
+            : c.level === "cosine"
+              ? "cosine"
+              : "heuristic"
     });
     picks = {
       rootCause: { ml: null, det: detSame(det.rootCause) },
@@ -201,11 +235,21 @@ async function classifyCached(
 }
 
 /** True when a cached outcome records the raw per-cell picks (ml + det). */
-function hasEnginePicks(
-  r: { solutionType?: { ml?: unknown; det?: unknown }; rootCause?: { ml?: unknown; det?: unknown } }
-): boolean {
-  return !!(r && typeof r.rootCause === "object" && r.rootCause && "ml" in r.rootCause && "det" in r.rootCause
-    && typeof r.solutionType === "object" && r.solutionType && "ml" in r.solutionType && "det" in r.solutionType);
+function hasEnginePicks(r: {
+  solutionType?: { ml?: unknown; det?: unknown };
+  rootCause?: { ml?: unknown; det?: unknown };
+}): boolean {
+  return !!(
+    r &&
+    typeof r.rootCause === "object" &&
+    r.rootCause &&
+    "ml" in r.rootCause &&
+    "det" in r.rootCause &&
+    typeof r.solutionType === "object" &&
+    r.solutionType &&
+    "ml" in r.solutionType &&
+    "det" in r.solutionType
+  );
 }
 
 /** Incrementally posts each ticket so the viewer gets per-row live progress. */
@@ -224,7 +268,13 @@ function hasEnginePicks(
   let done = 0;
   let notClassified = 0;
   for (const input of msg.rows) {
-    const [{ rowOut, unclassifiable }] = await classifyBatch([input], msg.mode, useMl, cache, modelId);
+    const [{ rowOut, unclassifiable }] = await classifyBatch(
+      [input],
+      msg.mode,
+      useMl,
+      cache,
+      modelId
+    );
     done++;
     if (unclassifiable) notClassified++;
     // One message per ticket: progress walks 1/49, 2/49, ... live.

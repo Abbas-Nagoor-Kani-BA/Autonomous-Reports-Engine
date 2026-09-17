@@ -40,7 +40,10 @@ export interface TimelineRepository {
  * there is nothing to compare, and re-fetching every such ticket on every run
  * would defeat the cache.
  */
-export function timelineNeedsFetch(entry: TimelineCacheEntry | undefined, ticketUpdatedOn: string): boolean {
+export function timelineNeedsFetch(
+  entry: TimelineCacheEntry | undefined,
+  ticketUpdatedOn: string
+): boolean {
   if (!entry || !Array.isArray(entry.events)) return true;
   if (!ticketUpdatedOn) return false;
   return String(ticketUpdatedOn) > String(entry.updatedAt || "");

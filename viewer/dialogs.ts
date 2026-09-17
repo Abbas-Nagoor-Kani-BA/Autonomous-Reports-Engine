@@ -6,7 +6,15 @@ import { CiDialog, ciAvailablePool } from "./components/ci-dialog.ts";
 import { MapDialog } from "./components/map-dialog.ts";
 import { getStoredConfigItems, refreshStoredConfigItems } from "./config-items.ts";
 import { DEFAULT_EXPORT_MAP, EXPORT_FIELD_BY_ID, EXPORT_GROUPS } from "./exporter.ts";
-import { getCiSplit, setCiSplit, setSavedMapPresent, syncSplitRadio, updateCiBtn, updateExportDots, closeConfigDialog } from "./config-state.ts";
+import {
+  getCiSplit,
+  setCiSplit,
+  setSavedMapPresent,
+  syncSplitRadio,
+  updateCiBtn,
+  updateExportDots,
+  closeConfigDialog
+} from "./config-state.ts";
 import { clearSelection, hasSelection } from "./selection.ts";
 import { dataStore } from "./store.ts";
 
@@ -40,65 +48,88 @@ export function initDialogs(): void {
   iconize($("ciSave"), "check");
   iconize($("addGroupBtn"), "plus");
 
-  mapModal = new Modal($("mapModal"), {}, {
-    // A cell editor inside the grid must keep its own Escape.
-    escapeGuard: () => !!document.querySelector("td.edit-input input")
-  });
+  mapModal = new Modal(
+    $("mapModal"),
+    {},
+    {
+      // A cell editor inside the grid must keep its own Escape.
+      escapeGuard: () => !!document.querySelector("td.edit-input input")
+    }
+  );
 
   letterPop = new Modal($("letterPop"), {}, { backdropClose: false });
 
-  ciModal = new Modal($("ciModal"), {}, {
-    onClosed: () => syncSplitRadio()
-  });
+  ciModal = new Modal(
+    $("ciModal"),
+    {},
+    {
+      onClosed: () => syncSplitRadio()
+    }
+  );
 
-  configModal = new Modal($("configModal"), {}, {
-    onClosed: () => closeConfigDialog()
-  });
+  configModal = new Modal(
+    $("configModal"),
+    {},
+    {
+      onClosed: () => closeConfigDialog()
+    }
+  );
 
-  mapEditor = new MapDialog($("mapModal"), {}, {
-    search: $("mapSearch"),
-    list: $("mapList"),
-    letterPop,
-    letterSearch: $("letterSearch"),
-    letterList: $("letterList"),
-    groups: EXPORT_GROUPS,
-    fieldLabel: (fid) => EXPORT_FIELD_BY_ID.get(fid)?.label ?? "",
-    status: (message, isError) => setStatus(message, isError),
-    onSave: async (mapping) => {
-      try {
-        await chrome.storage.local.set({ [STORAGE.exportColMap]: mapping });
-      } catch (err) {
-        setStatus(`Save failed: ${(err as Error).message}`, true);
-        throw err;
+  mapEditor = new MapDialog(
+    $("mapModal"),
+    {},
+    {
+      search: $("mapSearch"),
+      list: $("mapList"),
+      letterPop,
+      letterSearch: $("letterSearch"),
+      letterList: $("letterList"),
+      groups: EXPORT_GROUPS,
+      fieldLabel: (fid) => EXPORT_FIELD_BY_ID.get(fid)?.label ?? "",
+      status: (message, isError) => setStatus(message, isError),
+      onSave: async (mapping) => {
+        try {
+          await chrome.storage.local.set({ [STORAGE.exportColMap]: mapping });
+        } catch (err) {
+          setStatus(`Save failed: ${(err as Error).message}`, true);
+          throw err;
+        }
+        setSavedMapPresent(true);
+        updateExportDots();
+        if (mapModal) mapModal.close();
+      },
+      onReset: async () => {
+        try {
+          await chrome.storage.local.remove(STORAGE.exportColMap);
+        } catch {
+          /* ignored */
+        }
+        setSavedMapPresent(false);
+        updateExportDots();
       }
-      setSavedMapPresent(true);
-      updateExportDots();
-      if (mapModal) mapModal.close();
-    },
-    onReset: async () => {
-      try {
-        await chrome.storage.local.remove(STORAGE.exportColMap);
-      } catch { /* ignored */ }
-      setSavedMapPresent(false);
-      updateExportDots();
     }
-  });
+  );
 
-  ciEditor = new CiDialog($("ciModal"), {}, {
-    status: (message, isError) => setStatus(message, isError),
-    onClosed: () => {},
-    onSave: async (value) => {
-      setCiSplit(value);
-      await chrome.storage.local.set({ [STORAGE.ciSplit]: getCiSplit() });
-      if (ciModal) ciModal.close();
-      updateCiBtn();
+  ciEditor = new CiDialog(
+    $("ciModal"),
+    {},
+    {
+      status: (message, isError) => setStatus(message, isError),
+      onClosed: () => {},
+      onSave: async (value) => {
+        setCiSplit(value);
+        await chrome.storage.local.set({ [STORAGE.ciSplit]: getCiSplit() });
+        if (ciModal) ciModal.close();
+        updateCiBtn();
+      }
     }
-  });
+  );
 
   $("mapSave").addEventListener("click", () => {
     void (mapEditor && mapEditor.save());
   });
-  $("mapClose").addEventListener("click", () => mapModal && mapModal.close());  $("mapReset").addEventListener("click", async () => {
+  $("mapClose").addEventListener("click", () => mapModal && mapModal.close());
+  $("mapReset").addEventListener("click", async () => {
     if (!mapEditor) return;
     await mapEditor.reset(DEFAULT_EXPORT_MAP);
     setStatus("Mapping reset — exports use the template's default layout until saved again");
@@ -107,13 +138,16 @@ export function initDialogs(): void {
   // Close is a plain dismissal; Save closes itself only after persistence succeeds.
   $("ciClose").addEventListener("click", () => ciModal && ciModal.close());
 
-  document.addEventListener("keydown", e => {
+  document.addEventListener("keydown", (e) => {
     // Modals handle Escape themselves, innermost first. This only runs when none
     // of them did.
     if (e.key !== "Escape") return;
     if (hasOpenModal()) return;
-    if (hasSelection() && !document.querySelector("td.edit-input") &&
-        !document.querySelector(".msrPick")) {
+    if (
+      hasSelection() &&
+      !document.querySelector("td.edit-input") &&
+      !document.querySelector(".msrPick")
+    ) {
       clearSelection();
     }
   });
@@ -123,7 +157,9 @@ async function openMapDialog(): Promise<void> {
   let stored: Record<string, string> | null = null;
   try {
     ({ exportColMap: stored } = await chrome.storage.local.get(STORAGE.exportColMap));
-  } catch { /* ignored */ }
+  } catch {
+    /* ignored */
+  }
   setSavedMapPresent(!!(stored && Object.keys(stored).length));
   updateExportDots();
   if (mapEditor) mapEditor.show(stored, DEFAULT_EXPORT_MAP);
@@ -148,12 +184,4 @@ function hideLetterPop(): void {
   if (letterPop) letterPop.close();
 }
 
-export {
-  openMapDialog,
-  openCiDialog,
-  hideLetterPop,
-  mapModal,
-  letterPop,
-  ciModal,
-  configModal
-};
+export { openMapDialog, openCiDialog, hideLetterPop, mapModal, letterPop, ciModal, configModal };

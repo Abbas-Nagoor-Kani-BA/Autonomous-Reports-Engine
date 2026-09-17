@@ -37,10 +37,14 @@ type Fflate = {
 };
 
 let fflate: Fflate | null = globalThis?.fflate ?? null;
-export function setFflate(f: Fflate | null): void { fflate = f; }
+export function setFflate(f: Fflate | null): void {
+  fflate = f;
+}
 
 function normSheetName(s: string): string {
-  return String(s).toLowerCase().replace(/[\s_]+/g, "");
+  return String(s)
+    .toLowerCase()
+    .replace(/[\s_]+/g, "");
 }
 
 function findTargetSheetPath(files: FileMap, wanted: string): string | null {
@@ -48,8 +52,9 @@ function findTargetSheetPath(files: FileMap, wanted: string): string | null {
   const wbXml = decodeText(files["xl/workbook.xml"] || new Uint8Array());
   const relsXml = decodeText(files["xl/_rels/workbook.xml.rels"] || new Uint8Array());
   const resolveRel = (rid: string): string | null => {
-    const relMatch = relsXml.match(new RegExp(`<Relationship[^>]*Id="${rid}"[^>]*Target="([^"]*)"`, "i"))
-      || relsXml.match(new RegExp(`<Relationship[^>]*Target="([^"]*)"[^>]*Id="${rid}"`, "i"));
+    const relMatch =
+      relsXml.match(new RegExp(`<Relationship[^>]*Id="${rid}"[^>]*Target="([^"]*)"`, "i")) ||
+      relsXml.match(new RegExp(`<Relationship[^>]*Target="([^"]*)"[^>]*Id="${rid}"`, "i"));
     if (!relMatch) return null;
     let t = relMatch[1].replace(/^\//, "");
     if (!t.startsWith("xl/")) t = "xl/" + t;
@@ -63,7 +68,7 @@ function findTargetSheetPath(files: FileMap, wanted: string): string | null {
       const ridM = m[0].match(/\br:id="([^"]*)"/i);
       if (!nameM || !ridM) continue;
       const norm = normSheetName(nameM[1]);
-      if ((mode === "exact" ? norm === target : norm.includes(target))) {
+      if (mode === "exact" ? norm === target : norm.includes(target)) {
         const p = resolveRel(ridM[1]);
         if (p) return p;
       }
@@ -80,13 +85,23 @@ function parseSharedStrings(files: FileMap): string[] {
   const re = /<si(?:\s[^>]*)?>([\s\S]*?)<\/si>|<si\/>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) {
-    if (!m[1]) { items.push(""); continue; }
+    if (!m[1]) {
+      items.push("");
+      continue;
+    }
     let text = "";
     const tRe = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>|<t\/>/g;
     let t: RegExpExecArray | null;
     while ((t = tRe.exec(m[1])) !== null) text += t[1] ?? "";
-    items.push(text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d)).replace(/&amp;/g, "&"));
+    items.push(
+      text
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d))
+        .replace(/&amp;/g, "&")
+    );
   }
   return items;
 }
@@ -173,7 +188,14 @@ function buildDataRowsXml(
   return out;
 }
 
-function patchSheetXml(sheetXml: string, sharedStrings: string[], dataRowsXml: string, startRow: number, lastDataRow: number, lastColLetter: string): string {
+function patchSheetXml(
+  sheetXml: string,
+  sharedStrings: string[],
+  dataRowsXml: string,
+  startRow: number,
+  lastDataRow: number,
+  lastColLetter: string
+): string {
   const dimRe = /(<dimension ref=")([^"]*)(")/;
   if (dimRe.test(sheetXml)) {
     sheetXml = sheetXml.replace(dimRe, `$1A1:${lastColLetter}${lastDataRow}$3`);
@@ -230,20 +252,26 @@ function findHeaderRowInXml(sheetXml: string, sharedStrings: string[]): number {
 function stripCalcChain(files: FileMap): void {
   if (files["xl/calcChain.xml"]) {
     delete files["xl/calcChain.xml"];
-    const ctKey = Object.keys(files).find(k => k.toLowerCase() === "[content_types].xml");
+    const ctKey = Object.keys(files).find((k) => k.toLowerCase() === "[content_types].xml");
     if (ctKey) {
-      const ct = decodeText(files[ctKey]).replace(/<Override PartName="\/xl\/calcChain\.xml"[^>]*\/>/i, "");
+      const ct = decodeText(files[ctKey]).replace(
+        /<Override PartName="\/xl\/calcChain\.xml"[^>]*\/>/i,
+        ""
+      );
       files[ctKey] = encodeText(ct);
     }
-    const rels = decodeText(files["xl/_rels/workbook.xml.rels"] || new Uint8Array())
-      .replace(/<Relationship\b[^>]*Type="[^"]*\/calcChain"[^>]*\/>/i, "");
+    const rels = decodeText(files["xl/_rels/workbook.xml.rels"] || new Uint8Array()).replace(
+      /<Relationship\b[^>]*Type="[^"]*\/calcChain"[^>]*\/>/i,
+      ""
+    );
     if (files["xl/_rels/workbook.xml.rels"]) files["xl/_rels/workbook.xml.rels"] = encodeText(rels);
   }
   if (files["xl/workbook.xml"]) {
     let wb = decodeText(files["xl/workbook.xml"]);
     if (/<calcPr\b[^>]*\/>/.test(wb)) {
       wb = wb.replace(/<calcPr\b([^>]*?)\s*\/>/, (m, attrs) =>
-        /\bfullCalcOnLoad\s*=/.test(attrs) ? m : `<calcPr${attrs} fullCalcOnLoad="1"/>`);
+        /\bfullCalcOnLoad\s*=/.test(attrs) ? m : `<calcPr${attrs} fullCalcOnLoad="1"/>`
+      );
     } else {
       wb = wb.replace(/<\/workbook>/, '<calcPr calcId="191028" fullCalcOnLoad="1"/></workbook>');
     }
@@ -272,7 +300,13 @@ function cellHasFormula(sheetXml: string, ref: string): boolean {
   return m ? /<f[\s>]/.test(m[0]) : false;
 }
 
-function setCell(sheetXml: string, ref: string, typeAttr: string, body: string, fallbackStyle?: string | null): string {
+function setCell(
+  sheetXml: string,
+  ref: string,
+  typeAttr: string,
+  body: string,
+  fallbackStyle?: string | null
+): string {
   const m = cellMatch(sheetXml, ref);
   let style = "";
   if (m) {
@@ -282,7 +316,8 @@ function setCell(sheetXml: string, ref: string, typeAttr: string, body: string, 
     style = ` s="${fallbackStyle}"`;
   }
   const newCell = `<c r="${ref}"${style}${typeAttr ? ` ${typeAttr}` : ""}>${body}</c>`;
-  if (m && m.index !== undefined) return sheetXml.slice(0, m.index) + newCell + sheetXml.slice(m.index + m[0].length);
+  if (m && m.index !== undefined)
+    return sheetXml.slice(0, m.index) + newCell + sheetXml.slice(m.index + m[0].length);
   const rowNum = ref.replace(/^[A-Z]+/, "");
   const rowRe = new RegExp(`<row\\s[^>]*\\br="${rowNum}"[^>]*>[\\s\\S]*?<\\/row>`);
   const rm = sheetXml.match(rowRe);
@@ -302,7 +337,11 @@ export type SlaSummaryItem = {
   writeStatus?: boolean;
 };
 
-function patchSummarySlaSheet(files: FileMap, sharedStrings: string[], summaryRows: SlaSummaryItem[]): number {
+function patchSummarySlaSheet(
+  files: FileMap,
+  sharedStrings: string[],
+  summaryRows: SlaSummaryItem[]
+): number {
   if (!summaryRows || !summaryRows.length) return 0;
   const path = findTargetSheetPath(files, "summary_sla");
   if (!path) return 0;
@@ -313,7 +352,8 @@ function patchSummarySlaSheet(files: FileMap, sharedStrings: string[], summaryRo
   }
   const rowRe = /<row\s[^>]*r="(\d+)"[\s\S]*?<\/row>/g;
   let m: RegExpExecArray | null;
-  let curMetric = "", curCat = "";
+  let curMetric = "",
+    curCat = "";
   const hits: Array<{ rowNum: string; item: SlaSummaryItem }> = [];
   while ((m = rowRe.exec(sheetXml)) !== null) {
     const rowNum = m[1];
@@ -345,7 +385,13 @@ function patchSummarySlaSheet(files: FileMap, sharedStrings: string[], summaryRo
     const kRef = `K${rowNum}`;
     if (!cellHasFormula(sheetXml, kRef)) {
       const text = String(item.status || "").toUpperCase();
-      sheetXml = setCell(sheetXml, kRef, `t="inlineStr"`, `<is><t xml:space="preserve">${xmlEscape(text)}</t></is>`, fallback);
+      sheetXml = setCell(
+        sheetXml,
+        kRef,
+        `t="inlineStr"`,
+        `<is><t xml:space="preserve">${xmlEscape(text)}</t></is>`,
+        fallback
+      );
     }
     patched++;
   }
@@ -362,7 +408,12 @@ function patchSummarySlaSheet(files: FileMap, sharedStrings: string[], summaryRo
 // the slots available before the next section so nothing below is clobbered.
 // Narrative-only columns are left untouched for the user's editable section.
 
-export type SummaryChangeRow = { date: number | null; systemArea: string; crNumber: string; details: string };
+export type SummaryChangeRow = {
+  date: number | null;
+  systemArea: string;
+  crNumber: string;
+  details: string;
+};
 export type SummaryIncidentRow = {
   resolutionDate: number | null;
   systemArea: string;
@@ -382,7 +433,10 @@ export type SummaryDetailsData = {
 };
 
 /** Column-A display text of each row, in row order. */
-function rowTextsByColumnA(sheetXml: string, sharedStrings: string[]): Array<{ rowNum: number; text: string }> {
+function rowTextsByColumnA(
+  sheetXml: string,
+  sharedStrings: string[]
+): Array<{ rowNum: number; text: string }> {
   const out: Array<{ rowNum: number; text: string }> = [];
   const rowRe = /<row\s[^>]*r="(\d+)"[\s\S]*?<\/row>/g;
   let m: RegExpExecArray | null;
@@ -401,7 +455,12 @@ function setNumOrText(sheetXml: string, ref: string, value: string | number | nu
   }
   const str = String(value);
   if (isNumericCellValue(str)) return setCell(sheetXml, ref, "", `<v>${str.trim()}</v>`);
-  return setCell(sheetXml, ref, `t="inlineStr"`, `<is><t xml:space="preserve">${xmlEscape(str)}</t></is>`);
+  return setCell(
+    sheetXml,
+    ref,
+    `t="inlineStr"`,
+    `<is><t xml:space="preserve">${xmlEscape(str)}</t></is>`
+  );
 }
 
 /**
@@ -466,42 +525,65 @@ function clearRowCells(sheetXml: string, firstRow: number, limitRow: number): st
  * plain values), which is why growing it here does not risk Excel's repair
  * dialog. Do NOT reuse this on formula-bearing sheets without ref rewriting.
  */
-function shiftRowsDown(sheetXml: string, beforeRow: number, count: number, templateRow: number): string {
+function shiftRowsDown(
+  sheetXml: string,
+  beforeRow: number,
+  count: number,
+  templateRow: number
+): string {
   if (count <= 0) return sheetXml;
 
   // 1. Renumber existing rows at/after beforeRow, bottom-up so we never create
   //    a transient duplicate row number. Collect rows first.
   const rowRe = /<row(\s[^>]*?)\br="(\d+)"([^>]*)>([\s\S]*?)<\/row>/g;
-  type Row = { full: string; attrsPre: string; num: number; attrsPost: string; inner: string; index: number };
+  type Row = {
+    full: string;
+    attrsPre: string;
+    num: number;
+    attrsPost: string;
+    inner: string;
+    index: number;
+  };
   const rows: Row[] = [];
   let m: RegExpExecArray | null;
   while ((m = rowRe.exec(sheetXml)) !== null) {
-    rows.push({ full: m[0], attrsPre: m[1], num: parseInt(m[2], 10), attrsPost: m[3], inner: m[4], index: m.index });
+    rows.push({
+      full: m[0],
+      attrsPre: m[1],
+      num: parseInt(m[2], 10),
+      attrsPost: m[3],
+      inner: m[4],
+      index: m.index
+    });
   }
 
   const bump = (row: Row): string => {
     const newNum = row.num + count;
-    const inner = row.inner.replace(/(<c\s[^>]*\br=")([A-Z]+)(\d+)(")/g,
-      (_all, p1: string, col: string, _n: string, p4: string) => `${p1}${col}${newNum}${p4}`);
+    const inner = row.inner.replace(
+      /(<c\s[^>]*\br=")([A-Z]+)(\d+)(")/g,
+      (_all, p1: string, col: string, _n: string, p4: string) => `${p1}${col}${newNum}${p4}`
+    );
     return `<row${row.attrsPre}r="${newNum}"${row.attrsPost}>${inner}</row>`;
   };
 
   // Rebuild the sheet: rows before beforeRow untouched; rows at/after bumped;
   // blank rows inserted at the original position of the first shifted row.
-  const affected = rows.filter(r => r.num >= beforeRow).sort((a, b) => a.num - b.num);
+  const affected = rows.filter((r) => r.num >= beforeRow).sort((a, b) => a.num - b.num);
   if (!affected.length) return sheetXml; // nothing below; caller falls back to writing at the end
 
   // Style/column skeleton cloned from the template row (a known data row of the
   // section) so inserted rows carry the same columns and styles, values empty.
-  const tmpl = rows.find(r => r.num === templateRow);
+  const tmpl = rows.find((r) => r.num === templateRow);
   const blankCellsFor = (rowNum: number): string => {
     if (!tmpl) return "";
-    return tmpl.inner.replace(/<c(\s[^>]*)?\br="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>[\s\S]*?<\/c>)/g,
+    return tmpl.inner.replace(
+      /<c(\s[^>]*)?\br="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>[\s\S]*?<\/c>)/g,
       (_all, pre: string | undefined, col: string) => {
         const styleM = _all.match(/\bs="(\d+)"/);
         const style = styleM ? ` s="${styleM[1]}"` : "";
         return `<c r="${col}${rowNum}"${style}/>`;
-      });
+      }
+    );
   };
 
   const insertPos = affected[0].index;
@@ -513,11 +595,13 @@ function shiftRowsDown(sheetXml: string, beforeRow: number, count: number, templ
   // Process bottom-up so earlier replacements don't shift later indices' text.
   for (const row of [...affected].sort((a, b) => b.index - a.index)) {
     const rel = row.index - insertPos;
-    rebuiltAfter = rebuiltAfter.slice(0, rel) + bump(row) + rebuiltAfter.slice(rel + row.full.length);
+    rebuiltAfter =
+      rebuiltAfter.slice(0, rel) + bump(row) + rebuiltAfter.slice(rel + row.full.length);
   }
 
   let blanks = "";
-  for (let i = 0; i < count; i++) blanks += `<row r="${beforeRow + i}">${blankCellsFor(beforeRow + i)}</row>`;
+  for (let i = 0; i < count; i++)
+    blanks += `<row r="${beforeRow + i}">${blankCellsFor(beforeRow + i)}</row>`;
 
   let result = before + blanks + rebuiltAfter;
 
@@ -525,7 +609,8 @@ function shiftRowsDown(sheetXml: string, beforeRow: number, count: number, templ
   // moves down by `count`. Without this, merges below the insertion point stay
   // anchored to their old row numbers and end up covering the wrong cells
   // (e.g. a merged narrative block sliding onto a table's header cell).
-  result = result.replace(/<mergeCell ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"\s*\/>/g,
+  result = result.replace(
+    /<mergeCell ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"\s*\/>/g,
     (all, c1: string, r1: string, c2: string, r2: string) => {
       const n1 = parseInt(r1, 10);
       const n2 = parseInt(r2, 10);
@@ -533,7 +618,8 @@ function shiftRowsDown(sheetXml: string, beforeRow: number, count: number, templ
       const nn2 = n2 >= beforeRow ? n2 + count : n2;
       if (nn1 === n1 && nn2 === n2) return all;
       return `<mergeCell ref="${c1}${nn1}:${c2}${nn2}"/>`;
-    });
+    }
+  );
 
   return result;
 }
@@ -545,20 +631,31 @@ function shiftRowsDown(sheetXml: string, beforeRow: number, count: number, templ
  * setCell can place values there. Needed because templates often omit blank
  * rows entirely, and setCell is a no-op when the target row is absent.
  */
-function ensureRowsExist(sheetXml: string, firstRow: number, count: number, templateRow: number): string {
+function ensureRowsExist(
+  sheetXml: string,
+  firstRow: number,
+  count: number,
+  templateRow: number
+): string {
   const rowRe = /<row\s[^>]*\br="(\d+)"[\s\S]*?<\/row>/g;
   const existing = new Set<number>();
   let m: RegExpExecArray | null;
   while ((m = rowRe.exec(sheetXml)) !== null) existing.add(parseInt(m[1], 10));
 
-  const tmplMatch = sheetXml.match(new RegExp(`<row\\s[^>]*\\br="${templateRow}"[\\s\\S]*?<\\/row>`));
-  const tmplInner = tmplMatch ? (tmplMatch[0].match(/<row[^>]*>([\s\S]*)<\/row>/) || [, ""])[1] : "";
+  const tmplMatch = sheetXml.match(
+    new RegExp(`<row\\s[^>]*\\br="${templateRow}"[\\s\\S]*?<\\/row>`)
+  );
+  const tmplInner = tmplMatch
+    ? (tmplMatch[0].match(/<row[^>]*>([\s\S]*)<\/row>/) || [, ""])[1]
+    : "";
   const skeletonFor = (rowNum: number): string =>
-    String(tmplInner || "").replace(/<c(\s[^>]*)?\br="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>[\s\S]*?<\/c>)/g,
+    String(tmplInner || "").replace(
+      /<c(\s[^>]*)?\br="([A-Z]+)(\d+)"([^>]*?)(?:\/>|>[\s\S]*?<\/c>)/g,
       (all, _pre, col: string) => {
         const styleM = all.match(/\bs="(\d+)"/);
         return `<c r="${col}${rowNum}"${styleM ? ` s="${styleM[1]}"` : ""}/>`;
-      });
+      }
+    );
 
   let xml = sheetXml;
   for (let r = firstRow; r < firstRow + count; r++) {
@@ -570,7 +667,10 @@ function ensureRowsExist(sheetXml: string, firstRow: number, count: number, temp
     let insertAt = -1;
     let mm: RegExpExecArray | null;
     while ((mm = nextRe.exec(xml)) !== null) {
-      if (parseInt(mm[1], 10) > r) { insertAt = mm.index; break; }
+      if (parseInt(mm[1], 10) > r) {
+        insertAt = mm.index;
+        break;
+      }
     }
     if (insertAt >= 0) {
       xml = xml.slice(0, insertAt) + newRow + xml.slice(insertAt);
@@ -587,7 +687,11 @@ function ensureRowsExist(sheetXml: string, firstRow: number, count: number, temp
  * the number of table rows written across all sections (0 if the sheet or the
  * data is absent — never falls back to another sheet).
  */
-function patchSummaryDetailsSheet(files: FileMap, sharedStrings: string[], data: SummaryDetailsData | null | undefined): number {
+function patchSummaryDetailsSheet(
+  files: FileMap,
+  sharedStrings: string[],
+  data: SummaryDetailsData | null | undefined
+): number {
   if (!data) return 0;
   const path = findTargetSheetPath(files, "summary");
   if (!path) return 0;
@@ -621,7 +725,13 @@ function patchSummaryDetailsSheet(files: FileMap, sharedStrings: string[], data:
 
   // Section anchors (header rows). Data starts two rows below the section
   // header (section title row, then the column-header row).
-  const anchorNeedles = ["Key Incidents", "Changes implemented", "Changes Planned", "Changes Failed", "Operational Health"];
+  const anchorNeedles = [
+    "Key Incidents",
+    "Changes implemented",
+    "Changes Planned",
+    "Changes Failed",
+    "Operational Health"
+  ];
   const anchorsNow = (): number[] => anchorNeedles.map((n) => findRowIn(sheetXml, n));
 
   // Section definitions in sheet order. Each knows its data rows and columns;
@@ -676,7 +786,13 @@ function patchSummaryDetailsSheet(files: FileMap, sharedStrings: string[], data:
     const firstDataRow = hdr + 2;
     const dataLen = rows ? rows.length : 0;
     if (rows && rows.length) {
-      const res = writeSectionRows(sheetXml, rows, cols, firstDataRow, limit || firstDataRow + rows.length);
+      const res = writeSectionRows(
+        sheetXml,
+        rows,
+        cols,
+        firstDataRow,
+        limit || firstDataRow + rows.length
+      );
       sheetXml = res.xml;
       written += res.written;
     }
@@ -724,8 +840,14 @@ function fillTemplateBuffer(
   const lastDataRow = startRow + rows.length - 1;
   const styleMap = harvestDataCellStyles(sheetXml, startRow);
   const dataRowsXml = buildDataRowsXml(rows, startRow, styleMap, tplCols);
-  sheetXml = patchSheetXml(sheetXml, sharedStrings, dataRowsXml, startRow, lastDataRow,
-    colLetter(tplCols[tplCols.length - 1].col));
+  sheetXml = patchSheetXml(
+    sheetXml,
+    sharedStrings,
+    dataRowsXml,
+    startRow,
+    lastDataRow,
+    colLetter(tplCols[tplCols.length - 1].col)
+  );
   files[sheetPath] = encodeText(sheetXml);
   if (summary) patchSummarySlaSheet(files, sharedStrings, summary);
   if (summaryDetails) patchSummaryDetailsSheet(files, sharedStrings, summaryDetails);
@@ -734,7 +856,17 @@ function fillTemplateBuffer(
 }
 
 export {
-  normSheetName, findTargetSheetPath, parseSharedStrings, cellDisplayValue,
-  harvestDataCellStyles, isNumericCellValue, buildDataRowsXml, patchSheetXml,
-  findHeaderRowInXml, stripCalcChain, patchSummarySlaSheet, patchSummaryDetailsSheet, fillTemplateBuffer
+  normSheetName,
+  findTargetSheetPath,
+  parseSharedStrings,
+  cellDisplayValue,
+  harvestDataCellStyles,
+  isNumericCellValue,
+  buildDataRowsXml,
+  patchSheetXml,
+  findHeaderRowInXml,
+  stripCalcChain,
+  patchSummarySlaSheet,
+  patchSummaryDetailsSheet,
+  fillTemplateBuffer
 };

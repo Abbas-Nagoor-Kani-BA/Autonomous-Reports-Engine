@@ -11,8 +11,14 @@ import { mergeSortedNames, sortNames, subtractNames } from "../core/scope/resolv
  */
 
 test("resolving into empty lists fills them sorted A–Z", () => {
-  assert.deepEqual(mergeSortedNames([], ["Service Desk", "Network Ops"]), ["Network Ops", "Service Desk"]);
-  assert.deepEqual(mergeSortedNames([], ["Bob Brown", "Alice Adams"]), ["Alice Adams", "Bob Brown"]);
+  assert.deepEqual(mergeSortedNames([], ["Service Desk", "Network Ops"]), [
+    "Network Ops",
+    "Service Desk"
+  ]);
+  assert.deepEqual(mergeSortedNames([], ["Bob Brown", "Alice Adams"]), [
+    "Alice Adams",
+    "Bob Brown"
+  ]);
 });
 
 test("resolving keeps manually typed values and sorts the whole list", () => {
@@ -34,7 +40,10 @@ test("resolving twice does not grow the list (idempotent) and stays sorted", () 
 });
 
 test("empty resolved result leaves the existing values but sorts them", () => {
-  assert.deepEqual(mergeSortedNames(["Service Desk", "Network Ops"], []), ["Network Ops", "Service Desk"]);
+  assert.deepEqual(mergeSortedNames(["Service Desk", "Network Ops"], []), [
+    "Network Ops",
+    "Service Desk"
+  ]);
 });
 
 test("sortNames sorts case-insensitively and locale-aware without deduping", () => {
@@ -45,7 +54,10 @@ test("sortNames sorts case-insensitively and locale-aware without deduping", () 
 
 test("subtractNames keeps only members not already present (case-insensitive)", () => {
   // The picker only offers names the Team members list does not already have.
-  assert.deepEqual(subtractNames(["Alice Adams", "Bob Brown", "Carol Clark"], ["alice adams", "carol clark"]), ["Bob Brown"]);
+  assert.deepEqual(
+    subtractNames(["Alice Adams", "Bob Brown", "Carol Clark"], ["alice adams", "carol clark"]),
+    ["Bob Brown"]
+  );
 });
 
 test("subtractNames returns empty when every candidate is already present", () => {

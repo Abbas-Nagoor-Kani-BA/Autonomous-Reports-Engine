@@ -1,16 +1,38 @@
 import { MSG } from "../lib/keys.ts";
 import { broadcast } from "../lib/storage.ts";
 import * as Analysis from "../core/timeline/phase2.ts";
-import { createSmartTransport, findServiceNowTab, getPageUser } from "../data/datasource/sn-transport.ts";
+import {
+  createSmartTransport,
+  findServiceNowTab,
+  getPageUser
+} from "../data/datasource/sn-transport.ts";
 import { createServiceNowRemote } from "../data/datasource/sn-remote.ts";
-import { PULL_SERVICE, CONNECTION_SERVICE, SCOPE_RESOLVE_SERVICE, SETTINGS_REPO, SN_REMOTE_FACTORY } from "../di/tokens.ts";
+import {
+  PULL_SERVICE,
+  CONNECTION_SERVICE,
+  SCOPE_RESOLVE_SERVICE,
+  SETTINGS_REPO,
+  SN_REMOTE_FACTORY
+} from "../di/tokens.ts";
 import { createBackgroundContainer } from "../di/register-background.ts";
 import { ConnectionService } from "../services/connection-service.ts";
 import { PullService } from "../services/pull-service.ts";
 import { ScopeResolveService } from "../services/scope-resolve-service.ts";
-import type { MsgRun, MsgCount, MsgResolveScope, MsgResolveGroupMembers, MsgResolveGroupCis } from "../types/global.d.ts";
+import type {
+  MsgRun,
+  MsgCount,
+  MsgResolveScope,
+  MsgResolveGroupMembers,
+  MsgResolveGroupCis
+} from "../types/global.d.ts";
 
-type WorkerRequest = MsgRun | MsgCount | MsgResolveScope | MsgResolveGroupMembers | MsgResolveGroupCis | { type: typeof MSG.ping };
+type WorkerRequest =
+  | MsgRun
+  | MsgCount
+  | MsgResolveScope
+  | MsgResolveGroupMembers
+  | MsgResolveGroupCis
+  | { type: typeof MSG.ping };
 type SendResponse = (response: unknown) => void;
 
 /*
@@ -84,7 +106,10 @@ function onDiagnostic(d: any) {
       return;
     }
     if (d.rateLimited) {
-      progress("diag", `⚠ RATE LIMITED — ServiceNow is throttling requests; auto-retrying (${d.attempt}/${4}). If this repeats, reduce tickets per run or ask your admin about rate-limit rules.`);
+      progress(
+        "diag",
+        `⚠ RATE LIMITED — ServiceNow is throttling requests; auto-retrying (${d.attempt}/${4}). If this repeats, reduce tickets per run or ask your admin about rate-limit rules.`
+      );
       return;
     }
     const why = d.netError ? `network: ${d.netError}` : `server ${d.status}`;
@@ -92,110 +117,133 @@ function onDiagnostic(d: any) {
     return;
   }
   if (d.kind === "err") {
-    progress("diag", `${d.path} → HTTP ${d.status}${ms}${d.retriesExhausted ? " · retries exhausted" : ""} · q=${d.query || ""}`);
+    progress(
+      "diag",
+      `${d.path} → HTTP ${d.status}${ms}${d.retriesExhausted ? " · retries exhausted" : ""} · q=${d.query || ""}`
+    );
     return;
   }
-  const token = d.hadToken === null || d.hadToken === void 0 ? "" : ` · token=${d.hadToken ? d.tokenSource || "sent" : "MISSING"}`;
+  const token =
+    d.hadToken === null || d.hadToken === void 0
+      ? ""
+      : ` · token=${d.hadToken ? d.tokenSource || "sent" : "MISSING"}`;
   const rows = d.bodyRows !== void 0 && d.bodyRows !== null ? ` · result=${d.bodyRows}` : "";
   const preview = d.bodyPreview ? ` · body=${d.bodyPreview}` : "";
-  progress("diag", `${d.path} → ${d.status}${ms} · via=${d.via}${token}${rows} · q=${d.query || ""}${preview}`);
+  progress(
+    "diag",
+    `${d.path} → ${d.status}${ms} · via=${d.via}${token}${rows} · q=${d.query || ""}${preview}`
+  );
 }
 
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {
-});
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 
-chrome.runtime.onMessage.addListener((msg: WorkerRequest, _sender: unknown, sendResponse: SendResponse) => {
-  if (msg.type === MSG.ping) {
-    sendResponse({ ok: true, running });
-    return false;
-  }
-
-  if (msg.type === MSG.count) {
-    container
-      .resolve(CONNECTION_SERVICE)
-      .count({ instanceUrl: msg.instanceUrl, groups: msg.groups, filters: msg.filters, filterSets: msg.filterSets, onDiagnostic })
-      .then((result) => sendResponse({ ok: true, ...result }))
-      .catch((err) => {
-        progress("diag", `${MSG.count} failed: ${err.message}`);
-        sendResponse({ ok: false, error: err.message });
-      });
-    return true;
-  }
-
-  if (msg.type === MSG.resolveScope) {
-    resolveCurrentUserId(msg.instanceUrl, msg.currentUserId)
-      .then((currentUserId) =>
-        container
-          .resolve(SCOPE_RESOLVE_SERVICE)
-          .resolve({ instanceUrl: msg.instanceUrl, currentUserId, onDiagnostic })
-      )
-      .then((scope) => sendResponse({ ok: true, queues: scope.queues, members: scope.members, userId: scope.userId }))
-      .catch((err) => {
-        progress("diag", `${MSG.resolveScope} failed: ${err.message}`);
-        sendResponse({ ok: false, error: err.message });
-      });
-    return true;
-  }
-
-  if (msg.type === MSG.resolveGroupMembers) {
-    container
-      .resolve(SCOPE_RESOLVE_SERVICE)
-      .resolveGroupMembers({ instanceUrl: msg.instanceUrl, group: msg.group, onDiagnostic })
-      .then((res) => sendResponse({ ok: true, members: res.members, truncated: res.truncated }))
-      .catch((err) => {
-        progress("diag", `${MSG.resolveGroupMembers} failed: ${err.message}`);
-        sendResponse({ ok: false, error: err.message });
-      });
-    return true;
-  }
-
-  if (msg.type === MSG.resolveGroupCis) {
-    container
-      .resolve(SCOPE_RESOLVE_SERVICE)
-      .resolveGroupConfigItems({ instanceUrl: msg.instanceUrl, group: msg.group, onDiagnostic })
-      .then((res) => sendResponse({ ok: true, items: res.items, truncated: res.truncated }))
-      .catch((err) => {
-        progress("diag", `${MSG.resolveGroupCis} failed: ${err.message}`);
-        sendResponse({ ok: false, error: err.message });
-      });
-    return true;
-  }
-
-  if (msg.type === MSG.run) {
-    if (running) {
-      sendResponse({ ok: false, started: false, error: "A run is already in progress" });
+chrome.runtime.onMessage.addListener(
+  (msg: WorkerRequest, _sender: unknown, sendResponse: SendResponse) => {
+    if (msg.type === MSG.ping) {
+      sendResponse({ ok: true, running });
       return false;
     }
-    running = true;
-    const abort = new AbortController();
 
-    // Deliberately not awaited: a pull runs for minutes, and holding the
-    // response channel open that long risks it being torn down. Progress
-    // reaches the panel through broadcast, not through this reply.
-    container
-      .resolve(PULL_SERVICE)
-      .run({
-        instanceUrl: msg.instanceUrl,
-        groups: msg.groups,
-        filterSets: msg.filterSets,
-        filters: msg.filters,
-        fields: msg.fields,
-        includeChangeSummary: msg.includeChangeSummary,
-        changeSummaryWindows: msg.changeSummaryWindows,
-        signal: abort.signal,
-        onProgress: progress,
-        onDiagnostic
-      })
-      .catch((err) => {
-        progress("error", err.message);
-      })
-      .finally(() => {
-        running = false;
-      });
+    if (msg.type === MSG.count) {
+      container
+        .resolve(CONNECTION_SERVICE)
+        .count({
+          instanceUrl: msg.instanceUrl,
+          groups: msg.groups,
+          filters: msg.filters,
+          filterSets: msg.filterSets,
+          onDiagnostic
+        })
+        .then((result) => sendResponse({ ok: true, ...result }))
+        .catch((err) => {
+          progress("diag", `${MSG.count} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
 
-    sendResponse({ ok: true, started: true });
-    return true;
+    if (msg.type === MSG.resolveScope) {
+      resolveCurrentUserId(msg.instanceUrl, msg.currentUserId)
+        .then((currentUserId) =>
+          container
+            .resolve(SCOPE_RESOLVE_SERVICE)
+            .resolve({ instanceUrl: msg.instanceUrl, currentUserId, onDiagnostic })
+        )
+        .then((scope) =>
+          sendResponse({
+            ok: true,
+            queues: scope.queues,
+            members: scope.members,
+            userId: scope.userId
+          })
+        )
+        .catch((err) => {
+          progress("diag", `${MSG.resolveScope} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (msg.type === MSG.resolveGroupMembers) {
+      container
+        .resolve(SCOPE_RESOLVE_SERVICE)
+        .resolveGroupMembers({ instanceUrl: msg.instanceUrl, group: msg.group, onDiagnostic })
+        .then((res) => sendResponse({ ok: true, members: res.members, truncated: res.truncated }))
+        .catch((err) => {
+          progress("diag", `${MSG.resolveGroupMembers} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (msg.type === MSG.resolveGroupCis) {
+      container
+        .resolve(SCOPE_RESOLVE_SERVICE)
+        .resolveGroupConfigItems({ instanceUrl: msg.instanceUrl, group: msg.group, onDiagnostic })
+        .then((res) => sendResponse({ ok: true, items: res.items, truncated: res.truncated }))
+        .catch((err) => {
+          progress("diag", `${MSG.resolveGroupCis} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (msg.type === MSG.run) {
+      if (running) {
+        sendResponse({ ok: false, started: false, error: "A run is already in progress" });
+        return false;
+      }
+      running = true;
+      const abort = new AbortController();
+
+      // Deliberately not awaited: a pull runs for minutes, and holding the
+      // response channel open that long risks it being torn down. Progress
+      // reaches the panel through broadcast, not through this reply.
+      container
+        .resolve(PULL_SERVICE)
+        .run({
+          instanceUrl: msg.instanceUrl,
+          groups: msg.groups,
+          filterSets: msg.filterSets,
+          filters: msg.filters,
+          fields: msg.fields,
+          includeChangeSummary: msg.includeChangeSummary,
+          changeSummaryWindows: msg.changeSummaryWindows,
+          signal: abort.signal,
+          onProgress: progress,
+          onDiagnostic
+        })
+        .catch((err) => {
+          progress("error", err.message);
+        })
+        .finally(() => {
+          running = false;
+        });
+
+      sendResponse({ ok: true, started: true });
+      return true;
+    }
+
+    return false;
   }
-
-  return false;
-});
+);

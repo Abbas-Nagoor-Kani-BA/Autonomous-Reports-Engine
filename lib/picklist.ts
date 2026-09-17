@@ -4,12 +4,11 @@
 // definition. It is now used by the Calclens drawer's derivation pickers.
 
 export function pickCurNotInOptions(options: string[], cur: string | undefined): boolean {
-  return !options.some(x => String(x).toLowerCase() === String(cur || "").toLowerCase());
+  return !options.some((x) => String(x).toLowerCase() === String(cur || "").toLowerCase());
 }
 
 export function pickLabelOf(v: string, cur: string | undefined, curNotInOptions: boolean): string {
-  return v === "" ? "— clear —"
-    : v + (cur && v === cur && curNotInOptions ? " · current" : "");
+  return v === "" ? "— clear —" : v + (cur && v === cur && curNotInOptions ? " · current" : "");
 }
 
 export function pickBaseLabel(v: string): string {
@@ -17,7 +16,12 @@ export function pickBaseLabel(v: string): string {
 }
 
 export function pickAcronymOf(s: string): string {
-  return s.split(/[\s\-\/_,]+/).filter(Boolean).map(w => w[0]).join("").toLowerCase();
+  return s
+    .split(/[\s\-\/_,]+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join("")
+    .toLowerCase();
 }
 
 /**
@@ -46,7 +50,7 @@ export function applyPickFilter(
     items = [...acros, ...subs];
   }
   const ref = String(refVal).trim().toLowerCase();
-  const exact = items.findIndex(v => String(v).toLowerCase() === ref);
+  const exact = items.findIndex((v) => String(v).toLowerCase() === ref);
   return { items, activeIdx: exact >= 0 ? exact : 0 };
 }
 
@@ -82,7 +86,8 @@ export function paintPickItems(
 export function scrollActiveIntoView(listEl: HTMLElement, activeIdx: number): void {
   const act = listEl.children[activeIdx] as HTMLElement | undefined;
   if (!act) return;
-  const top = act.offsetTop, view = listEl.clientHeight;
+  const top = act.offsetTop,
+    view = listEl.clientHeight;
   if (top < listEl.scrollTop || top + act.offsetHeight > listEl.scrollTop + view) {
     listEl.scrollTop = Math.max(0, top - view / 2);
   }

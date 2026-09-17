@@ -1,8 +1,12 @@
 function xmlEscape(s: unknown): string {
   const map: Record<string, string> = {
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;"
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&apos;"
   };
-  return String(s).replace(/[&<>"']/g, ch => map[ch]);
+  return String(s).replace(/[&<>"']/g, (ch) => map[ch]);
 }
 function decodeText(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes);
@@ -48,17 +52,10 @@ function placePopupNear(pop: HTMLElement, rect: RectLike, minW: number, gap = 4)
   pop.style.width = `${w}px`;
   const left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8));
   let top = rect.bottom + gap;
-  if (top + pop.offsetHeight > window.innerHeight - 8) top = Math.max(8, rect.top - pop.offsetHeight - gap);
+  if (top + pop.offsetHeight > window.innerHeight - 8)
+    top = Math.max(8, rect.top - pop.offsetHeight - gap);
   pop.style.left = `${left}px`;
   pop.style.top = `${top}px`;
 }
 
-export {
-  xmlEscape,
-  decodeText,
-  encodeText,
-  colLetter,
-  letterToColNum,
-  placePopupNear,
-  cellShort
-};
+export { xmlEscape, decodeText, encodeText, colLetter, letterToColNum, placePopupNear, cellShort };

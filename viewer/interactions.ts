@@ -1,6 +1,13 @@
 import { $, visibleCols, COLUMNS } from "./core.ts";
 import { render, reportCellFocus } from "./grid.ts";
-import { anyOverlayOpen, getSelFocus, movePage, moveSel, moveToRowFirstLast, setSelPoint } from "./selection.ts";
+import {
+  anyOverlayOpen,
+  getSelFocus,
+  movePage,
+  moveSel,
+  moveToRowFirstLast,
+  setSelPoint
+} from "./selection.ts";
 import { getCalclensMode } from "./calclens-state.ts";
 import { setDisplayValueResolver } from "./grid-data.ts";
 import { exportSvc } from "./exporter.ts";
@@ -44,22 +51,65 @@ export function initInteractions(): void {
 
   document.addEventListener("keydown", (e: KeyboardEvent) => {
     const t = e.target;
-    if (t instanceof HTMLElement &&
-        (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+    if (
+      t instanceof HTMLElement &&
+      (t.tagName === "INPUT" ||
+        t.tagName === "SELECT" ||
+        t.tagName === "TEXTAREA" ||
+        t.isContentEditable)
+    ) {
       return;
     }
     if (anyOverlayOpen()) return;
     let moved = false;
     switch (e.key) {
-      case "ArrowDown": e.preventDefault(); moveSel(1, 0, e.shiftKey); moved = true; break;
-      case "ArrowUp": e.preventDefault(); moveSel(-1, 0, e.shiftKey); moved = true; break;
-      case "ArrowLeft": e.preventDefault(); moveSel(0, -1, e.shiftKey); moved = true; break;
-      case "ArrowRight": e.preventDefault(); moveSel(0, 1, e.shiftKey); moved = true; break;
-      case "Home": e.preventDefault(); moveToRowFirstLast(e.shiftKey, "first"); moved = true; break;
-      case "End": e.preventDefault(); moveToRowFirstLast(e.shiftKey, "last"); moved = true; break;
-      case "PageDown": e.preventDefault(); movePage(1, e.shiftKey); moved = true; break;
-      case "PageUp": e.preventDefault(); movePage(-1, e.shiftKey); moved = true; break;
-      case "Tab": if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); moveSel(0, e.shiftKey ? -1 : 1, false); moved = true; } break;
+      case "ArrowDown":
+        e.preventDefault();
+        moveSel(1, 0, e.shiftKey);
+        moved = true;
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        moveSel(-1, 0, e.shiftKey);
+        moved = true;
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        moveSel(0, -1, e.shiftKey);
+        moved = true;
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        moveSel(0, 1, e.shiftKey);
+        moved = true;
+        break;
+      case "Home":
+        e.preventDefault();
+        moveToRowFirstLast(e.shiftKey, "first");
+        moved = true;
+        break;
+      case "End":
+        e.preventDefault();
+        moveToRowFirstLast(e.shiftKey, "last");
+        moved = true;
+        break;
+      case "PageDown":
+        e.preventDefault();
+        movePage(1, e.shiftKey);
+        moved = true;
+        break;
+      case "PageUp":
+        e.preventDefault();
+        movePage(-1, e.shiftKey);
+        moved = true;
+        break;
+      case "Tab":
+        if (!e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          moveSel(0, e.shiftKey ? -1 : 1, false);
+          moved = true;
+        }
+        break;
     }
     if (moved) reportFocus();
   });
@@ -91,10 +141,16 @@ function initSearchControls(): void {
       colSel.appendChild(opt);
     }
   }
-  colSel?.addEventListener("change", () => { setSearchColumn(colSel.value); render(); });
+  colSel?.addEventListener("change", () => {
+    setSearchColumn(colSel.value);
+    render();
+  });
 
   const modeSel = $("searchMode") as HTMLSelectElement;
-  modeSel?.addEventListener("change", () => { setSearchMode(modeSel.value as SearchMode); render(); });
+  modeSel?.addEventListener("change", () => {
+    setSearchMode(modeSel.value as SearchMode);
+    render();
+  });
 
   const insensitive = $("searchCaseInsensitive");
   const sensitive = $("searchCaseSensitive");

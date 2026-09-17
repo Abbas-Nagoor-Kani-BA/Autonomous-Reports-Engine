@@ -19,7 +19,9 @@ a `static deps` array of tokens:
 ```ts
 export class PullService {
   static readonly deps = [RUN_SCOPE_FACTORY, SETTINGS_REPO, DATASET_REPO, RUN_STATE_REPO] as const;
-  constructor(scopeFactory, settings, dataset, runState) { /* ... */ }
+  constructor(scopeFactory, settings, dataset, runState) {
+    /* ... */
+  }
 }
 ```
 
@@ -51,5 +53,6 @@ Per-surface registration functions bind the graph:
 A surface builds its container from these, then constructs its composition root.
 
 ---
+
 Related: [Architecture](Architecture) · [Testing](Testing) ·
 [Authentication Chain](Authentication-Chain)

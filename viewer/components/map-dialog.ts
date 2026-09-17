@@ -57,7 +57,7 @@ const NOT_EXPORTED = "— not exported —";
  *   which would silently overwrite cells in the exported workbook
  */
 export class MapDialog extends Component<MapDialogState, ComponentProps, MapDialogDeps> {
-  protected declare refs: MapDialogRefs;
+  declare protected refs: MapDialogRefs;
 
   protected initialState(): MapDialogState {
     return { mapping: {}, query: "", letterQuery: "", targetFid: null };
@@ -91,7 +91,12 @@ export class MapDialog extends Component<MapDialogState, ComponentProps, MapDial
 
     if (mappingChanged) this.syncRowButtons(next.mapping);
     if (!prev || next.query !== prev.query || mappingChanged) this.applyFilter(next.query);
-    if (mappingChanged || !prev || next.letterQuery !== prev.letterQuery || next.targetFid !== prev.targetFid) {
+    if (
+      mappingChanged ||
+      !prev ||
+      next.letterQuery !== prev.letterQuery ||
+      next.targetFid !== prev.targetFid
+    ) {
       this.buildLetterOptions(next);
     }
   }
@@ -227,7 +232,8 @@ export class MapDialog extends Component<MapDialogState, ComponentProps, MapDial
       if (q && !letter.toLowerCase().startsWith(q)) continue;
       const holderFid = holders[letter];
       // A column held by the field being edited is not "taken" — it is current.
-      const holder = holderFid && holderFid !== state.targetFid ? this.deps.fieldLabel(holderFid) : null;
+      const holder =
+        holderFid && holderFid !== state.targetFid ? this.deps.fieldLabel(holderFid) : null;
       add(letter, letter, holder);
     }
   }

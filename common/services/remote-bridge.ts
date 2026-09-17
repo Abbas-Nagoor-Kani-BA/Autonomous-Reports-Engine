@@ -1,6 +1,13 @@
 import { MSG } from "../../lib/keys.ts";
 import { broadcast } from "../../lib/storage.ts";
-import type { MsgCount, MsgProgress, MsgResolveScope, MsgResolveGroupMembers, MsgResolveGroupCis, MsgRun } from "../../types/global.d.ts";
+import type {
+  MsgCount,
+  MsgProgress,
+  MsgResolveScope,
+  MsgResolveGroupMembers,
+  MsgResolveGroupCis,
+  MsgRun
+} from "../../types/global.d.ts";
 
 /*
  * Page-side proxy for the service worker's message API.
@@ -61,7 +68,9 @@ export class RemoteBridge {
    * Uses the callback form so `chrome.runtime.lastError` is checked in one
    * place; pages that awaited a raw sendMessage would miss it.
    */
-  private request(msg: MsgCount | MsgRun | MsgResolveScope | MsgResolveGroupMembers | MsgResolveGroupCis): Promise<unknown> {
+  private request(
+    msg: MsgCount | MsgRun | MsgResolveScope | MsgResolveGroupMembers | MsgResolveGroupCis
+  ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(msg, (res: unknown) => {
         if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
@@ -94,8 +103,13 @@ export class RemoteBridge {
    * "resolve members" button. Reply carries a `truncated` flag when the group
    * exceeded the single-page read.
    */
-  resolveGroupMembers(req: Omit<MsgResolveGroupMembers, "type">): Promise<ResolveGroupMembersReply> {
-    return this.request({ type: MSG.resolveGroupMembers, ...req }) as Promise<ResolveGroupMembersReply>;
+  resolveGroupMembers(
+    req: Omit<MsgResolveGroupMembers, "type">
+  ): Promise<ResolveGroupMembersReply> {
+    return this.request({
+      type: MSG.resolveGroupMembers,
+      ...req
+    }) as Promise<ResolveGroupMembersReply>;
   }
 
   /**

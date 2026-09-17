@@ -93,7 +93,9 @@ export class ClassificationCacheStore implements ClassificationCacheRepository {
     this.db = db;
   }
 
-  private disabled(): boolean { return this.db === null; }
+  private disabled(): boolean {
+    return this.db === null;
+  }
 
   private entries(): IdbStore {
     if (!this.db) throw new Error("classification cache unavailable: no IndexedDB");

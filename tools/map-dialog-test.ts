@@ -57,25 +57,31 @@ function mount() {
   let resets = 0;
   const statuses: { message: string; isError?: boolean }[] = [];
 
-  const dialog = new MapDialog($("mapModal"), {}, {
-    search: el<HTMLInputElement>("mapSearch"),
-    list: $("mapList"),
-    letterPop,
-    letterSearch: el<HTMLInputElement>("letterSearch"),
-    letterList: $("letterList"),
-    groups: GROUPS,
-    fieldLabel: (fid) => ({ "#row": "Row number", number: "Number", shortDescription: "Short description" })[fid] ?? "",
-    status: (message, isError) => statuses.push({ message, isError }),
-    onSave: async (mapping) => saved.push(mapping),
-    onReset: async () => {
-      resets++;
+  const dialog = new MapDialog(
+    $("mapModal"),
+    {},
+    {
+      search: el<HTMLInputElement>("mapSearch"),
+      list: $("mapList"),
+      letterPop,
+      letterSearch: el<HTMLInputElement>("letterSearch"),
+      letterList: $("letterList"),
+      groups: GROUPS,
+      fieldLabel: (fid) =>
+        ({ "#row": "Row number", number: "Number", shortDescription: "Short description" })[fid] ??
+        "",
+      status: (message, isError) => statuses.push({ message, isError }),
+      onSave: async (mapping) => saved.push(mapping),
+      onReset: async () => {
+        resets++;
+      }
     }
-  });
+  );
 
   const rows = () => [...win.document.querySelectorAll("#mapList .mapRow")] as HTMLElement[];
-  const rowFor = (fid: string) =>
-    rows().find((r) => r.dataset.fid === fid) as HTMLElement;
-  const options = () => [...win.document.querySelectorAll("#letterList .letterOpt")] as HTMLElement[];
+  const rowFor = (fid: string) => rows().find((r) => r.dataset.fid === fid) as HTMLElement;
+  const options = () =>
+    [...win.document.querySelectorAll("#letterList .letterOpt")] as HTMLElement[];
 
   return { $, dialog, letterPop, saved, statuses, resets: () => resets, rows, rowFor, options };
 }
@@ -86,8 +92,14 @@ test("show renders one row per field with its current column", () => {
 
   assert.equal(rows().length, 3);
   assert.equal(rowFor("number").querySelector(".mapPick")?.textContent, "C");
-  assert.equal(rowFor("shortDescription").querySelector(".mapPick")?.textContent, "— not exported —");
-  assert.equal(rowFor("shortDescription").querySelector(".mapPick")?.classList.contains("set"), false);
+  assert.equal(
+    rowFor("shortDescription").querySelector(".mapPick")?.textContent,
+    "— not exported —"
+  );
+  assert.equal(
+    rowFor("shortDescription").querySelector(".mapPick")?.classList.contains("set"),
+    false
+  );
 });
 
 test("show drops unknown fields and out-of-range columns", () => {
@@ -129,8 +141,9 @@ test("clicking a field opens the column picker for it", () => {
   const { dialog, letterPop, rowFor, options } = mount();
   dialog.show(null, DEFAULTS);
 
-  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   assert.equal(letterPop.isOpen(), true);
   assert.equal(options().length, 41, "— not exported — plus columns A..AN");
@@ -153,8 +166,9 @@ test("columns held by another field are marked taken and named", () => {
   const { dialog, rowFor, options } = mount();
   dialog.show({ "#row": "A", number: "B" }, DEFAULTS);
 
-  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   const a = options().find((o) => o.textContent?.startsWith("A")) as HTMLElement;
   assert.ok(a.classList.contains("taken"), "column A is taken");
@@ -165,8 +179,9 @@ test("the column the field already holds is not marked taken", () => {
   const { dialog, rowFor, options } = mount();
   dialog.show({ number: "B" }, DEFAULTS);
 
-  (rowFor("number").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("number").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   const b = options().find((o) => o.textContent === "B") as HTMLElement;
   assert.equal(b.classList.contains("taken"), false, "its own column is current, not taken");
@@ -176,8 +191,9 @@ test("picking a column evicts the field that held it", () => {
   const { dialog, rowFor, options } = mount();
   dialog.show({ "#row": "A", number: "B" }, DEFAULTS);
 
-  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   const b = options().find((o) => o.textContent?.startsWith("B")) as HTMLElement;
   b.dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
@@ -191,8 +207,9 @@ test("picking the clear entry removes the field from the mapping", () => {
   const { dialog, rowFor, options } = mount();
   dialog.show({ number: "B" }, DEFAULTS);
 
-  (rowFor("number").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("number").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   (options()[0] as HTMLElement).dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
 
@@ -204,8 +221,9 @@ test("typing in the column picker narrows the columns", () => {
   const { dialog, $, rowFor, options } = mount();
   dialog.show(null, DEFAULTS);
 
-  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   const search = $("letterSearch") as HTMLInputElement;
   search.value = "ab";
@@ -219,8 +237,9 @@ test("Enter in the column picker commits the first option", () => {
   const { dialog, $, rowFor } = mount();
   dialog.show(null, DEFAULTS);
 
-  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement)
-    .dispatchEvent(new win.MouseEvent("click", { bubbles: true, cancelable: true }));
+  (rowFor("shortDescription").querySelector(".mapPick") as HTMLElement).dispatchEvent(
+    new win.MouseEvent("click", { bubbles: true, cancelable: true })
+  );
 
   ($("letterSearch") as HTMLInputElement).dispatchEvent(
     new win.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })
@@ -289,5 +308,5 @@ test("reset clears the stored mapping and restores the defaults", async () => {
   assert.equal(resets(), 1);
   assert.equal(rowFor("#row").querySelector(".mapPick")?.textContent, "A");
   assert.equal(rowFor("number").querySelector(".mapPick")?.textContent, "B");
-  assert.match(statuses.length === 0 ? "" : statuses.at(-1)?.message ?? "", /^$|^Mapping reset/);
+  assert.match(statuses.length === 0 ? "" : (statuses.at(-1)?.message ?? ""), /^$|^Mapping reset/);
 });

@@ -36,6 +36,7 @@ times against ServiceNow's display values. It needs live credentials, which is
 why it is a `-check` (not part of the offline `npm test`). See [Testing](Testing).
 
 ---
+
 Related: [Why Time Conversions](Why-Time-Conversions) ·
 [Timeline and SLA Rules](Timeline-and-SLA-Rules) ·
 [Export Internals](Export-Internals) · [Calclens](Calclens)

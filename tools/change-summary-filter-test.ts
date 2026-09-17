@@ -119,12 +119,9 @@ test("encode is byte-identical to legacy for empty conditions (with groupNames)"
 test("encode appends an extra condition after the date anchor", () => {
   const w = defaultChangeSummaryWindows(FIXED);
   const weeks = weekRanges(FIXED);
-  w.lastWeek.conditions = [
-    { join: "AND", field: "state", oper: "eq", value: "3", value2: "" }
-  ];
+  w.lastWeek.conditions = [{ join: "AND", field: "state", oper: "eq", value: "3", value2: "" }];
 
-  const expected =
-    legacyLastWeek(weeks.last.from, weeks.last.to, []) + "^state=3";
+  const expected = legacyLastWeek(weeks.last.from, weeks.last.to, []) + "^state=3";
   assert.equal(encodeChangeSummaryWindow(w.lastWeek, []), expected);
 });
 
@@ -137,7 +134,6 @@ test("encode joins a second extra condition with ^OR when join is OR", () => {
   ];
 
   const expected =
-    legacyNextWeek(weeks.current.from, weeks.current.to, ["Grp"]) +
-    "^state=2^ORpriority=1";
+    legacyNextWeek(weeks.current.from, weeks.current.to, ["Grp"]) + "^state=2^ORpriority=1";
   assert.equal(encodeChangeSummaryWindow(w.nextWeek, ["Grp"]), expected);
 });

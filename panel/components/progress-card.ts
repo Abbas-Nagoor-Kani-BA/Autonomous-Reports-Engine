@@ -46,7 +46,7 @@ const fmtNum = (n: number): string => Number(n || 0).toLocaleString("en-US");
  * caller only reports what happened — it never has to compute a width.
  */
 export class ProgressCard extends Component<ProgressCardState, ComponentProps> {
-  protected declare refs: ProgressCardRefs;
+  declare protected refs: ProgressCardRefs;
 
   constructor(root: HTMLElement, props: ComponentProps = {}) {
     super(root, props, {});
@@ -99,7 +99,15 @@ export class ProgressCard extends Component<ProgressCardState, ComponentProps> {
 
   /** Shows the card in its starting state. */
   begin(label = "Starting\u2026"): void {
-    this.setState({ visible: true, percent: 4, tone: "pending", stage: "", label, pulled: null, planned: null });
+    this.setState({
+      visible: true,
+      percent: 4,
+      tone: "pending",
+      stage: "",
+      label,
+      pulled: null,
+      planned: null
+    });
   }
 
   /** Hides the card again. */
@@ -133,7 +141,14 @@ export class ProgressCard extends Component<ProgressCardState, ComponentProps> {
     }
 
     if (msg.stage === "done") {
-      this.setState({ percent: 100, tone: "good", stage: "done", label: detail, pulled: null, planned: null });
+      this.setState({
+        percent: 100,
+        tone: "good",
+        stage: "done",
+        label: detail,
+        pulled: null,
+        planned: null
+      });
       return "success";
     }
 
@@ -148,7 +163,12 @@ export class ProgressCard extends Component<ProgressCardState, ComponentProps> {
     return "info";
   }
 
-  protected percentFor(stage: string, detail: string, pulled: number | null, planned: number | null): number {
+  protected percentFor(
+    stage: string,
+    detail: string,
+    pulled: number | null,
+    planned: number | null
+  ): number {
     if (stage === "phase1" && pulled !== null && planned) {
       return STAGE_BASE.phase1 + Math.min(1, pulled / planned) * 40;
     }

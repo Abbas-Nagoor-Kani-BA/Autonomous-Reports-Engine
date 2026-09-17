@@ -19,14 +19,18 @@ const fakeChrome = {
       if (fakeChrome.runtime.lastError) {
         cb?.(undefined);
       } else {
-        cb?.(({ ok: true, echoed: msg } as unknown));
+        cb?.({ ok: true, echoed: msg } as unknown);
       }
       return Promise.resolve();
     }
   }
 };
 
-Object.defineProperty(globalThis, "chrome", { value: fakeChrome, configurable: true, writable: true });
+Object.defineProperty(globalThis, "chrome", {
+  value: fakeChrome,
+  configurable: true,
+  writable: true
+});
 
 function deliver(msg: Record<string, unknown>): void {
   for (const fn of listeners) fn(msg);
@@ -97,7 +101,10 @@ test("run forwards changeSummaryWindows in the RUN message when provided", async
 
 test("resolveScope sends RESOLVE_SCOPE and resolves with the reply", async () => {
   const bridge = new RemoteBridge();
-  const res = await bridge.resolveScope({ instanceUrl: "https://x.service-now.com", currentUserId: "u1" });
+  const res = await bridge.resolveScope({
+    instanceUrl: "https://x.service-now.com",
+    currentUserId: "u1"
+  });
   assert.equal(res.ok, true);
   assert.deepEqual(sent[sent.length - 1], {
     type: MSG.resolveScope,
@@ -121,7 +128,10 @@ test("resolveScope rejects when chrome.runtime.lastError is set", async () => {
 
 test("resolveGroupMembers sends RESOLVE_GROUP_MEMBERS with the group and resolves", async () => {
   const bridge = new RemoteBridge();
-  const res = await bridge.resolveGroupMembers({ instanceUrl: "https://x.service-now.com", group: "Network Ops" });
+  const res = await bridge.resolveGroupMembers({
+    instanceUrl: "https://x.service-now.com",
+    group: "Network Ops"
+  });
   assert.equal(res.ok, true);
   assert.deepEqual(sent[sent.length - 1], {
     type: MSG.resolveGroupMembers,
@@ -132,7 +142,10 @@ test("resolveGroupMembers sends RESOLVE_GROUP_MEMBERS with the group and resolve
 
 test("resolveGroupCis sends RESOLVE_GROUP_CIS with the group and resolves", async () => {
   const bridge = new RemoteBridge();
-  const res = await bridge.resolveGroupCis({ instanceUrl: "https://x.service-now.com", group: "Network Ops" });
+  const res = await bridge.resolveGroupCis({
+    instanceUrl: "https://x.service-now.com",
+    group: "Network Ops"
+  });
   assert.equal(res.ok, true);
   assert.deepEqual(sent[sent.length - 1], {
     type: MSG.resolveGroupCis,

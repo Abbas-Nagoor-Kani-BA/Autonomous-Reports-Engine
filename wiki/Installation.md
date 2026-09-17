@@ -57,5 +57,6 @@ For the development loop, `npm run dev` builds to `dev/` and rebuilds on change;
 load `dev/` instead. Both `dev/` and `dist/` are gitignored.
 
 ---
+
 Related: [Quick Start](Quick-Start) · [Configuration](Configuration) ·
 [Building and Running](Building-and-Running)

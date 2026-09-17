@@ -107,5 +107,6 @@ formatted rows into your Monthly Status Report sheet without overwriting its
 history — see [Export](Export).
 
 ---
+
 Related: [Calclens](Calclens) · [Classification](Classification) ·
 [Export](Export) · [Timezone Contract](Timezone-Contract)

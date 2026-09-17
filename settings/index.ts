@@ -56,7 +56,10 @@ export type SettingsWiring = {
   msrFieldIds: { lists: [string, string][]; rootCause: [string, string][] };
 };
 
-export function createSettings(hooks?: { onSettingsChange?: () => void; onMsrChange?: () => void }): SettingsWiring {
+export function createSettings(hooks?: {
+  onSettingsChange?: () => void;
+  onMsrChange?: () => void;
+}): SettingsWiring {
   const container = registerCoreRepositories(new Container());
   container.registerClass(REMOTE_BRIDGE, RemoteBridge, { singleton: true });
 
@@ -70,7 +73,11 @@ export function createSettings(hooks?: { onSettingsChange?: () => void; onMsrCha
   const onMsrChange = hooks?.onMsrChange;
 
   const chip = (id: string, change?: () => void, collapsible = true): ChipList =>
-    new ChipList($(id), { on: { change } }, { collapsible, placeholder: "One value per line — commas/semicolons also split" });
+    new ChipList(
+      $(id),
+      { on: { change } },
+      { collapsible, placeholder: "One value per line — commas/semicolons also split" }
+    );
 
   const chips: Record<string, ChipList> = {
     queues: chip("queuesChips", onSettingsChange),
@@ -100,7 +107,7 @@ export function createSettings(hooks?: { onSettingsChange?: () => void; onMsrCha
  *  resolution label (keyword hints are keyed by label name). */
 function kwLabels(lists: Record<string, any>): string[] {
   const out: string[] = [];
-  const rc = ((lists.rootCause as Record<string, any>) || {});
+  const rc = (lists.rootCause as Record<string, any>) || {};
   for (const t of ["Incident", "RFS", "P_Ticket"]) {
     for (const label of rc[t] || []) {
       if (typeof label === "string" && !out.includes(label)) out.push(label);
@@ -121,15 +128,21 @@ export function rebuildKeywordChips(wiring: SettingsWiring, lists: Record<string
   for (const label of wanted) {
     if (wiring.kwChips[label]) continue;
     const tile = el("div", "msrTile");
-    tile.append(el("label", "block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5", label));
+    tile.append(
+      el("label", "block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5", label)
+    );
     const body = el("div");
     tile.appendChild(body);
     stack.appendChild(tile);
     wiring.kwTiles[label] = tile;
-    wiring.kwChips[label] = new ChipList(body, { on: { change: wiring.onMsrChange || undefined } }, {
-      collapsible: true,
-      placeholder: "One keyword per line — commas/semicolons also split"
-    });
+    wiring.kwChips[label] = new ChipList(
+      body,
+      { on: { change: wiring.onMsrChange || undefined } },
+      {
+        collapsible: true,
+        placeholder: "One keyword per line — commas/semicolons also split"
+      }
+    );
   }
   for (const label of Object.keys(wiring.kwChips)) {
     if (wanted.has(label)) continue;
@@ -155,7 +168,10 @@ export function fillMsrLists(wiring: SettingsWiring, lists: Record<string, any>)
   }
 }
 
-export function collectMsrLists(wiring: SettingsWiring): { version: number; lists: Record<string, any> } {
+export function collectMsrLists(wiring: SettingsWiring): {
+  version: number;
+  lists: Record<string, any>;
+} {
   const lists: Record<string, any> = {};
   for (const [key, id] of MSR_LIST_FIELDS) lists[key] = wiring.chips[id].getValues();
   const rootCause: Record<string, string[]> = {};

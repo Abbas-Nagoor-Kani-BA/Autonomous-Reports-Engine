@@ -44,12 +44,18 @@ export const chrome = {
     }
   },
   runtime: {
-    onMessage: { addListener: fn => messageListeners.add(fn) },
-    sendMessage: msg => { sentMessages.push(msg); return Promise.resolve(); },
-    getURL: p => "chrome-extension://test/" + p
+    onMessage: { addListener: (fn) => messageListeners.add(fn) },
+    sendMessage: (msg) => {
+      sentMessages.push(msg);
+      return Promise.resolve();
+    },
+    getURL: (p) => "chrome-extension://test/" + p
   },
   downloads: {
-    download: (options, cb) => { downloads.push(options); if (cb) cb(); }
+    download: (options, cb) => {
+      downloads.push(options);
+      if (cb) cb();
+    }
   },
   sidePanel: { setPanelBehavior: async () => {} }
 };
@@ -71,40 +77,51 @@ if (!win.HTMLCollection.prototype[Symbol.iterator]) {
 if (!("rows" in win.HTMLTableSectionElement.prototype)) {
   Object.defineProperty(win.HTMLTableSectionElement.prototype, "rows", {
     get() {
-      return Array.from(this.children).filter(c => c.tagName === "TR");
+      return Array.from(this.children).filter((c) => c.tagName === "TR");
     },
     configurable: true
   });
 }
 globalThis.HTMLCollection = win.HTMLCollection;
-globalThis.CSS = win.CSS ?? { escape: s => String(s).replace(/[^\w-]/g, c => "\\" + c) };
+globalThis.CSS = win.CSS ?? { escape: (s) => String(s).replace(/[^\w-]/g, (c) => "\\" + c) };
 globalThis.customElements = win.customElements;
 globalThis.getComputedStyle = win.getComputedStyle.bind(win);
-globalThis.requestAnimationFrame = cb => setTimeout(cb, 0);
-globalThis.cancelAnimationFrame = id => clearTimeout(id);
+globalThis.requestAnimationFrame = (cb) => setTimeout(cb, 0);
+globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 let lastCopied = null;
 let clipboardText = null;
 Object.defineProperty(win.navigator, "clipboard", {
   value: {
-    writeText: async t => { lastCopied = t; },
+    writeText: async (t) => {
+      lastCopied = t;
+    },
     readText: async () => clipboardText
   },
   configurable: true
 });
-export function getLastCopied() { return lastCopied; }
-export function setClipboardText(t) { clipboardText = t; }
-export function clearClipboardText() { clipboardText = null; }
+export function getLastCopied() {
+  return lastCopied;
+}
+export function setClipboardText(t) {
+  clipboardText = t;
+}
+export function clearClipboardText() {
+  clipboardText = null;
+}
 globalThis.chrome = chrome;
 
 export function getDownloads() {
-  return downloads.map(d => ({ filename: d.filename, url: d.url, saveAs: d.saveAs }));
+  return downloads.map((d) => ({ filename: d.filename, url: d.url, saveAs: d.saveAs }));
 }
 export function clearDownloads() {
   downloads.length = 0;
 }
 
 export function seed(key, value) {
-  if (value === undefined) { store.delete(key); return; }
+  if (value === undefined) {
+    store.delete(key);
+    return;
+  }
   store.set(key, typeof value === "string" ? value : JSON.parse(JSON.stringify(value)));
 }
 export function seedAll(obj) {
@@ -118,7 +135,7 @@ export function sentMessagesList() {
   return sentMessages;
 }
 export async function flush(times = 4) {
-  for (let i = 0; i < times; i++) await new Promise(r => setTimeout(r, 0));
+  for (let i = 0; i < times; i++) await new Promise((r) => setTimeout(r, 0));
 }
 
 const SKELETON = `

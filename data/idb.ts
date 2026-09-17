@@ -67,7 +67,11 @@ export function createIdbDatabase(
    * which cursors must, since walking them happens in `onsuccess`. Assigning
    * `onsuccess` here for those would clobber the walk and silently no-op.
    */
-  const tx = <T>(storeName: string, mode: IDBTransactionMode, fn: (store: any) => any): Promise<T> =>
+  const tx = <T>(
+    storeName: string,
+    mode: IDBTransactionMode,
+    fn: (store: any) => any
+  ): Promise<T> =>
     open().then(
       (db) =>
         new Promise<T>((resolve, reject) => {
@@ -76,7 +80,11 @@ export function createIdbDatabase(
           let getResult: (() => T) | undefined;
 
           const returned = fn(transaction.objectStore(storeName));
-          if (returned && typeof returned === "object" && typeof returned.getResult === "function") {
+          if (
+            returned &&
+            typeof returned === "object" &&
+            typeof returned.getResult === "function"
+          ) {
             getResult = returned.getResult;
           } else if (returned && typeof returned === "object" && "onsuccess" in returned) {
             returned.onsuccess = () => {

@@ -2,7 +2,12 @@ import { loadOnce } from "../lib/storage.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { MlModelStore, specForModelId } from "../data/ml-model-repository.ts";
 import { dataStore, getMsrLists } from "./store.ts";
-import { msrType, rootCauseFor, normResolution, isClassifyEligible } from "../core/classification/msrchoices.ts";
+import {
+  msrType,
+  rootCauseFor,
+  normResolution,
+  isClassifyEligible
+} from "../core/classification/msrchoices.ts";
 import { categorizeField } from "../core/classification/msrcategorize.ts";
 
 /*
@@ -25,7 +30,11 @@ import { categorizeField } from "../core/classification/msrcategorize.ts";
  * beyond reading the persisted settings once.
  */
 
-type SettingsMl = { mode?: "heuristic" | "ml" | "hybrid"; modelId?: string; cacheEnabled?: boolean };
+type SettingsMl = {
+  mode?: "heuristic" | "ml" | "hybrid";
+  modelId?: string;
+  cacheEnabled?: boolean;
+};
 
 export type ClassifyRun = {
   total: number;
@@ -149,8 +158,8 @@ function hashStr(s: string, prefix: string): string {
  *  against (root-cause buckets + resolution + per-label keyword hints), so an
  *  edited list is detected. */
 export function classificationListsFp(lists: unknown): string {
-  const rc = ((lists as any)?.rootCause) || {};
-  const hints = ((lists as any)?.hints) || {};
+  const rc = (lists as any)?.rootCause || {};
+  const hints = (lists as any)?.hints || {};
   const parts: unknown[][] = [
     rc.Incident || [],
     rc.RFS || [],
@@ -160,7 +169,9 @@ export function classificationListsFp(lists: unknown): string {
   const hintParts = Object.keys(hints)
     .sort()
     .map((k) => `${k}=${((hints as any)[k] || []).join("\u0000")}`);
-  const joined = [...parts.map((arr) => arr.join("\u0000")), hintParts.join("\u0001")].join("\u0002");
+  const joined = [...parts.map((arr) => arr.join("\u0000")), hintParts.join("\u0001")].join(
+    "\u0002"
+  );
   return hashStr(joined, "lists");
 }
 
@@ -183,7 +194,13 @@ function alreadyClassified(row: Record<string, any>, notes: string, fp?: string)
 
 /** Maps a heuristic stage to the source string stamped on a classified cell. */
 function sourceFor(level: "regex" | "keyword" | "cosine" | null): string {
-  return level === "regex" ? "regex" : level === "keyword" ? "keyword" : level === "cosine" ? "cosine" : "heuristic";
+  return level === "regex"
+    ? "regex"
+    : level === "keyword"
+      ? "keyword"
+      : level === "cosine"
+        ? "cosine"
+        : "heuristic";
 }
 
 function deterministicPass(
@@ -230,8 +247,18 @@ function deterministicPass(
       continue;
     }
 
-    const result = categorizeField(input.notes, ["rootCauseCategory"], input.rootCauseLabels, getMsrLists().hints);
-    const solution = categorizeField(input.notes, ["resolutionType"], input.resolutionLabels, getMsrLists().hints);
+    const result = categorizeField(
+      input.notes,
+      ["rootCauseCategory"],
+      input.rootCauseLabels,
+      getMsrLists().hints
+    );
+    const solution = categorizeField(
+      input.notes,
+      ["resolutionType"],
+      input.resolutionLabels,
+      getMsrLists().hints
+    );
 
     let toRootCause = result.label ?? row.rootCause ?? null;
     let toSolution = solution.label ?? row.solutionType ?? null;
@@ -319,12 +346,20 @@ export function resolveApplyCell(
   // Hybrid is non-destructive: never erase an existing value when the worker
   // returned no label for the cell. Keep the current value and its marker.
   if (wValue == null && current.value != null) {
-    return { value: current.value, source: String(current.source || "unrecorded"), confidence: Number(current.confidence) || 0 };
+    return {
+      value: current.value,
+      source: String(current.source || "unrecorded"),
+      confidence: Number(current.confidence) || 0
+    };
   }
   const mlWon = worker.source === "ml";
   const keep = !!current.value && !(current.source === "heuristic" && mlWon);
   if (keep) {
-    return { value: current.value, source: String(current.source || "unrecorded"), confidence: Number(current.confidence) || 0 };
+    return {
+      value: current.value,
+      source: String(current.source || "unrecorded"),
+      confidence: Number(current.confidence) || 0
+    };
   }
   return { value: wValue, source: wSource, confidence: wConf };
 }
@@ -357,12 +392,20 @@ function mlPass(
 
           const applyMode = mode === "fallback" ? "hybrid" : "ml";
           const rc = resolveApplyCell(
-            { value: res.rootCause, source: res.rootCauseSource, confidence: res.rootCauseConfidence },
+            {
+              value: res.rootCause,
+              source: res.rootCauseSource,
+              confidence: res.rootCauseConfidence
+            },
             { value: row.rootCause, source: row.__rcSource, confidence: row.__rcConf },
             applyMode
           );
           const sol = resolveApplyCell(
-            { value: res.solutionType, source: res.solutionSource, confidence: res.solutionConfidence },
+            {
+              value: res.solutionType,
+              source: res.solutionSource,
+              confidence: res.solutionConfidence
+            },
             { value: row.solutionType, source: row.__solSource, confidence: row.__solConf },
             applyMode
           );
@@ -383,7 +426,11 @@ function mlPass(
           tally(stats, done, (preDoneUnclassified || 0) + msg.notClassified, sol.value, rc.value);
         }
         // Live per-ticket progress, with the not-classified tally.
-        cb.onProgress(preDone + msg.done, totalRows, (preDoneUnclassified || 0) + msg.notClassified);
+        cb.onProgress(
+          preDone + msg.done,
+          totalRows,
+          (preDoneUnclassified || 0) + msg.notClassified
+        );
         if (msg.done >= msg.total) {
           w.removeEventListener("message", handler);
           w.terminate();
@@ -444,7 +491,8 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
       classified: d.changed,
       changed: d.changed,
       changedSysIds: d.changedSysIds,
-      notice: "ML model not downloaded — using the built-in scorer. Download it under Settings → Classification."
+      notice:
+        "ML model not downloaded — using the built-in scorer. Download it under Settings → Classification."
     };
   }
 
@@ -466,7 +514,19 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
     cb.onProgress(preDone, total, preDone);
     cb.onStats(stats);
     if (targets.length) {
-      await mlPass(targets, "always", total, preDone, preDone, cb, changedSysIds, stats, modelId, cacheEnabled, fp);
+      await mlPass(
+        targets,
+        "always",
+        total,
+        preDone,
+        preDone,
+        cb,
+        changedSysIds,
+        stats,
+        modelId,
+        cacheEnabled,
+        fp
+      );
     }
     cb.onProgress(total, total, preDone);
     cb.onStats(stats);
@@ -484,7 +544,19 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
     stats.done = preDone;
     stats.notClassified = preDone;
     if (targets.length) {
-      await mlPass(targets, "fallback", total, preDone, preDone, cb, changedSysIds, stats, modelId, cacheEnabled, fp);
+      await mlPass(
+        targets,
+        "fallback",
+        total,
+        preDone,
+        preDone,
+        cb,
+        changedSysIds,
+        stats,
+        modelId,
+        cacheEnabled,
+        fp
+      );
     }
     cb.onProgress(total, total, preDone);
     cb.onStats(stats);
@@ -496,7 +568,13 @@ export async function classifyRows(cb: ClassifyCallbacks): Promise<ClassifyRun> 
   const d = deterministicPass(rows, false, cb, stats, modelId, fp);
   cb.onProgress(total, total, d.notClassified);
   cb.onStats(stats);
-  return { total, withNotes, classified: d.changed, changed: d.changed, changedSysIds: d.changedSysIds };
+  return {
+    total,
+    withNotes,
+    classified: d.changed,
+    changed: d.changed,
+    changedSysIds: d.changedSysIds
+  };
 }
 
 export { hashNotes, alreadyClassified, hasValidRootCause, hasValidSolutionType };

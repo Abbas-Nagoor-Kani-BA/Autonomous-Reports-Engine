@@ -6,7 +6,11 @@ const SOLUTION_WORKAROUND = "Workaround solution";
 /* ------------------------------------------------------------------ */
 
 function normLabel(s: string): string {
-  return String(s).toLowerCase().replace(/[^a-z]+/g, " ").replace(/\s+/g, " ").trim();
+  return String(s)
+    .toLowerCase()
+    .replace(/[^a-z]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // Strip list bullets / numbering: "-", "* ", "3.", "1)", "(2" ...
@@ -18,7 +22,8 @@ function stripPrefix(s: string): string {
 function editDistanceWithin(a: string, b: string, max: number): boolean {
   if (a === b) return true;
   if (Math.abs(a.length - b.length) > max) return false;
-  const m = a.length, n = b.length;
+  const m = a.length,
+    n = b.length;
   let prev = Array.from({ length: n + 1 }, (_, j) => j);
   let cur = new Array(n + 1);
   for (let i = 1; i <= m; i++) {
@@ -37,8 +42,21 @@ type SectionLabel = { key: SectionKey; variants: string[] };
 type SectionKey = "rootCauseCategory" | "resolutionType";
 
 const SECTION_LABELS: SectionLabel[] = [
-  { key: "rootCauseCategory", variants: ["root cause category", "rootcause category", "rca category", "root cause cat"] },
-  { key: "resolutionType", variants: ["resolution type", "resoultion type", "resolution types", "solution type", "resolved type", "resolution status"] }
+  {
+    key: "rootCauseCategory",
+    variants: ["root cause category", "rootcause category", "rca category", "root cause cat"]
+  },
+  {
+    key: "resolutionType",
+    variants: [
+      "resolution type",
+      "resoultion type",
+      "resolution types",
+      "solution type",
+      "resolved type",
+      "resolution status"
+    ]
+  }
 ];
 
 function maxDistFor(variant: string): number {
@@ -106,11 +124,13 @@ function captureFrom(lines: string[], startIdx: number): string {
 // Token-level fuzzy check so misspellings still map onto a known bucket
 // ("Permanant fix" -> permanent, "Work arount" -> workaround).
 function tokensInclude(list: string[], target: string, maxDist: number): boolean {
-  return list.some(t => t === target || editDistanceWithin(t, target, maxDist));
+  return list.some((t) => t === target || editDistanceWithin(t, target, maxDist));
 }
 
 function classifySolution(raw: unknown): string {
-  let s = String(raw ?? "").replace(/\s+/g, " ").trim();
+  let s = String(raw ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!s) return "";
   s = s.replace(/^[:\-)\]]+\s*/, "");
   const tokens = normLabel(s).split(" ").filter(Boolean);
@@ -144,7 +164,11 @@ export type ExtractResult = {
 
 function extractHeuristic(notes: unknown): ExtractResult {
   const text = String(notes ?? "");
-  const out: ExtractResult = { solutionType: "", rootCause: "", confidence: { solutionType: "", rootCause: "" } };
+  const out: ExtractResult = {
+    solutionType: "",
+    rootCause: "",
+    confidence: { solutionType: "", rootCause: "" }
+  };
   if (!text.trim()) return out;
   const lines = text.split(/\r?\n/);
 
@@ -170,10 +194,18 @@ function extractHeuristic(notes: unknown): ExtractResult {
 
   // Fallback 2: prose keywords.
   if (!out.solutionType) {
-    if (/\bpermanen(?:t|tly)\s+(?:fix|resolved|solution)|\bfixed\s+(?:at\s+)?(?:the\s+)?root\b|\bpermanent\s+solution\s+applied\b/i.test(text)) {
+    if (
+      /\bpermanen(?:t|tly)\s+(?:fix|resolved|solution)|\bfixed\s+(?:at\s+)?(?:the\s+)?root\b|\bpermanent\s+solution\s+applied\b/i.test(
+        text
+      )
+    ) {
       out.solutionType = SOLUTION_PERMANENT;
       out.confidence.solutionType = "medium";
-    } else if (/\bwork\s?-?arounds?\b|\btemporary\b|\btemp\s+fix\b|\buntil\s+(?:the\s+)?(?:vendor|patch)\b/i.test(text)) {
+    } else if (
+      /\bwork\s?-?arounds?\b|\btemporary\b|\btemp\s+fix\b|\buntil\s+(?:the\s+)?(?:vendor|patch)\b/i.test(
+        text
+      )
+    ) {
       out.solutionType = SOLUTION_WORKAROUND;
       out.confidence.solutionType = "medium";
     }

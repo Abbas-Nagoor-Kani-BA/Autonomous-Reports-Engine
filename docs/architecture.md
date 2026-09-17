@@ -74,14 +74,14 @@ wiring to a viewer module re-introduces the invisible ordering this replaced.
 
 ## Layering rules
 
-| Layer | May use | Must never |
-|---|---|---|
-| `core/` | only `core/` | `chrome.*`, `indexedDB`, `fetch`, DOM |
-| `lib/` | `core/` | other layers |
-| `data/` | `core/`, `lib/`, platform APIs | DOM, `services/`, `common/`, surfaces |
-| `services/` | `core/`, `lib/`, `data/` | DOM, `common/components/` |
-| `common/components/` | `core/`, `lib/`, services via `deps` | repositories, `chrome.*`, `indexedDB`, `fetch` |
-| `viewer/`, `panel/`, `settings/` | everything | containing business logic |
+| Layer                            | May use                              | Must never                                     |
+| -------------------------------- | ------------------------------------ | ---------------------------------------------- |
+| `core/`                          | only `core/`                         | `chrome.*`, `indexedDB`, `fetch`, DOM          |
+| `lib/`                           | `core/`                              | other layers                                   |
+| `data/`                          | `core/`, `lib/`, platform APIs       | DOM, `services/`, `common/`, surfaces          |
+| `services/`                      | `core/`, `lib/`, `data/`             | DOM, `common/components/`                      |
+| `common/components/`             | `core/`, `lib/`, services via `deps` | repositories, `chrome.*`, `indexedDB`, `fetch` |
+| `viewer/`, `panel/`, `settings/` | everything                           | containing business logic                      |
 
 ## Download path (MV3 constraint)
 

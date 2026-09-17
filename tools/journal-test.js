@@ -5,7 +5,9 @@ let failed = 0;
 function check(name, got, want) {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) failed++;
-  console.log(`  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`);
+  console.log(
+    `  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`
+  );
 }
 console.log("== parseEntries ==");
 const blob = `2026-08-20 09:14:02 - john.doe (Work notes)
@@ -19,8 +21,11 @@ check("first entry author cleaned", parsed[0].author, "john.doe (Work notes)");
 check("first entry time", parsed[0].time, "2026-08-20 09:14:02");
 check("multi-line body preserved", parsed[1].text, "Monitoring.");
 check("empty blob", Journal.parseEntries("", "X"), []);
-check("leading orphan line becomes single entry",
-  Journal.parseEntries("just some text", "X")[0].text, "just some text");
+check(
+  "leading orphan line becomes single entry",
+  Journal.parseEntries("just some text", "X")[0].text,
+  "just some text"
+);
 
 console.log("\n== cleanAuthor / authorInitials ==");
 check("strips field suffix", Journal.cleanAuthor("john.doe (Work notes)"), "john doe");
@@ -38,18 +43,40 @@ const row = {
   comments: `2026-08-21 08:00:00 - jane.smith\nUser confirmed fix.`,
   closeNotes: "Root cause: stale cache."
 };
-const entries = Journal.build(row, ms => Date.parse(ms.replace(/(\d{2})-(\d{2})-(\d{4})/, "$3-$2-$1")));
+const entries = Journal.build(row, (ms) =>
+  Date.parse(ms.replace(/(\d{2})-(\d{2})-(\d{4})/, "$3-$2-$1"))
+);
 check("work notes + comment + resolution", entries.length, 4);
-check("classes assigned", entries.map(e => e.cls), ["wn", "wn", "cm", "rn"]);
-const rn = entries.find(e => e.cls === "rn");
+check(
+  "classes assigned",
+  entries.map((e) => e.cls),
+  ["wn", "wn", "cm", "rn"]
+);
+const rn = entries.find((e) => e.cls === "rn");
 check("resolution note stamped from resolvedAt", rn.sort.length >= 19, true);
-check("summary NOT part of stream", entries.some(e => e.cls === "sum"), false);
+check(
+  "summary NOT part of stream",
+  entries.some((e) => e.cls === "sum"),
+  false
+);
 
 console.log("\n== group (same author + same time merge) ==");
 const stream = [
   { cls: "wn", label: "Work note", author: "GM", time: "24-08-2026 18:04:41", sort: "2026-08-24" },
-  { cls: "cm", label: "Customer comment", author: "GM", time: "24-08-2026 18:04:41", sort: "2026-08-24" },
-  { cls: "cm", label: "Customer comment", author: "jane.smith", time: "21-08-2026 08:00:00", sort: "2026-08-21" }
+  {
+    cls: "cm",
+    label: "Customer comment",
+    author: "GM",
+    time: "24-08-2026 18:04:41",
+    sort: "2026-08-24"
+  },
+  {
+    cls: "cm",
+    label: "Customer comment",
+    author: "jane.smith",
+    time: "21-08-2026 08:00:00",
+    sort: "2026-08-21"
+  }
 ];
 const groups = Journal.group(stream);
 check("same-time posts merged into one card", groups.length, 2);

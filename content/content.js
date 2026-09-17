@@ -3,7 +3,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type !== "SN_FETCH") return false;
   (async () => {
     try {
-      const headers = { "Accept": "application/json" };
+      const headers = { Accept: "application/json" };
       let token = msg.token || null;
       let source = token ? "cookie-from-background" : null;
       if (!token && typeof g_ck === "string" && g_ck) {

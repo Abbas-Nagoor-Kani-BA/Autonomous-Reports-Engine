@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 
 import { createMemoryDatabase } from "../data/idb.ts";
 import { FakeSnRemote } from "../data/datasource/sn-remote.ts";
-import { CachedTicketRepository, isFreshQuery, queryKey } from "../data/repositories/ticket-repository.ts";
+import {
+  CachedTicketRepository,
+  isFreshQuery,
+  queryKey
+} from "../data/repositories/ticket-repository.ts";
 import {
   CachedTimelineRepository,
   timelineNeedsFetch
@@ -36,10 +40,17 @@ test("isFreshQuery follows the documented rules", () => {
 
   assert.equal(isFreshQuery(null), false, "no entry");
   assert.equal(isFreshQuery({ at: now - 1000, records: [1] } as never, now), true, "fresh");
-  assert.equal(isFreshQuery({ at: now - ttl, records: [1] } as never, now), false, "exactly at the TTL is stale");
+  assert.equal(
+    isFreshQuery({ at: now - ttl, records: [1] } as never, now),
+    false,
+    "exactly at the TTL is stale"
+  );
   assert.equal(isFreshQuery({ at: now - ttl - 1, records: [1] } as never, now), false, "expired");
   assert.equal(isFreshQuery({ at: now } as never, now), false, "records must be an array");
-  assert.equal(new CachedTicketRepository(new FakeSnRemote(), createMemoryDatabase()).getQueryTtlMs(), ttl);
+  assert.equal(
+    new CachedTicketRepository(new FakeSnRemote(), createMemoryDatabase()).getQueryTtlMs(),
+    ttl
+  );
 });
 
 test("first list hits the remote and populates the cache", async () => {
@@ -97,7 +108,12 @@ test("purgeExpired drops stale query entries and keeps fresh ones", async () => 
   const { db, repo } = setup(15);
   const store = db.store("queries");
   await store.put("fresh", { at: Date.now(), table: TABLE, query: QUERY, records: [] });
-  await store.put("stale", { at: Date.now() - 20 * 60 * 1000, table: TABLE, query: QUERY, records: [] });
+  await store.put("stale", {
+    at: Date.now() - 20 * 60 * 1000,
+    table: TABLE,
+    query: QUERY,
+    records: []
+  });
 
   await repo.purgeExpired();
 
@@ -109,7 +125,11 @@ test("timelineNeedsFetch follows the documented rules", () => {
   const entry = { at: Date.now(), updatedAt: "2026-01-01 10:00:00", events: [{ field: "state" }] };
 
   assert.equal(timelineNeedsFetch(undefined, "2026-01-01 10:00:00"), true, "no cached entry");
-  assert.equal(timelineNeedsFetch({ ...entry, events: undefined as never }, "x"), true, "events not an array");
+  assert.equal(
+    timelineNeedsFetch({ ...entry, events: undefined as never }, "x"),
+    true,
+    "events not an array"
+  );
   assert.equal(timelineNeedsFetch(entry, ""), false, "no watermark means trust the cache");
   assert.equal(timelineNeedsFetch(entry, "2026-01-02 10:00:00"), true, "ticket newer than cache");
   assert.equal(timelineNeedsFetch(entry, "2025-12-31 10:00:00"), false, "ticket older than cache");
@@ -141,7 +161,8 @@ test("timeline repository reuses cached events and fetches only the rest", async
   assert.equal(result.reused, 1, "only the cached ticket was reused");
   assert.equal(result.fetched, 2, "b and c needed a request");
 
-  const fetchedIds = remote.calls.find((c) => c.method === "fetchTimelineEvents")?.args[0] as string[];
+  const fetchedIds = remote.calls.find((c) => c.method === "fetchTimelineEvents")
+    ?.args[0] as string[];
   assert.deepEqual(fetchedIds, ["b", "c"], "cached ticket is not re-fetched");
 });
 

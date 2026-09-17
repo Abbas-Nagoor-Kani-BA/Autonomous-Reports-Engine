@@ -28,7 +28,8 @@ const row = {
   __dur: "0:30:00"
 };
 
-const opt = (over = {}) => ({ column: "", mode: "contains", caseSensitive: false, ...over } as const);
+const opt = (over = {}) =>
+  ({ column: "", mode: "contains", caseSensitive: false, ...over }) as const;
 
 test("empty query matches everything (no filtering)", () => {
   assert.equal(rowMatches(row, "", opt(), display, COLUMNS), true);
@@ -42,8 +43,14 @@ test("contains, all columns, case-insensitive", () => {
 });
 
 test("case-sensitive respects case", () => {
-  assert.equal(rowMatches(row, "closed", opt({ column: "state", caseSensitive: true }), display, COLUMNS), false);
-  assert.equal(rowMatches(row, "Closed", opt({ column: "state", caseSensitive: true }), display, COLUMNS), true);
+  assert.equal(
+    rowMatches(row, "closed", opt({ column: "state", caseSensitive: true }), display, COLUMNS),
+    false
+  );
+  assert.equal(
+    rowMatches(row, "Closed", opt({ column: "state", caseSensitive: true }), display, COLUMNS),
+    true
+  );
 });
 
 test("single-column scope only searches that column", () => {
@@ -52,18 +59,36 @@ test("single-column scope only searches that column", () => {
 });
 
 test("equals is a full-value match, not substring", () => {
-  assert.equal(rowMatches(row, "Closed", opt({ column: "state", mode: "equals" }), display, COLUMNS), true);
-  assert.equal(rowMatches(row, "Clos", opt({ column: "state", mode: "equals" }), display, COLUMNS), false);
+  assert.equal(
+    rowMatches(row, "Closed", opt({ column: "state", mode: "equals" }), display, COLUMNS),
+    true
+  );
+  assert.equal(
+    rowMatches(row, "Clos", opt({ column: "state", mode: "equals" }), display, COLUMNS),
+    false
+  );
 });
 
 test("does not contain keeps rows where the column lacks the query", () => {
-  assert.equal(rowMatches(row, "Open", opt({ column: "state", mode: "notContains" }), display, COLUMNS), true);
-  assert.equal(rowMatches(row, "Clos", opt({ column: "state", mode: "notContains" }), display, COLUMNS), false);
+  assert.equal(
+    rowMatches(row, "Open", opt({ column: "state", mode: "notContains" }), display, COLUMNS),
+    true
+  );
+  assert.equal(
+    rowMatches(row, "Clos", opt({ column: "state", mode: "notContains" }), display, COLUMNS),
+    false
+  );
 });
 
 test("does not equal keeps rows whose value is not exactly the query", () => {
-  assert.equal(rowMatches(row, "Closed", opt({ column: "state", mode: "notEquals" }), display, COLUMNS), false);
-  assert.equal(rowMatches(row, "Clos", opt({ column: "state", mode: "notEquals" }), display, COLUMNS), true);
+  assert.equal(
+    rowMatches(row, "Closed", opt({ column: "state", mode: "notEquals" }), display, COLUMNS),
+    false
+  );
+  assert.equal(
+    rowMatches(row, "Clos", opt({ column: "state", mode: "notEquals" }), display, COLUMNS),
+    true
+  );
 });
 
 test("all-columns negative mode keeps a row only when NO column matches", () => {
@@ -73,11 +98,29 @@ test("all-columns negative mode keeps a row only when NO column matches", () => 
 });
 
 test("matches DISPLAYED value of derived columns (Type, formatted time, duration)", () => {
-  assert.equal(rowMatches(row, "Incident", opt({ column: "rep:type", mode: "equals" }), display, COLUMNS), true);
-  assert.equal(rowMatches(row, "01-08-2026", opt({ column: "assignTimeUtcIso" }), display, COLUMNS), true);
-  assert.equal(rowMatches(row, "0:30:00", opt({ column: "dur:assignToAckn", mode: "equals" }), display, COLUMNS), true);
+  assert.equal(
+    rowMatches(row, "Incident", opt({ column: "rep:type", mode: "equals" }), display, COLUMNS),
+    true
+  );
+  assert.equal(
+    rowMatches(row, "01-08-2026", opt({ column: "assignTimeUtcIso" }), display, COLUMNS),
+    true
+  );
+  assert.equal(
+    rowMatches(
+      row,
+      "0:30:00",
+      opt({ column: "dur:assignToAckn", mode: "equals" }),
+      display,
+      COLUMNS
+    ),
+    true
+  );
 });
 
 test("selecting a removed column falls back to no filtering", () => {
-  assert.equal(rowMatches(row, "anything", opt({ column: "incidentState" }), display, COLUMNS), true);
+  assert.equal(
+    rowMatches(row, "anything", opt({ column: "incidentState" }), display, COLUMNS),
+    true
+  );
 });

@@ -68,5 +68,6 @@ covers the derived durations; `tools/slasummary-test.js` and
 `tools/report-test.js` cover SLA and report derivation. See [Testing](Testing).
 
 ---
+
 Related: [Two-Phase Pipeline](Two-Phase-Pipeline) ·
 [Timezone Contract](Timezone-Contract) · [Calclens](Calclens)

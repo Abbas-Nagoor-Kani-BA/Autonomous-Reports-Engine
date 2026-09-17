@@ -1,6 +1,13 @@
 import { Container } from "./container.ts";
 import { registerCoreRepositories } from "./register-core.ts";
-import { IDB, RUN_SCOPE_FACTORY, SN_REMOTE, SN_REMOTE_FACTORY, TICKET_REPO, TIMELINE_REPO } from "./tokens.ts";
+import {
+  IDB,
+  RUN_SCOPE_FACTORY,
+  SN_REMOTE,
+  SN_REMOTE_FACTORY,
+  TICKET_REPO,
+  TIMELINE_REPO
+} from "./tokens.ts";
 
 import { createIdbDatabase } from "../data/idb.ts";
 import { CachedTicketRepository } from "../data/repositories/ticket-repository.ts";

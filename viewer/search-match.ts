@@ -56,9 +56,7 @@ export function rowMatches(
 
   const negative = NEGATIVE.has(opts.mode);
 
-  const targets = opts.column
-    ? columns.filter(([k]) => k === opts.column)
-    : columns;
+  const targets = opts.column ? columns.filter(([k]) => k === opts.column) : columns;
   // A column that no longer exists (e.g. removed): fall back to no filtering.
   if (opts.column && targets.length === 0) return true;
 

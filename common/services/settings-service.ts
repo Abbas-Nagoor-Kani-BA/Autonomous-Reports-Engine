@@ -89,12 +89,27 @@ export function normaliseSettings(raw: unknown): SettingsDraft {
 
   if (s.params && typeof s.params === "object") Object.assign(merged.params, s.params);
 
-  merged.params.tablePageSize = clampInt(merged.params.tablePageSize, 100, 5000, SETTINGS_DEFAULTS.params.tablePageSize);
-  merged.params.cacheTtlMinutes = clampInt(merged.params.cacheTtlMinutes, 0, 10080, SETTINGS_DEFAULTS.params.cacheTtlMinutes);
-  merged.params.maxTicketsPerPull = clampInt(merged.params.maxTicketsPerPull, 0, 1e5, SETTINGS_DEFAULTS.params.maxTicketsPerPull);
+  merged.params.tablePageSize = clampInt(
+    merged.params.tablePageSize,
+    100,
+    5000,
+    SETTINGS_DEFAULTS.params.tablePageSize
+  );
+  merged.params.cacheTtlMinutes = clampInt(
+    merged.params.cacheTtlMinutes,
+    0,
+    10080,
+    SETTINGS_DEFAULTS.params.cacheTtlMinutes
+  );
+  merged.params.maxTicketsPerPull = clampInt(
+    merged.params.maxTicketsPerPull,
+    0,
+    1e5,
+    SETTINGS_DEFAULTS.params.maxTicketsPerPull
+  );
   merged.params.debugResponses = !!merged.params.debugResponses;
 
-  const ml = (s.ml && typeof s.ml === "object") ? (s.ml as Record<string, any>) : {};
+  const ml = s.ml && typeof s.ml === "object" ? (s.ml as Record<string, any>) : {};
   // Classification mode is a single 3-way choice. Accept an explicit new value,
   // else migrate the legacy { enabled, mode: always|fallback } pair.
   const MODES = ["heuristic", "ml", "hybrid"] as const;
@@ -107,8 +122,10 @@ export function normaliseSettings(raw: unknown): SettingsDraft {
   } else if (ml.enabled === true) {
     merged.ml.mode = "hybrid";
   }
-  merged.ml.modelId = (typeof ml.modelId === "string" && ml.modelId) ? ml.modelId : SETTINGS_DEFAULTS.ml.modelId;
-  merged.ml.cacheEnabled = typeof ml.cacheEnabled === "boolean" ? ml.cacheEnabled : SETTINGS_DEFAULTS.ml.cacheEnabled;
+  merged.ml.modelId =
+    typeof ml.modelId === "string" && ml.modelId ? ml.modelId : SETTINGS_DEFAULTS.ml.modelId;
+  merged.ml.cacheEnabled =
+    typeof ml.cacheEnabled === "boolean" ? ml.cacheEnabled : SETTINGS_DEFAULTS.ml.cacheEnabled;
 
   return merged;
 }
@@ -143,7 +160,9 @@ export class SettingsService {
 
   /** The effective MSR lists, falling back to the built-in defaults. */
   msrLists(raw: unknown): Record<string, unknown> {
-    return mergeMsrLists(raw && typeof raw === "object" ? (raw as { lists?: unknown }).lists ?? null : null);
+    return mergeMsrLists(
+      raw && typeof raw === "object" ? ((raw as { lists?: unknown }).lists ?? null) : null
+    );
   }
 
   defaultMsrLists(): Record<string, unknown> {

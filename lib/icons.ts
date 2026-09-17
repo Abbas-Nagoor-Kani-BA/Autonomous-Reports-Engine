@@ -70,7 +70,11 @@ export type IconizeOpts = {
  * existing tooltip system (`lib/tooltip.ts` → `initTooltips`) drives its
  * hover label, and `aria-label` for accessibility.
  */
-export function iconButton(name: IconName, tip: string, opts: IconButtonOpts = {}): HTMLButtonElement {
+export function iconButton(
+  name: IconName,
+  tip: string,
+  opts: IconButtonOpts = {}
+): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `btn icon-btn${opts.cls ? " " + opts.cls : ""}`;
@@ -95,7 +99,11 @@ export function iconButton(name: IconName, tip: string, opts: IconButtonOpts = {
  * "icon"` renders an icon-only button (iconButton-style: `icon-btn` class,
  * `aria-label` + `data-tip`).
  */
-export function iconize(btn: HTMLButtonElement, name: IconName, opts: IconizeOpts = {}): HTMLButtonElement {
+export function iconize(
+  btn: HTMLButtonElement,
+  name: IconName,
+  opts: IconizeOpts = {}
+): HTMLButtonElement {
   const mode = opts.mode ?? "label";
   const svg = icon(name);
 

@@ -6,7 +6,9 @@ let failed = 0;
 function check(name, got, want) {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) failed++;
-  console.log(`  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`);
+  console.log(
+    `  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`
+  );
 }
 
 console.log("== createStore ==");
@@ -20,22 +22,36 @@ store.setState(null);
 check("null patch ignored", store.getState().count, 2);
 
 let seen = null;
-const unsub = store.subscribe((s) => { seen = s.count; });
+const unsub = store.subscribe((s) => {
+  seen = s.count;
+});
 store.setState({ count: 5 });
 check("subscriber notified", seen, 5);
 unsub();
 store.setState({ count: 6 });
 check("unsub no longer notified", seen, 5);
-check("use selector", store.use((s) => s.label), "x");
+check(
+  "use selector",
+  store.use((s) => s.label),
+  "x"
+);
 
 console.log("== persistSlice (mock storage) ==");
 const fake = { store: {} };
 globalThis.chrome = {
   storage: {
     local: {
-      async set(obj) { Object.assign(fake.store, obj); },
-      async get(keys) { const out = {}; for (const k of keys) if (k in fake.store) out[k] = fake.store[k]; return out; },
-      async remove(keys) { for (const k of keys) delete fake.store[k]; }
+      async set(obj) {
+        Object.assign(fake.store, obj);
+      },
+      async get(keys) {
+        const out = {};
+        for (const k of keys) if (k in fake.store) out[k] = fake.store[k];
+        return out;
+      },
+      async remove(keys) {
+        for (const k of keys) delete fake.store[k];
+      }
     }
   }
 };

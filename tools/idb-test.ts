@@ -96,7 +96,12 @@ test("purgeExpired actually deletes stale rows over IndexedDB", async () => {
   const db = freshDb();
   const store = db.store("queries");
   await store.put("fresh", { at: Date.now(), table: "incident", query: "q", records: [] });
-  await store.put("stale", { at: Date.now() - 20 * 60 * 1000, table: "incident", query: "q", records: [] });
+  await store.put("stale", {
+    at: Date.now() - 20 * 60 * 1000,
+    table: "incident",
+    query: "q",
+    records: []
+  });
 
   const repo = new CachedTicketRepository(new FakeSnRemote(), db);
   await repo.purgeExpired();
@@ -111,13 +116,19 @@ test("timeline repository persists through real IndexedDB", async () => {
   remote.timelines.a = [{ field: "state" }];
   const repo = new CachedTimelineRepository(remote, db);
 
-  await repo.getMany({ table: "incident", tickets: [{ sysId: "a", updatedOn: "2026-01-01 00:00:00" }] });
+  await repo.getMany({
+    table: "incident",
+    tickets: [{ sysId: "a", updatedOn: "2026-01-01 00:00:00" }]
+  });
 
   const stored = await db.store("timelines").get<any>("incident:a");
   assert.equal(stored.events.length, 1);
 
   remote.calls.length = 0;
-  const again = await repo.getMany({ table: "incident", tickets: [{ sysId: "a", updatedOn: "2026-01-01 00:00:00" }] });
+  const again = await repo.getMany({
+    table: "incident",
+    tickets: [{ sysId: "a", updatedOn: "2026-01-01 00:00:00" }]
+  });
   assert.equal(remote.calls.length, 0);
   assert.equal(again.reused, 1);
 });

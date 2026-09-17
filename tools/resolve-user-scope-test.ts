@@ -57,8 +57,16 @@ test("resolveUserScope reads groups first, then members, and shapes both", async
     sys_user_grmember: (query) => {
       if (query.startsWith("user=")) {
         return [
-          { group: ref("g1", "g1"), "group.name": ref("Network Ops", "Network Ops"), user: ref("Me", "u-self") },
-          { group: ref("g2", "g2"), "group.name": ref("Service Desk", "Service Desk"), user: ref("Me", "u-self") }
+          {
+            group: ref("g1", "g1"),
+            "group.name": ref("Network Ops", "Network Ops"),
+            user: ref("Me", "u-self")
+          },
+          {
+            group: ref("g2", "g2"),
+            "group.name": ref("Service Desk", "Service Desk"),
+            user: ref("Me", "u-self")
+          }
         ];
       }
       // members-of-groups query. The `user` reference display value is the
@@ -91,25 +99,50 @@ test("resolveUserScope reads groups first, then members, and shapes both", async
 
   const fetches = client.calls.filter((c) => c.method === "fetchRecords");
   assert.equal(fetches.length, 2, "one groups read, one members read");
-  assert.ok(fetches[0].args[1].startsWith("user=u-self"), "first read filters by the user's memberships");
+  assert.ok(
+    fetches[0].args[1].startsWith("user=u-self"),
+    "first read filters by the user's memberships"
+  );
   assert.match(fetches[0].args[1], /group\.active=true/);
-  assert.deepEqual(fetches[0].args[2], ["group", "group.name"], "groups read requests dot-walked group.name");
-  assert.ok(fetches[1].args[1].startsWith("groupIN"), "second read filters by the resolved group ids");
+  assert.deepEqual(
+    fetches[0].args[2],
+    ["group", "group.name"],
+    "groups read requests dot-walked group.name"
+  );
+  assert.ok(
+    fetches[1].args[1].startsWith("groupIN"),
+    "second read filters by the resolved group ids"
+  );
   assert.match(fetches[1].args[1], /g1,g2/);
   assert.match(fetches[1].args[1], /user\.active=true/);
-  assert.deepEqual(fetches[1].args[2], ["user", "user.name", "user.active", "group"], "members read requests dot-walked user.name");
+  assert.deepEqual(
+    fetches[1].args[2],
+    ["user", "user.name", "user.active", "group"],
+    "members read requests dot-walked user.name"
+  );
 });
 
 test("resolveUserScope includes the current user even when the member read omits them", async () => {
   const client = fakeClient({
     sys_user_grmember: (query) => {
       if (query.startsWith("user=")) {
-        return [{ group: ref("g1", "g1"), "group.name": ref("Network Ops", "Network Ops"), user: ref("Me", "u-self") }];
+        return [
+          {
+            group: ref("g1", "g1"),
+            "group.name": ref("Network Ops", "Network Ops"),
+            user: ref("Me", "u-self")
+          }
+        ];
       }
       // The group-member read returns OTHER people but not the current user
       // (e.g. the user belongs via role/manager access, no grmember row).
       return [
-        { user: ref("alice@ba.com", "u1"), "user.name": ref("Alice Adams", "Alice Adams"), "user.active": ref("true", "true"), group: ref("g1", "g1") }
+        {
+          user: ref("alice@ba.com", "u1"),
+          "user.name": ref("Alice Adams", "Alice Adams"),
+          "user.active": ref("true", "true"),
+          group: ref("g1", "g1")
+        }
       ];
     }
   });
@@ -120,7 +153,10 @@ test("resolveUserScope includes the current user even when the member read omits
 
   assert.ok(scope.members.includes("Abbas Nagoor Kani"), "the current user's own name is present");
   assert.ok(scope.members.includes("Alice Adams"), "other members are still present");
-  assert.ok(client.calls.some((c) => c.method === "userNameById" && c.args[0] === "u-self"), "fetched own name by id");
+  assert.ok(
+    client.calls.some((c) => c.method === "userNameById" && c.args[0] === "u-self"),
+    "fetched own name by id"
+  );
 });
 
 test("resolveUserScope falls back to currentUserId() when no id is passed", async () => {
@@ -130,7 +166,10 @@ test("resolveUserScope falls back to currentUserId() when no id is passed", asyn
   const scope = await remote.resolveUserScope();
 
   assert.equal(scope.userId, "resolved-self");
-  assert.ok(client.calls.some((c) => c.method === "currentUserId"), "asked the endpoint for the id");
+  assert.ok(
+    client.calls.some((c) => c.method === "currentUserId"),
+    "asked the endpoint for the id"
+  );
 });
 
 test("resolveUserScope returns empty members when the user has no groups", async () => {
@@ -147,7 +186,10 @@ test("resolveUserScope returns empty members when the user has no groups", async
 test("resolveUserScope throws a friendly error when no user id can be resolved", async () => {
   const client = fakeClient({ sys_user_grmember: [] }, null);
   const remote = new ServiceNowRemote(client);
-  await assert.rejects(remote.resolveUserScope(), /Could not determine the current ServiceNow user/);
+  await assert.rejects(
+    remote.resolveUserScope(),
+    /Could not determine the current ServiceNow user/
+  );
 });
 
 test("FakeSnRemote.resolveUserScope records the call and returns scripted scope", async () => {
@@ -168,8 +210,16 @@ test("resolveGroupMembers shapes a group's member rows (full names)", async () =
   const client = fakeClient({});
   client.groupMemberRows = {
     rows: [
-      { user: ref("me@ba.com", "u-self"), "user.name": ref("Abbas Nagoor Kani", "Abbas Nagoor Kani"), "user.active": ref("true", "true") },
-      { user: ref("alice@ba.com", "u1"), "user.name": ref("Alice Adams", "Alice Adams"), "user.active": ref("true", "true") }
+      {
+        user: ref("me@ba.com", "u-self"),
+        "user.name": ref("Abbas Nagoor Kani", "Abbas Nagoor Kani"),
+        "user.active": ref("true", "true")
+      },
+      {
+        user: ref("alice@ba.com", "u1"),
+        "user.name": ref("Alice Adams", "Alice Adams"),
+        "user.active": ref("true", "true")
+      }
     ],
     truncated: false
   };

@@ -10,7 +10,7 @@ export function normalizeNames(arr: NameEntry[] | null | undefined): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const p of arr || []) {
-    const n = String(p && typeof p === "object" ? p.name ?? "" : p ?? "").trim();
+    const n = String(p && typeof p === "object" ? (p.name ?? "") : (p ?? "")).trim();
     if (!n) continue;
     const key = n.toLowerCase();
     if (seen.has(key)) continue;
@@ -26,7 +26,11 @@ export function normalizeNames(arr: NameEntry[] | null | undefined): string[] {
  * de-duplicated case-insensitively.
  */
 export function parseNameLines(text: string): string[] {
-  return normalizeNames(String(text).split("\n").map((s) => s.replace(/\s*[|=]\s*.*$/, "").trim()));
+  return normalizeNames(
+    String(text)
+      .split("\n")
+      .map((s) => s.replace(/\s*[|=]\s*.*$/, "").trim())
+  );
 }
 
 /**

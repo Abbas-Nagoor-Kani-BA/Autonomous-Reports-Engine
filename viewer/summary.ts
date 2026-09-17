@@ -15,8 +15,10 @@ function panelFmt(utcIso: string, row: ViewerRow): string {
   if (isNaN(d.getTime())) return String(utcIso);
   const offsetMs = rowOffsetMs(row, dataStore.getState().snOffsetMs);
   const local = new Date(d.getTime() + offsetMs);
-  return `${pad2(local.getUTCDate())}-${pad2(local.getUTCMonth() + 1)}-${local.getUTCFullYear()} ` +
-    `${pad2(local.getUTCHours())}:${pad2(local.getUTCMinutes())}:${pad2(local.getUTCSeconds())}`;
+  return (
+    `${pad2(local.getUTCDate())}-${pad2(local.getUTCMonth() + 1)}-${local.getUTCFullYear()} ` +
+    `${pad2(local.getUTCHours())}:${pad2(local.getUTCMinutes())}:${pad2(local.getUTCSeconds())}`
+  );
 }
 
 function attachSummaryToData(data: ViewerData | null | undefined): boolean {
@@ -35,7 +37,12 @@ function setRowsProvider(fn: () => ViewerRow[]) {
   rowsProvider = fn;
 }
 
-function addCell(tr: HTMLTableRowElement, text: unknown, cls?: string, span = 1): HTMLTableCellElement {
+function addCell(
+  tr: HTMLTableRowElement,
+  text: unknown,
+  cls?: string,
+  span = 1
+): HTMLTableCellElement {
   const td = document.createElement("td");
   if (cls) td.className = cls;
   if (span > 1) td.rowSpan = span;
@@ -44,7 +51,12 @@ function addCell(tr: HTMLTableRowElement, text: unknown, cls?: string, span = 1)
   return td;
 }
 
-function addStackedCell(tr: HTMLTableRowElement, lines: string[], cls?: string, span = 1): HTMLTableCellElement {
+function addStackedCell(
+  tr: HTMLTableRowElement,
+  lines: string[],
+  cls?: string,
+  span = 1
+): HTMLTableCellElement {
   const td = document.createElement("td");
   if (cls) td.className = cls;
   if (span > 1) td.rowSpan = span;
@@ -56,7 +68,11 @@ function addStackedCell(tr: HTMLTableRowElement, lines: string[], cls?: string, 
   return td;
 }
 
-function addTokenCell(tr: HTMLTableRowElement, tokens: Array<{ text: string; bold?: boolean }>, cls?: string): HTMLTableCellElement {
+function addTokenCell(
+  tr: HTMLTableRowElement,
+  tokens: Array<{ text: string; bold?: boolean }>,
+  cls?: string
+): HTMLTableCellElement {
   const td = document.createElement("td");
   if (cls) td.className = cls;
   let first = true;
@@ -87,11 +103,11 @@ function targetCls(item: SlaSummaryItem): string {
 }
 
 function incidentRowCount(items: SlaSummaryItem[], item: SlaSummaryItem): number {
-  return items.filter(x => x.metric === item.metric).length;
+  return items.filter((x) => x.metric === item.metric).length;
 }
 
 function categoryRunCount(items: SlaSummaryItem[], item: SlaSummaryItem): number {
-  return items.filter(x => x.metric === item.metric && x.category === item.category).length;
+  return items.filter((x) => x.metric === item.metric && x.category === item.category).length;
 }
 
 function buildIncidentTable(tbody: HTMLTableSectionElement, incident: SlaSummaryItem[]): void {
@@ -126,7 +142,8 @@ function stackedMetric(item: SlaSummaryItem): string[] {
 }
 
 function stackedCategory(item: SlaSummaryItem): string[] {
-  if (item.category === "All other priorities except High") return ["All other priorities except", "High"];
+  if (item.category === "All other priorities except High")
+    return ["All other priorities except", "High"];
   return [item.category];
 }
 
@@ -181,7 +198,8 @@ function renderSummary(): void {
   }
   const rows = rowsProvider ? rowsProvider() : data.rows;
   const s = buildSlaSummaryFor(rows, panelFmt);
-  let meta = `Computed ${s.computedAt.slice(0, 16).replace("T", " ")} · incidents by severity — ` +
+  let meta =
+    `Computed ${s.computedAt.slice(0, 16).replace("T", " ")} · incidents by severity — ` +
     `P1 ${s.incidentTotals[1]}, P2 ${s.incidentTotals[2]}, P3 ${s.incidentTotals[3]}, P4 ${s.incidentTotals[4]}`;
   if (rows.length !== data.rows.length) {
     meta += ` · showing ${rows.length} of ${data.rows.length} tickets (search filter)`;
@@ -190,17 +208,37 @@ function renderSummary(): void {
   const incTbl = $("sumIncTbl") as HTMLTableElement;
   const probTbl = $("sumProbTbl") as HTMLTableElement;
   buildTableHead(incTbl.tHead, [
-    "Service Metric", "Ticket Type", "Category", "SLA", "Target", "Actual",
-    "Count of<br>Incidents", "Total<br>Incidents", "Actual<br>Status"
+    "Service Metric",
+    "Ticket Type",
+    "Category",
+    "SLA",
+    "Target",
+    "Actual",
+    "Count of<br>Incidents",
+    "Total<br>Incidents",
+    "Actual<br>Status"
   ]);
   buildTableHead(probTbl.tHead, [
-    "Service Metric", "Ticket Type", "Category", "SLA", "Target", "Actual",
-    "Count of<br>Problems", "Total<br>Problems", "Actual<br>Status"
+    "Service Metric",
+    "Ticket Type",
+    "Category",
+    "SLA",
+    "Target",
+    "Actual",
+    "Count of<br>Problems",
+    "Total<br>Problems",
+    "Actual<br>Status"
   ]);
   incTbl.tBodies[0].innerHTML = "";
   probTbl.tBodies[0].innerHTML = "";
-  buildIncidentTable(incTbl.tBodies[0], s.items.filter(i => i.ticketType === "Incident"));
-  buildProblemTable(probTbl.tBodies[0], s.items.filter(i => i.ticketType === "Problem"));
+  buildIncidentTable(
+    incTbl.tBodies[0],
+    s.items.filter((i) => i.ticketType === "Incident")
+  );
+  buildProblemTable(
+    probTbl.tBodies[0],
+    s.items.filter((i) => i.ticketType === "Problem")
+  );
 }
 
 function setTab(active: "tickets" | "summary" | "details"): void {
@@ -245,27 +283,40 @@ function showSummaryDetails(): void {
 export function initSummary(): void {
   // Replace the tab glyph span with a Lucide icon.
   const ticketsGlyph = $("tabTickets").querySelector(".g");
-  if (ticketsGlyph && ticketsGlyph.parentNode) ticketsGlyph.parentNode.replaceChild(icon("list", "g") as unknown as Node, ticketsGlyph);
+  if (ticketsGlyph && ticketsGlyph.parentNode)
+    ticketsGlyph.parentNode.replaceChild(icon("list", "g") as unknown as Node, ticketsGlyph);
   const summaryGlyph = $("tabSummary").querySelector(".g");
-  if (summaryGlyph && summaryGlyph.parentNode) summaryGlyph.parentNode.replaceChild(icon("chart-line", "g") as unknown as Node, summaryGlyph);
+  if (summaryGlyph && summaryGlyph.parentNode)
+    summaryGlyph.parentNode.replaceChild(icon("chart-line", "g") as unknown as Node, summaryGlyph);
 
   $("tabTickets").addEventListener("click", () => showTickets());
   $("tabSummary").addEventListener("click", () => showSummary());
   const detTab = $("tabSummaryDetails");
   if (detTab) detTab.addEventListener("click", () => showSummaryDetails());
 
-  document.addEventListener("keydown", e => {
+  document.addEventListener("keydown", (e) => {
     const t = e.target;
-    if (t instanceof HTMLElement &&
-        (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+    if (
+      t instanceof HTMLElement &&
+      (t.tagName === "INPUT" ||
+        t.tagName === "SELECT" ||
+        t.tagName === "TEXTAREA" ||
+        t.isContentEditable)
+    ) {
       return;
     }
     const mod = e.ctrlKey || e.metaKey;
     if (!mod) return;
-    if (e.key === "1") { e.preventDefault(); showTickets(); }
-    else if (e.key === "2") { e.preventDefault(); showSummary(); }
-    else if (e.key === "3") { e.preventDefault(); showSummaryDetails(); }
-    else if (e.key === "Tab") {
+    if (e.key === "1") {
+      e.preventDefault();
+      showTickets();
+    } else if (e.key === "2") {
+      e.preventDefault();
+      showSummary();
+    } else if (e.key === "3") {
+      e.preventDefault();
+      showSummaryDetails();
+    } else if (e.key === "Tab") {
       e.preventDefault();
       if (e.shiftKey) showTickets();
       else showSummary();

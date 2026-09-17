@@ -47,7 +47,8 @@ function hmsToHours(hms: unknown): number {
 }
 
 function hoursToHMS(decimalHours: unknown): string {
-  if (decimalHours === "" || decimalHours === "0" || isNaN(parseFloat(String(decimalHours)))) return "";
+  if (decimalHours === "" || decimalHours === "0" || isNaN(parseFloat(String(decimalHours))))
+    return "";
   const totalSecs = Math.round(parseFloat(String(decimalHours)) * 3600);
   const h = Math.floor(totalSecs / 3600);
   const m = Math.floor((totalSecs % 3600) / 60);
@@ -57,7 +58,11 @@ function hoursToHMS(decimalHours: unknown): string {
 
 function normDisplay(v: unknown): string {
   if (!v) return "";
-  const s = String(v).trim().replace("T", " ").replace(/\.\d+Z?$/, "").replace(/Z$/, "");
+  const s = String(v)
+    .trim()
+    .replace("T", " ")
+    .replace(/\.\d+Z?$/, "")
+    .replace(/Z$/, "");
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ ](\d{2}:\d{2}(?::\d{2})?)$/);
   if (m) return `${m[3]}-${m[2]}-${m[1]} ${m[4]}`;
   m = s.match(/^(\d{2})-(\d{2})-(\d{4})[ ](\d{2}:\d{2}(?::\d{2})?)$/);
@@ -77,7 +82,9 @@ function parseDisplayWallClock(str: string): Date | null {
   const [datePart, timePart] = String(str).trim().split(/\s+/);
   const [dd, mm, yyyy] = datePart.split("-");
   if (!yyyy || !mm || !dd) return null;
-  const [h = 0, mi = 0, s = 0] = String(timePart || "").split(":").map(Number);
+  const [h = 0, mi = 0, s = 0] = String(timePart || "")
+    .split(":")
+    .map(Number);
   const d = new Date(Date.UTC(+yyyy, +mm - 1, +dd, h, mi, s));
   return isNaN(d.getTime()) ? null : d;
 }
@@ -90,18 +97,33 @@ function businessHoursBetween(startStr: string | Date, endStr: string | Date): n
   const WORK_START_H = 8;
   const WORK_END_H = 17;
 
-  function isWorkday(d: Date) { const day = d.getUTCDay(); return day !== 0 && day !== 6; }
+  function isWorkday(d: Date) {
+    const day = d.getUTCDay();
+    return day !== 0 && day !== 6;
+  }
 
   let hours = 0;
   const startDayEpoch = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
   const endDayEpoch = Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate());
 
-  for (let d = new Date(startDayEpoch); d.getTime() <= endDayEpoch; d.setUTCDate(d.getUTCDate() + 1)) {
+  for (
+    let d = new Date(startDayEpoch);
+    d.getTime() <= endDayEpoch;
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
     if (!isWorkday(d)) continue;
-    const ws = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), WORK_START_H));
+    const ws = new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), WORK_START_H)
+    );
     const we = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), WORK_END_H));
-    const segStart = d.getTime() === startDayEpoch ? new Date(Math.min(Math.max(start.getTime(), ws.getTime()), we.getTime())) : ws;
-    const segEnd = d.getTime() === endDayEpoch ? new Date(Math.min(Math.max(end.getTime(), ws.getTime()), we.getTime())) : we;
+    const segStart =
+      d.getTime() === startDayEpoch
+        ? new Date(Math.min(Math.max(start.getTime(), ws.getTime()), we.getTime()))
+        : ws;
+    const segEnd =
+      d.getTime() === endDayEpoch
+        ? new Date(Math.min(Math.max(end.getTime(), ws.getTime()), we.getTime()))
+        : we;
     if (segEnd > segStart) hours += (segEnd.getTime() - segStart.getTime()) / 3600000;
   }
   return hours;
@@ -195,7 +217,9 @@ function calcResponseSLA(
   const p = slaPriority(priority);
   const start = parseDisplayWallClock(assignedStr);
   if (!start) return "";
-  const end = acknowledgedStr ? parseDisplayWallClock(acknowledgedStr) : new Date(Date.now() + offsetMs);
+  const end = acknowledgedStr
+    ? parseDisplayWallClock(acknowledgedStr)
+    : new Date(Date.now() + offsetMs);
   if (!end) return "";
 
   if (p === 1 || p === 2) {
@@ -317,12 +341,19 @@ export type MessageFormatter = (v: string) => string;
  */
 export function isSlaEligible(row: WalkedRow): boolean {
   const isIncident = String(row.number ?? "").startsWith("INC");
-  const state = String(row.state ?? "").trim().toLowerCase();
+  const state = String(row.state ?? "")
+    .trim()
+    .toLowerCase();
   const terminal = state.startsWith("close") || state.startsWith("resolv");
   return isIncident && terminal;
 }
 
-export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: Date = new Date(), opts?: { skipSlaGate?: boolean; opCo?: string; domain?: string }): Report {
+export function buildReport(
+  row: WalkedRow,
+  fmt?: MessageFormatter | null,
+  now: Date = new Date(),
+  opts?: { skipSlaGate?: boolean; opCo?: string; domain?: string }
+): Report {
   // opCo/domain are chosen at export time from the MSR option lists; they
   // default to "BA"/"AO" when no selection is supplied. They are part of the
   // cache key so switching the selection re-derives (rather than returning a
@@ -330,11 +361,20 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
   const opCo = opts?.opCo && String(opts.opCo).trim() ? String(opts.opCo).trim() : "BA";
   const domain = opts?.domain && String(opts.domain).trim() ? String(opts.domain).trim() : "AO";
   const keyInputs = [
-    row.number, row.priority, row.state, row.assignmentGroup,
-    row.createdOn, row.assignTimeUtcIso, row.acknTimeUtcIso, row.resolvedAt,
-    row.suspendTimeUtcIso, row.resumeTimeUtcIso,
-    row.solutionType, row.rootCause,
-    opCo, domain
+    row.number,
+    row.priority,
+    row.state,
+    row.assignmentGroup,
+    row.createdOn,
+    row.assignTimeUtcIso,
+    row.acknTimeUtcIso,
+    row.resolvedAt,
+    row.suspendTimeUtcIso,
+    row.resumeTimeUtcIso,
+    row.solutionType,
+    row.rootCause,
+    opCo,
+    domain
   ].join("|");
   // The gated result is what every surface reads and is what we cache. The
   // ungated variant (skipSlaGate) is an internal-only path (SLA summary problem
@@ -344,23 +384,47 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
 
   const type = deriveType(row.number);
   const created = normDisplay(row.createdOn);
-  const assigned = normDisplay(fmt ? fmt(String(row.assignTimeUtcIso || "")) : row.assignTimeUtcIso);
+  const assigned = normDisplay(
+    fmt ? fmt(String(row.assignTimeUtcIso || "")) : row.assignTimeUtcIso
+  );
   const ackn = normDisplay(fmt ? fmt(String(row.acknTimeUtcIso || "")) : row.acknTimeUtcIso);
   const resolved = normDisplay(row.resolvedAt);
   const susp = normDisplay(fmt ? fmt(String(row.suspendTimeUtcIso || "")) : row.suspendTimeUtcIso);
   const resumed = normDisplay(fmt ? fmt(String(row.resumeTimeUtcIso || "")) : row.resumeTimeUtcIso);
   const instanceOffsetMs = pairOffsetMs(row.openedAt || "", row.openedAtRaw || "") || 0;
 
-  const incidentHoursRaw =   calcBusinessHours(created, resolved, susp, resumed, row.priority, instanceOffsetMs);
+  const incidentHoursRaw = calcBusinessHours(
+    created,
+    resolved,
+    susp,
+    resumed,
+    row.priority,
+    instanceOffsetMs
+  );
   const incidentHours = hoursToHMS(incidentHoursRaw);
   const incidentTotalAge = calcTotalAgeDays(incidentHoursRaw);
-  const incCurrentHoursRaw = calcIncCurrentHours(assigned, resolved, susp, resumed, row.priority, instanceOffsetMs);
+  const incCurrentHoursRaw = calcIncCurrentHours(
+    assigned,
+    resolved,
+    susp,
+    resumed,
+    row.priority,
+    instanceOffsetMs
+  );
   const incCurrentHours = hoursToHMS(incCurrentHoursRaw);
   const incidentCurrentAge = calcTotalAgeDays(incCurrentHoursRaw);
-  const responseSLA = calcResponseSLA(assigned, ackn, susp, resumed, row.priority, instanceOffsetMs);
+  const responseSLA = calcResponseSLA(
+    assigned,
+    ackn,
+    susp,
+    resumed,
+    row.priority,
+    instanceOffsetMs
+  );
   const respVal = responseSLA === "" ? NaN : hmsToHours(responseSLA);
   const respThreshold = RESPONSE_SLA_TABLE[slaPriority(row.priority)] || 0;
-  const metResponse = isNaN(respVal) || !respThreshold ? "" : (respVal < respThreshold ? "YES" : "No");
+  const metResponse =
+    isNaN(respVal) || !respThreshold ? "" : respVal < respThreshold ? "YES" : "No";
   const incVal = parseFloat(incCurrentHoursRaw);
   const metMin = isNaN(incVal) ? "" : metSLA(incVal, row.priority, "min");
   const metMax = isNaN(incVal) ? "" : metSLA(incVal, row.priority, "max");
@@ -372,7 +436,12 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
     type,
     opCo,
     domain,
-    created, assigned, ackn, resolved, susp, resumed,
+    created,
+    assigned,
+    ackn,
+    resolved,
+    susp,
+    resumed,
     impactedApplication: String(row.configItem || ""),
     resolutionType: String(row.solutionType || ""),
     rootCauseCategory: String(row.rootCause || ""),
@@ -392,7 +461,9 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
 
     respHours: Number.isNaN(respVal) ? undefined : respVal,
     respTarget: respThreshold || undefined,
-    incHoursRaw: Number.isNaN(parseFloat(incidentHoursRaw)) ? undefined : parseFloat(incidentHoursRaw),
+    incHoursRaw: Number.isNaN(parseFloat(incidentHoursRaw))
+      ? undefined
+      : parseFloat(incidentHoursRaw),
     incCurrentRaw: Number.isNaN(incVal) ? undefined : incVal,
     resMinTarget: slaPriority(row.priority) ? SLA_TABLE[slaPriority(row.priority)].min : undefined,
     resMaxTarget: slaPriority(row.priority) ? SLA_TABLE[slaPriority(row.priority)].max : undefined,
@@ -414,16 +485,20 @@ export function buildReport(row: WalkedRow, fmt?: MessageFormatter | null, now: 
     const prio = slaPriority(row.priority);
     const hasSuspend = !!(susp && resumed);
     const suspWindowH = hasSuspend
-      ? (prio === 1 || prio === 2
-          ? Math.max(0, (parseDisplayWallClock(resumed)!.getTime() - parseDisplayWallClock(susp)!.getTime()) / 3600000)
-          : businessHoursBetween(parseDisplayWallClock(susp)!, parseDisplayWallClock(resumed)!))
+      ? prio === 1 || prio === 2
+        ? Math.max(
+            0,
+            (parseDisplayWallClock(resumed)!.getTime() - parseDisplayWallClock(susp)!.getTime()) /
+              3600000
+          )
+        : businessHoursBetween(parseDisplayWallClock(susp)!, parseDisplayWallClock(resumed)!)
       : 0;
     rep.suspendWindowHours = Number.isFinite(suspWindowH) ? suspWindowH : 0;
     rep.grossIncHours = Number.isFinite(rep.incHoursRaw)
-      ? (rep.incHoursRaw! + rep.suspendWindowHours)
+      ? rep.incHoursRaw! + rep.suspendWindowHours
       : undefined;
     rep.grossIncCurrentHours = Number.isFinite(rep.incCurrentRaw)
-      ? (rep.incCurrentRaw! + rep.suspendWindowHours)
+      ? rep.incCurrentRaw! + rep.suspendWindowHours
       : undefined;
   }
 
@@ -472,6 +547,13 @@ export function resolutionTargetHours(priority: unknown): { min: number; max: nu
 }
 
 export {
-  deriveType, slaPriority, metSLA, hmsToHours, normDisplay, businessHoursBetween,
-  calcBusinessHours, calcIncCurrentHours, calcResponseSLA
+  deriveType,
+  slaPriority,
+  metSLA,
+  hmsToHours,
+  normDisplay,
+  businessHoursBetween,
+  calcBusinessHours,
+  calcIncCurrentHours,
+  calcResponseSLA
 };

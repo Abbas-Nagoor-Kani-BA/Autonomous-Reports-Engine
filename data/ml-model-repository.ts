@@ -221,7 +221,10 @@ export class MlModelStore implements MlModelRepository {
     return v as ArrayBuffer | undefined;
   }
 
-  async download(spec: MlModelSpec, onProgress?: (p: DownloadProgress) => void): Promise<MlModelMeta> {
+  async download(
+    spec: MlModelSpec,
+    onProgress?: (p: DownloadProgress) => void
+  ): Promise<MlModelMeta> {
     const base = (spec.baseUrl || "https://huggingface.co") + `/${spec.repoId}/resolve/main/`;
     const files = this.db.store("files");
     const done = new Set<string>();

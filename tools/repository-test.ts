@@ -31,7 +31,11 @@ test("settings repository round-trips and notifies", async () => {
   const seen: unknown[] = [];
   const off = repo.onChange((s) => seen.push(s));
 
-  await repo.save({ version: 2, instanceUrl: "https://x.service-now.com", defaults: { queues: ["A"] } });
+  await repo.save({
+    version: 2,
+    instanceUrl: "https://x.service-now.com",
+    defaults: { queues: ["A"] }
+  });
 
   const loaded = await repo.load();
   assert.equal(loaded?.instanceUrl, "https://x.service-now.com");
@@ -166,7 +170,10 @@ test("repositories are singletons per container", () => {
 
 test("a child overriding the store gets a repository bound to it", async () => {
   const root = new Container();
-  root.registerValue(KEY_VALUE_STORE, createMemoryKeyValueStore({ pluginSettings: { version: 9 } }));
+  root.registerValue(
+    KEY_VALUE_STORE,
+    createMemoryKeyValueStore({ pluginSettings: { version: 9 } })
+  );
   const rootRepo = registerCoreRepositories(root).resolve(SETTINGS_REPO);
 
   const childStore = createMemoryKeyValueStore();
@@ -179,6 +186,6 @@ test("a child overriding the store gets a repository bound to it", async () => {
   assert.equal(await childRepo.load(), null);
 
   await childRepo.save({ version: 1, instanceUrl: "https://child", defaults: {} });
-  assert.equal(await childRepo.load() !== null, true);
+  assert.equal((await childRepo.load()) !== null, true);
   assert.equal((await rootRepo.load())?.version, 9);
 });

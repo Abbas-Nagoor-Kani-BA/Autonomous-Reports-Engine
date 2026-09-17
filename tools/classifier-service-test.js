@@ -43,7 +43,10 @@ test("run fills only blank fields in fallback mode", async () => {
   const svc = new ClassifierService();
   const rows = [
     row("INC001", "disk failure on the server"),
-    row("INC002", "dns resolution issue", { solutionType: "Permanent solution", rootCause: "Network issue" })
+    row("INC002", "dns resolution issue", {
+      solutionType: "Permanent solution",
+      rootCause: "Network issue"
+    })
   ];
   const stats = await svc.run(rows, LISTS, "fallback", (r, _i, out) => {
     if (!r.rootCause) r.rootCause = out.rootCause.value;
@@ -57,7 +60,9 @@ test("run fills only blank fields in fallback mode", async () => {
 
 test("run re-classifies every row in always mode", async () => {
   const svc = new ClassifierService();
-  const rows = [row("INC001", "certificate expired", { rootCause: "Old value", solutionType: "Old" })];
+  const rows = [
+    row("INC001", "certificate expired", { rootCause: "Old value", solutionType: "Old" })
+  ];
   const stats = await svc.run(rows, LISTS, "always", (r, _i, out) => {
     r.rootCause = out.rootCause.value;
     r.solutionType = out.solutionType.value;
@@ -69,7 +74,13 @@ test("run re-classifies every row in always mode", async () => {
 test("run reports progress in batches and completes", async () => {
   let lastDone = 0;
   const calls = [];
-  const svc = new ClassifierService({ batchSize: 2, onProgress: (d, t) => { lastDone = d; calls.push([d, t]); } });
+  const svc = new ClassifierService({
+    batchSize: 2,
+    onProgress: (d, t) => {
+      lastDone = d;
+      calls.push([d, t]);
+    }
+  });
   const rows = Array.from({ length: 5 }, (_, i) =>
     row(`INC${String(i + 1).padStart(3, "0")}`, "application bug caused a crash")
   );
@@ -111,9 +122,14 @@ test("cached classify reuses the result and calls compute once", async () => {
       rootCause: { value: label, confidence: 0.6 }
     };
   };
-  const svc = new ClassifierService({ classify: fakeClassify, cache: createMemoryClassificationCacheRepository() });
+  const svc = new ClassifierService({
+    classify: fakeClassify,
+    cache: createMemoryClassificationCacheRepository()
+  });
   const rows = [row("INC001", "disk failure on the server")];
-  const commit = (r, _i, out) => { r.rootCause = out.rootCause.value; };
+  const commit = (r, _i, out) => {
+    r.rootCause = out.rootCause.value;
+  };
 
   await svc.run(rows, LISTS, "always", commit);
   await svc.run(rows, LISTS, "always", commit);
@@ -133,7 +149,9 @@ test("cache can be disabled (cacheEnabled false)", async () => {
   };
   const svc = new ClassifierService({ classify: fakeClassify, cacheEnabled: false });
   const rows = [row("INC001", "disk failure on the server")];
-  const commit = (r, _i, out) => { r.rootCause = out.rootCause.value; };
+  const commit = (r, _i, out) => {
+    r.rootCause = out.rootCause.value;
+  };
 
   await svc.run(rows, LISTS, "always", commit);
   await svc.run(rows, LISTS, "always", commit);

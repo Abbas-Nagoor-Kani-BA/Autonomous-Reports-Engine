@@ -60,7 +60,10 @@ export function buildTicketStats(rows: Row[] | null | undefined, fmt?: Fmt | nul
   let closedTotal = 0;
 
   for (const row of rows || []) {
-    const rep = buildReport(row as Parameters<typeof buildReport>[0], fmt as Parameters<typeof buildReport>[1]) as Record<string, unknown>;
+    const rep = buildReport(
+      row as Parameters<typeof buildReport>[0],
+      fmt as Parameters<typeof buildReport>[1]
+    ) as Record<string, unknown>;
     const typeLabel = String(rep.type ?? "").trim() || "Other";
     const stateLabel = String((row as Row).state ?? rep.state ?? "").trim() || "(no state)";
 

@@ -1,6 +1,10 @@
 import { SN_REMOTE_FACTORY } from "../di/tokens.ts";
 import type { SnRemoteFactory } from "../di/tokens.ts";
-import type { ResolvedScope, ResolvedGroupMembers, ResolvedGroupConfigItems } from "../data/datasource/sn-remote.ts";
+import type {
+  ResolvedScope,
+  ResolvedGroupMembers,
+  ResolvedGroupConfigItems
+} from "../data/datasource/sn-remote.ts";
 
 export type ResolveScopeRequest = {
   instanceUrl: string;
@@ -37,7 +41,9 @@ export class ScopeResolveService {
 
   async resolve(req: ResolveScopeRequest): Promise<ResolvedScope> {
     if (!req.instanceUrl) {
-      throw new Error("No instance URL configured \u2014 set your ServiceNow instance URL in Settings first.");
+      throw new Error(
+        "No instance URL configured \u2014 set your ServiceNow instance URL in Settings first."
+      );
     }
     let scope: ResolvedScope;
     try {
@@ -62,9 +68,15 @@ export class ScopeResolveService {
    * error (a group can legitimately have zero active members) — the UI reports
    * "no members" instead.
    */
-  async resolveGroupMembers(req: { instanceUrl: string; group: string; onDiagnostic?: (d: any) => void }): Promise<ResolvedGroupMembers> {
+  async resolveGroupMembers(req: {
+    instanceUrl: string;
+    group: string;
+    onDiagnostic?: (d: any) => void;
+  }): Promise<ResolvedGroupMembers> {
     if (!req.instanceUrl) {
-      throw new Error("No instance URL configured \u2014 set your ServiceNow instance URL in Settings first.");
+      throw new Error(
+        "No instance URL configured \u2014 set your ServiceNow instance URL in Settings first."
+      );
     }
     if (!req.group || !req.group.trim()) {
       throw new Error("No group name given.");
@@ -86,9 +98,15 @@ export class ScopeResolveService {
    * button. Same graceful-failure contract as `resolveGroupMembers`: permission
    * failures map to the friendly hint; an empty result is valid.
    */
-  async resolveGroupConfigItems(req: { instanceUrl: string; group: string; onDiagnostic?: (d: any) => void }): Promise<ResolvedGroupConfigItems> {
+  async resolveGroupConfigItems(req: {
+    instanceUrl: string;
+    group: string;
+    onDiagnostic?: (d: any) => void;
+  }): Promise<ResolvedGroupConfigItems> {
     if (!req.instanceUrl) {
-      throw new Error("No instance URL configured \u2014 set your ServiceNow instance URL in Settings first.");
+      throw new Error(
+        "No instance URL configured \u2014 set your ServiceNow instance URL in Settings first."
+      );
     }
     if (!req.group || !req.group.trim()) {
       throw new Error("No group name given.");

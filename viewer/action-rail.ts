@@ -23,8 +23,13 @@ let prefs: RailPrefs = { x: null, y: null, folded: false };
 /** Clamp a top-left position so the WxH box stays fully within viewW x viewH,
  *  never above `minTop` (leaves room for the toolbar). Pure, unit-tested. */
 export function clampPosition(
-  x: number, y: number, w: number, h: number,
-  viewW: number, viewH: number, minTop = 0
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  viewW: number,
+  viewH: number,
+  minTop = 0
 ): { x: number; y: number } {
   const maxX = Math.max(0, viewW - w);
   const maxY = Math.max(minTop, viewH - h);
@@ -80,7 +85,10 @@ export async function loadRailPrefs(): Promise<void> {
 
 function wireDrag(rail: HTMLElement, grip: HTMLElement): void {
   let dragging = false;
-  let startX = 0, startY = 0, baseX = 0, baseY = 0;
+  let startX = 0,
+    startY = 0,
+    baseX = 0,
+    baseY = 0;
 
   grip.addEventListener("pointerdown", (e) => {
     const pe = e as PointerEvent;
@@ -92,7 +100,11 @@ function wireDrag(rail: HTMLElement, grip: HTMLElement): void {
     baseX = rect.left;
     baseY = rect.top;
     grip.classList.add("dragging");
-    try { grip.setPointerCapture(pe.pointerId); } catch { /* best-effort */ }
+    try {
+      grip.setPointerCapture(pe.pointerId);
+    } catch {
+      /* best-effort */
+    }
   });
 
   grip.addEventListener("pointermove", (e) => {
@@ -103,7 +115,11 @@ function wireDrag(rail: HTMLElement, grip: HTMLElement): void {
     const c = clampPosition(
       baseX + (pe.clientX - startX),
       baseY + (pe.clientY - startY),
-      rect.width || 40, rect.height || 40, w, h, MIN_TOP
+      rect.width || 40,
+      rect.height || 40,
+      w,
+      h,
+      MIN_TOP
     );
     prefs.x = c.x;
     prefs.y = c.y;
@@ -116,7 +132,11 @@ function wireDrag(rail: HTMLElement, grip: HTMLElement): void {
     if (!dragging) return;
     dragging = false;
     grip.classList.remove("dragging");
-    try { grip.releasePointerCapture((e as PointerEvent).pointerId); } catch { /* best-effort */ }
+    try {
+      grip.releasePointerCapture((e as PointerEvent).pointerId);
+    } catch {
+      /* best-effort */
+    }
     persist();
   };
   grip.addEventListener("pointerup", end);
@@ -132,10 +152,14 @@ export function initActionRail(): void {
 
   iconize(grip as HTMLButtonElement, "grip-vertical", { mode: "icon", tip: "Drag to move" });
 
-  loadRailPrefs().then(() => {
-    applyFold(rail);
-    applyPosition(rail);
-  }).catch(() => { applyFold(rail); });
+  loadRailPrefs()
+    .then(() => {
+      applyFold(rail);
+      applyPosition(rail);
+    })
+    .catch(() => {
+      applyFold(rail);
+    });
 
   // Reflect any synchronous default immediately (icon on the fold button).
   applyFold(rail);

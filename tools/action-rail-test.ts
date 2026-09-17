@@ -16,9 +16,18 @@ test("clampPosition keeps the box within the viewport and below minTop", () => {
 });
 
 const FIXTURE = {
-  lastData: { at: "2026-08-25T10:00:00Z", instance: "https://t", missingAudit: 0, totalPulled: 0, rows: [], runs: [] },
+  lastData: {
+    at: "2026-08-25T10:00:00Z",
+    instance: "https://t",
+    missingAudit: 0,
+    totalPulled: 0,
+    rows: [],
+    runs: []
+  },
   pluginSettings: { defaults: { ticketType: "incident", queues: [], teamMembers: [] } },
-  msrLists: undefined, viewerHiddenCols: [], viewerSel: null
+  msrLists: undefined,
+  viewerHiddenCols: [],
+  viewerSel: null
 };
 
 before(async () => {
@@ -52,9 +61,30 @@ test("fold toggle flips the state and persists it", async () => {
 test("dragging the grip moves the rail and persists the position", async () => {
   const rail = document.getElementById("actionRail");
   const grip = document.getElementById("railGrip");
-  grip.dispatchEvent(new window.PointerEvent("pointerdown", { bubbles: true, clientX: 200, clientY: 200, pointerId: 1 }));
-  grip.dispatchEvent(new window.PointerEvent("pointermove", { bubbles: true, clientX: 260, clientY: 240, pointerId: 1 }));
-  grip.dispatchEvent(new window.PointerEvent("pointerup", { bubbles: true, clientX: 260, clientY: 240, pointerId: 1 }));
+  grip.dispatchEvent(
+    new window.PointerEvent("pointerdown", {
+      bubbles: true,
+      clientX: 200,
+      clientY: 200,
+      pointerId: 1
+    })
+  );
+  grip.dispatchEvent(
+    new window.PointerEvent("pointermove", {
+      bubbles: true,
+      clientX: 260,
+      clientY: 240,
+      pointerId: 1
+    })
+  );
+  grip.dispatchEvent(
+    new window.PointerEvent("pointerup", {
+      bubbles: true,
+      clientX: 260,
+      clientY: 240,
+      pointerId: 1
+    })
+  );
   await flush();
   // Inline position applied and persisted (exact px depends on happy-dom rects,
   // but left/top must be set and stored).

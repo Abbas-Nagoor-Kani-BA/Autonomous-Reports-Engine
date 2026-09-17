@@ -10,11 +10,7 @@
     "strict": false,
     "noImplicitAny": false,
     "skipLibCheck": true,
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": []
   },
   "include": [
@@ -32,10 +28,5 @@
     "settings/*",
     "surfaces/**/*"
   ],
-  "exclude": [
-    "**/vendor/**",
-    "dist/**",
-    "node_modules/**",
-    "tools/**"
-  ]
+  "exclude": ["**/vendor/**", "dist/**", "node_modules/**", "tools/**"]
 }

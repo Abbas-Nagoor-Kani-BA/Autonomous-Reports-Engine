@@ -54,7 +54,7 @@ export type SearchPickerRefs = {
  * singleton, so two pickers can no longer fight over one slot.
  */
 export class SearchPicker extends Component<SearchPickerState, ComponentProps, SearchPickerDeps> {
-  protected declare refs: SearchPickerRefs;
+  declare protected refs: SearchPickerRefs;
 
   #closed = false;
   #onDocDown: (e: MouseEvent) => void;
@@ -152,7 +152,8 @@ export class SearchPicker extends Component<SearchPickerState, ComponentProps, S
     const { options, current } = this.deps;
     const cur = String(current ?? "");
     const entries = ["", ...options];
-    if (cur && !options.some((x) => String(x).toLowerCase() === cur.toLowerCase())) entries.push(cur);
+    if (cur && !options.some((x) => String(x).toLowerCase() === cur.toLowerCase()))
+      entries.push(cur);
     return entries;
   }
 
@@ -213,7 +214,9 @@ export class SearchPicker extends Component<SearchPickerState, ComponentProps, S
     const state = this.getState();
     if (!state.items.length) return false;
     const q = state.query.trim().toLowerCase();
-    const exact = state.firstOpen ? undefined : state.items.find((v) => String(v).toLowerCase() === q);
+    const exact = state.firstOpen
+      ? undefined
+      : state.items.find((v) => String(v).toLowerCase() === q);
     const value = exact !== undefined ? exact : state.items[state.activeIdx];
     this.commit(value, intent);
     return true;
@@ -260,8 +263,10 @@ export class SearchPicker extends Component<SearchPickerState, ComponentProps, S
       // The backdrop flex-centers the popup via CSS. If the wide (aside)
       // layout is wider than the viewport, drop to the compact single-column
       // layout so it never overflows.
-      if (this.refs.pop.classList.contains("wide") &&
-          this.refs.pop.offsetWidth > window.innerWidth - 24) {
+      if (
+        this.refs.pop.classList.contains("wide") &&
+        this.refs.pop.offsetWidth > window.innerWidth - 24
+      ) {
         this.refs.pop.classList.remove("wide");
         const aside = this.refs.pop.querySelector(".msrPickNotes");
         if (aside) aside.remove();
@@ -271,7 +276,11 @@ export class SearchPicker extends Component<SearchPickerState, ComponentProps, S
       this.refs.pop.style.width = "";
       return;
     }
-    placePopupNear(this.refs.pop, this.deps.anchor.getBoundingClientRect(), this.deps.minWidth ?? 300);
+    placePopupNear(
+      this.refs.pop,
+      this.deps.anchor.getBoundingClientRect(),
+      this.deps.minWidth ?? 300
+    );
   }
 
   close(): void {
@@ -280,7 +289,10 @@ export class SearchPicker extends Component<SearchPickerState, ComponentProps, S
     document.removeEventListener("mousedown", this.#onDocDown, true);
     this.deps.repositionOn?.removeEventListener("scroll", this.#onScroll);
     this.refs.pop.remove();
-    if (this.#backdrop) { this.#backdrop.remove(); this.#backdrop = null; }
+    if (this.#backdrop) {
+      this.#backdrop.remove();
+      this.#backdrop = null;
+    }
     this.destroy();
   }
 }

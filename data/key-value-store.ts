@@ -26,7 +26,9 @@ export type MemoryKeyValueStore = KeyValueStore & {
  * `emitExternal` simulates a write arriving from another extension surface,
  * which is how the viewer learns about a pull finished in the background.
  */
-export function createMemoryKeyValueStore(initial: Record<string, unknown> = {}): MemoryKeyValueStore {
+export function createMemoryKeyValueStore(
+  initial: Record<string, unknown> = {}
+): MemoryKeyValueStore {
   const data: Record<string, unknown> = { ...initial };
   const listeners = new Set<{ keys: Set<string>; handler: ChangeHandler }>();
 

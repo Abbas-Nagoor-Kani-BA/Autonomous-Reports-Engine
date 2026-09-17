@@ -119,5 +119,6 @@ Click **Open data view** to search, edit, classify, and export. See
 > download rely on it.
 
 ---
+
 Related: [Filters and Presets](Filters-and-Presets) ·
 [Two-Phase Pipeline](Two-Phase-Pipeline) · [Data Viewer](Data-Viewer)

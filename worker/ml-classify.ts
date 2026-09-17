@@ -8,17 +8,111 @@ import type { MlModelSpec } from "../data/ml-model-repository.ts";
 // "user", "error", "access", "issue"), so stripping can never flip things like
 // "not an issue" into its opposite.
 const STOPWORDS = new Set([
-  "the", "a", "an", "and", "or", "was", "were", "is", "are", "am", "be",
-  "been", "being", "has", "have", "had", "do", "does", "did", "will", "would",
-  "shall", "should", "can", "could", "may", "might", "must", "of", "to", "in",
-  "on", "at", "by", "for", "with", "about", "against", "between", "into",
-  "through", "during", "before", "after", "above", "below", "from", "again",
-  "further", "once", "here", "there", "when", "where", "why", "how", "all",
-  "any", "both", "each", "few", "more", "most", "other", "some", "such", "own",
-  "same", "so", "than", "too", "very", "it", "this", "that", "these", "those",
-  "we", "they", "he", "she", "him", "her", "us", "them", "you", "your", "ours",
-  "theirs", "my", "our", "its", "as", "per", "via", "within", "along", "among",
-  "onto", "upon", "regarding", "like", "just", "then", "whose"
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "was",
+  "were",
+  "is",
+  "are",
+  "am",
+  "be",
+  "been",
+  "being",
+  "has",
+  "have",
+  "had",
+  "do",
+  "does",
+  "did",
+  "will",
+  "would",
+  "shall",
+  "should",
+  "can",
+  "could",
+  "may",
+  "might",
+  "must",
+  "of",
+  "to",
+  "in",
+  "on",
+  "at",
+  "by",
+  "for",
+  "with",
+  "about",
+  "against",
+  "between",
+  "into",
+  "through",
+  "during",
+  "before",
+  "after",
+  "above",
+  "below",
+  "from",
+  "again",
+  "further",
+  "once",
+  "here",
+  "there",
+  "when",
+  "where",
+  "why",
+  "how",
+  "all",
+  "any",
+  "both",
+  "each",
+  "few",
+  "more",
+  "most",
+  "other",
+  "some",
+  "such",
+  "own",
+  "same",
+  "so",
+  "than",
+  "too",
+  "very",
+  "it",
+  "this",
+  "that",
+  "these",
+  "those",
+  "we",
+  "they",
+  "he",
+  "she",
+  "him",
+  "her",
+  "us",
+  "them",
+  "you",
+  "your",
+  "ours",
+  "theirs",
+  "my",
+  "our",
+  "its",
+  "as",
+  "per",
+  "via",
+  "within",
+  "along",
+  "among",
+  "onto",
+  "upon",
+  "regarding",
+  "like",
+  "just",
+  "then",
+  "whose"
 ]);
 
 // Direction/state words ("down", "up", "out", "off", "over", "under") are
@@ -29,7 +123,9 @@ const STOPWORDS = new Set([
  *  token budget on content words (leaving room for the candidate label). */
 function stripCommonWords(note: string): string {
   const out: string[] = [];
-  for (const raw of String(note).toLowerCase().split(/[^a-z0-9]+/)) {
+  for (const raw of String(note)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)) {
     if (!raw || raw.length === 1) continue;
     if (STOPWORDS.has(raw)) continue;
     out.push(raw);
@@ -73,7 +169,11 @@ function pathFromUrl(url: string, files: string[]): string | null {
 }
 
 function bytesResponse(bytes: ArrayBuffer, contentType: string): Response {
-  return new Response(bytes, { status: 200, statusText: "OK", headers: { "content-type": contentType } });
+  return new Response(bytes, {
+    status: 200,
+    statusText: "OK",
+    headers: { "content-type": contentType }
+  });
 }
 
 /** Builds a Cache-API-compatible cache backed by the model repository. */
@@ -204,7 +304,11 @@ export type CellPicks = { ml: EnginePick | null; det: EnginePick };
  *   - true (ML mode): the ML pick is authoritative and is returned as-is,
  *     INCLUDING a null value (the cell is cleared). There is no fallback to the
  *     deterministic scorer, so ML-only means ML-only. */
-export function resolvePick(ml: EnginePick | null, det: EnginePick, mlAuthoritative = false): EnginePick {
+export function resolvePick(
+  ml: EnginePick | null,
+  det: EnginePick,
+  mlAuthoritative = false
+): EnginePick {
   if (mlAuthoritative) {
     return ml ? { ...ml } : { value: null, confidence: 0, source: "ml" };
   }
@@ -221,7 +325,14 @@ async function classifyWithMl(
   const detSame = (c: ClassifyCell): EnginePick => ({
     value: c.value,
     confidence: c.confidence,
-    source: c.level === "regex" ? "regex" : c.level === "keyword" ? "keyword" : c.level === "cosine" ? "cosine" : "heuristic"
+    source:
+      c.level === "regex"
+        ? "regex"
+        : c.level === "keyword"
+          ? "keyword"
+          : c.level === "cosine"
+            ? "cosine"
+            : "heuristic"
   });
   const [rc, st] = await Promise.all([
     ml(input.notes, input.rootCauseLabels),

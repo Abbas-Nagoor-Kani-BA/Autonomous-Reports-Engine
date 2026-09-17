@@ -6,7 +6,14 @@ import type { ViewerRow } from "./core.ts";
 import { fmtInstant } from "./grid.ts";
 import { setTip } from "../lib/tooltip.ts";
 
-type FieldEntry = { label: string; cls: string; author: string; time: string; sort?: string; text: string };
+type FieldEntry = {
+  label: string;
+  cls: string;
+  author: string;
+  time: string;
+  sort?: string;
+  text: string;
+};
 type FieldChangeEv = { atEpoch?: unknown; f?: unknown; o?: unknown; n?: unknown };
 
 const FIELD_LABELS: Record<string, string> = {
@@ -30,21 +37,32 @@ const FIELD_LABELS: Record<string, string> = {
 
 function fieldLabel(f: unknown): string {
   const k = String(f || "").toLowerCase();
-  return FIELD_LABELS[k] ||
-    String(f || "").replace(/u002e/g, ".").split(/[._]/).filter(Boolean)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Change";
+  return (
+    FIELD_LABELS[k] ||
+    String(f || "")
+      .replace(/u002e/g, ".")
+      .split(/[._]/)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ") ||
+    "Change"
+  );
 }
 
 function fieldChangeEntries(row: ViewerRow): FieldEntry[] {
   return (row.activity || []).map((ev: FieldChangeEv) => {
-    const iso = Number.isFinite(ev.atEpoch as number) && ev.atEpoch !== null
-      ? new Date(ev.atEpoch as number).toISOString() : "";
+    const iso =
+      Number.isFinite(ev.atEpoch as number) && ev.atEpoch !== null
+        ? new Date(ev.atEpoch as number).toISOString()
+        : "";
     return {
       label: "Field change",
       cls: "fc",
       author: "",
       time: iso ? fmtInstant(iso, row) : "",
-      sort: Number.isFinite(ev.atEpoch as number) ? new Date(ev.atEpoch as number).toISOString().replace("T", " ").slice(0, 19) : "",
+      sort: Number.isFinite(ev.atEpoch as number)
+        ? new Date(ev.atEpoch as number).toISOString().replace("T", " ").slice(0, 19)
+        : "",
       text: `${fieldLabel(ev.f)}: ${ev.o || "(empty)"} → ${ev.n || "(empty)"}`
     };
   });
@@ -62,7 +80,9 @@ function activityPaneEl(row: ViewerRow): HTMLElement {
   // field-change entries to keep the pane focused and compact.
   const stream: FieldEntry[] = (journal as FieldEntry[])
     .filter((e) => (e as { cls?: string }).cls === "wn" || (e as { cls?: string }).cls === "rn")
-    .sort((a, b) => Journal.sortKey(b as Journal.Entry).localeCompare(Journal.sortKey(a as Journal.Entry)));
+    .sort((a, b) =>
+      Journal.sortKey(b as Journal.Entry).localeCompare(Journal.sortKey(a as Journal.Entry))
+    );
   head.textContent = `${row.number || ""} · Notes · ${pinned.length + stream.length} ${pinned.length + stream.length === 1 ? "entry" : "entries"}`;
   if (!stream.length && !pinned.length) {
     const d = el("div", "noteEmpty");
@@ -155,20 +175,27 @@ const NOTE_HEAD_RE =
  *  both date orders. Falls back to a single undated entry when no heading is
  *  recognised (so the text is never dropped). */
 function splitNoteBlob(blob: unknown): NoteEntry[] {
-  const txt = String(blob || "").replace(/\r\n/g, "\n").trim();
+  const txt = String(blob || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
   if (!txt) return [];
   const out: NoteEntry[] = [];
   let cur: NoteEntry | null = null;
   const body: string[] = [];
   const flush = (): void => {
-    if (cur) { cur.text = body.join("\n").trim(); if (cur.text) out.push(cur); }
+    if (cur) {
+      cur.text = body.join("\n").trim();
+      if (cur.text) out.push(cur);
+    }
     body.length = 0;
   };
   for (const ln of txt.split("\n")) {
     const m = ln.match(NOTE_HEAD_RE);
     if (m) {
       flush();
-      const author = (m[2] || "").replace(/\((?:Work notes?|Additional comments?|Comments?)\)/i, "").trim();
+      const author = (m[2] || "")
+        .replace(/\((?:Work notes?|Additional comments?|Comments?)\)/i, "")
+        .trim();
       cur = { time: m[1].trim(), author, text: "" };
     } else if (cur) {
       body.push(ln);
@@ -207,12 +234,27 @@ function buildTimeline(row: ViewerRow): TimelineItem[] {
     });
   }
 
-  const pushNote = (kind: TimelineItem["kind"], label: string, text: string, heading: string, author: string): void => {
+  const pushNote = (
+    kind: TimelineItem["kind"],
+    label: string,
+    text: string,
+    heading: string,
+    author: string
+  ): void => {
     const epoch = headingToEpoch(heading);
-    items.push({ epoch, time: heading || "", kind, label, author: author || "", text, moments: [] });
+    items.push({
+      epoch,
+      time: heading || "",
+      kind,
+      label,
+      author: author || "",
+      text,
+      moments: []
+    });
   };
 
-  for (const e of splitNoteBlob(row.workNotes)) pushNote("wn", "Work note", e.text, e.time, e.author);
+  for (const e of splitNoteBlob(row.workNotes))
+    pushNote("wn", "Work note", e.text, e.time, e.author);
   for (const e of splitNoteBlob(row.comments)) pushNote("cm", "Comment", e.text, e.time, e.author);
   const closeNotes = String(row.closeNotes || "").trim();
   if (closeNotes) {
@@ -230,7 +272,10 @@ function buildTimeline(row: ViewerRow): TimelineItem[] {
     for (let i = 0; i < items.length; i++) {
       if (!Number.isFinite(items[i].epoch)) continue;
       const d = Math.abs(items[i].epoch - t);
-      if (d < bestDelta) { bestDelta = d; best = i; }
+      if (d < bestDelta) {
+        bestDelta = d;
+        best = i;
+      }
     }
     if (best >= 0 && bestDelta <= 60_000) items[best].moments.push(km.label);
   }
@@ -286,10 +331,14 @@ function groupTimeline(items: TimelineItem[]): TimelineGroup[] {
 /** Icon-less short tag for an entry kind, shown as the sub-event label prefix. */
 function kindTag(kind: TimelineItem["kind"]): string {
   switch (kind) {
-    case "wn": return "Work note";
-    case "rn": return "Resolution";
-    case "cm": return "Comment";
-    default: return "Change";
+    case "wn":
+      return "Work note";
+    case "rn":
+      return "Resolution";
+    case "cm":
+      return "Comment";
+    default:
+      return "Change";
   }
 }
 

@@ -10,7 +10,9 @@ export function scopeGroups(groups: unknown): string[] {
   const unique = [
     ...new Set(
       list
-        .map((g) => String((typeof g === "string" ? g : (g as { name?: unknown })?.name) || "").trim())
+        .map((g) =>
+          String((typeof g === "string" ? g : (g as { name?: unknown })?.name) || "").trim()
+        )
         .filter(Boolean)
     )
   ];

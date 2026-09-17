@@ -12,7 +12,9 @@ globalThis.MouseEvent = win.MouseEvent;
 globalThis.Node = win.Node;
 
 const { Modal, hasOpenModal, closeAllModals } = await import("../common/components/modal.ts");
-const { CiDialog, unassignedItems, ciAvailablePool } = await import("../viewer/components/ci-dialog.ts");
+const { CiDialog, unassignedItems, ciAvailablePool } = await import(
+  "../viewer/components/ci-dialog.ts"
+);
 
 /*
  * Modal stack and Escape cascade.
@@ -28,14 +30,18 @@ function mount(ids: string[], rootId = "outer") {
   // Rewriting innerHTML orphans any still-registered modal, which would make
   // these tests order-dependent.
   closeAllModals();
-  const inner = ids.map((id) => `<div id="${id}" class="hidden"><span id="${id}-inner"></span></div>`).join("");
+  const inner = ids
+    .map((id) => `<div id="${id}" class="hidden"><span id="${id}-inner"></span></div>`)
+    .join("");
   win.document.body.innerHTML = `<div id="${rootId}" class="hidden">${inner}</div>`;
   const $ = (id: string) => win.document.getElementById(id) as HTMLElement;
   return { $ };
 }
 
 const escape = () =>
-  win.document.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  win.document.dispatchEvent(
+    new win.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })
+  );
 
 test("open and close toggle the hidden class", () => {
   const { $ } = mount([]);
@@ -184,11 +190,15 @@ function mountCi() {
   const saved: any[] = [];
   const statuses: { message: string; isError?: boolean }[] = [];
 
-  const dialog = new CiDialog($("ciModal"), {}, {
-    onSave: (v) => saved.push(v),
-    onClosed: () => {},
-    status: (message, isError) => statuses.push({ message, isError })
-  });
+  const dialog = new CiDialog(
+    $("ciModal"),
+    {},
+    {
+      onSave: (v) => saved.push(v),
+      onClosed: () => {},
+      status: (message, isError) => statuses.push({ message, isError })
+    }
+  );
 
   return { $, dialog, saved, statuses };
 }
@@ -218,17 +228,27 @@ test("add group creates a card with the next free letter name", () => {
   $("addGroupBtn").dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
   assert.equal($("groupBoard").querySelectorAll(".ciGroupGrid .ciGroupCard").length, 1);
 
-  const name = ($("groupBoard").querySelector(".ciGroupGrid .ciGroupName") as HTMLInputElement).value;
+  const name = ($("groupBoard").querySelector(".ciGroupGrid .ciGroupName") as HTMLInputElement)
+    .value;
   assert.equal(name, "Group A");
 });
 
 test("group names are de-duplicated on save", () => {
   const { dialog, saved } = mountCi();
-  dialog.show({ enabled: true, groups: [{ name: "Same", items: ["a"] }, { name: "same", items: ["b"] }] });
+  dialog.show({
+    enabled: true,
+    groups: [
+      { name: "Same", items: ["a"] },
+      { name: "same", items: ["b"] }
+    ]
+  });
 
   (dialog as any).commit();
 
-  assert.deepEqual(saved[0].groups.map((g: any) => g.name), ["Same", "same 2"]);
+  assert.deepEqual(
+    saved[0].groups.map((g: any) => g.name),
+    ["Same", "same 2"]
+  );
 });
 
 test("a group with a name but no items is kept; an unnamed empty one is dropped", () => {
@@ -237,7 +257,11 @@ test("a group with a name but no items is kept; an unnamed empty one is dropped"
   const { dialog, saved } = mountCi();
   dialog.show({
     enabled: true,
-    groups: [{ name: "Has items", items: ["a"] }, { name: "Empty", items: [] }, { name: "", items: [] }]
+    groups: [
+      { name: "Has items", items: ["a"] },
+      { name: "Empty", items: [] },
+      { name: "", items: [] }
+    ]
   });
 
   (dialog as any).commit();
@@ -288,7 +312,10 @@ test("dragging an item between groups moves it", () => {
   const { $, dialog } = mountCi();
   dialog.show({
     enabled: true,
-    groups: [{ name: "A", items: ["shared"] }, { name: "B", items: [] }]
+    groups: [
+      { name: "A", items: ["shared"] },
+      { name: "B", items: [] }
+    ]
   });
 
   dragChip($, 0, 0);
@@ -303,7 +330,10 @@ test("dropping onto a group that already has the item moves it out of the source
   const { $, dialog } = mountCi();
   dialog.show({
     enabled: true,
-    groups: [{ name: "A", items: ["dup"] }, { name: "B", items: ["dup"] }]
+    groups: [
+      { name: "A", items: ["dup"] },
+      { name: "B", items: ["dup"] }
+    ]
   });
 
   dragChip($, 0, 0);
@@ -333,7 +363,10 @@ test("unassignedItems returns available minus grouped, deduped and sorted", () =
 });
 
 test("ciAvailablePool unions data CIs with stored (resolved) CIs, deduped", () => {
-  const out = ciAvailablePool(["Payment Gateway", "Web"], ["Billing API", "payment gateway", "RMS (prd)"]);
+  const out = ciAvailablePool(
+    ["Payment Gateway", "Web"],
+    ["Billing API", "payment gateway", "RMS (prd)"]
+  );
   // Data items first, then new stored ones; case-insensitive dedupe keeps first spelling.
   assert.deepEqual(out, ["Payment Gateway", "Web", "Billing API", "RMS (prd)"]);
 });
@@ -346,7 +379,11 @@ test("ciAvailablePool handles empty/nullish sides", () => {
 
 test("show renders an Ungrouped pool of the unassigned data CIs", () => {
   const { $, dialog } = mountCi();
-  dialog.show({ enabled: true, groups: [{ name: "A", items: ["Payments"] }] }, ["Payments", "Web", "Mobile"]);
+  dialog.show({ enabled: true, groups: [{ name: "A", items: ["Payments"] }] }, [
+    "Payments",
+    "Web",
+    "Mobile"
+  ]);
   const pool = $("groupBoard").querySelector(".ciUngrouped");
   assert.ok(pool, "an Ungrouped pool is rendered");
   const chips = [...pool.querySelectorAll(".ciChip .lbl")].map((n) => n.textContent);
@@ -361,7 +398,9 @@ test("dragging an Ungrouped item into a group removes it from the pool", () => {
   (dialog as any).dropOnGroup(0);
   const groups = (dialog as any).getState().groups;
   assert.deepEqual(groups[0].items, ["Mobile"], "moved into the group");
-  const poolLabels = [...$("groupBoard").querySelectorAll(".ciUngrouped .ciChip .lbl")].map((n) => n.textContent);
+  const poolLabels = [...$("groupBoard").querySelectorAll(".ciUngrouped .ciChip .lbl")].map(
+    (n) => n.textContent
+  );
   assert.deepEqual(poolLabels, ["Web"], "removed from the pool");
 });
 
@@ -380,7 +419,11 @@ test("click-to-select then drag moves the whole selection", () => {
 
 test("commit never persists the Ungrouped pool", () => {
   const { dialog, saved } = mountCi();
-  dialog.show({ enabled: true, groups: [{ name: "A", items: ["Payments"] }] }, ["Payments", "Web", "Mobile"]);
+  dialog.show({ enabled: true, groups: [{ name: "A", items: ["Payments"] }] }, [
+    "Payments",
+    "Web",
+    "Mobile"
+  ]);
   (dialog as any).commit();
   assert.equal(saved.length, 1);
   assert.deepEqual(saved[0].groups, [{ name: "A", items: ["Payments"] }], "only real groups saved");
@@ -393,6 +436,8 @@ test("dragging a grouped item onto the Ungrouped pool unassigns it", () => {
   chip.dispatchEvent(new win.Event("dragstart", { bubbles: true }));
   (dialog as any).dropOnUngrouped();
   assert.deepEqual((dialog as any).getState().groups[0].items, [], "removed from the group");
-  const poolLabels = [...$("groupBoard").querySelectorAll(".ciUngrouped .ciChip .lbl")].map((n) => n.textContent);
+  const poolLabels = [...$("groupBoard").querySelectorAll(".ciUngrouped .ciChip .lbl")].map(
+    (n) => n.textContent
+  );
   assert.deepEqual(poolLabels, ["Web"], "back in the pool");
 });

@@ -4,10 +4,12 @@ import { installSkeleton } from "./helpers/dom-env.mjs";
 
 installSkeleton();
 
-const { buildCiGroups, setCiSplit, getCiSplit, ciSplitDiagnostics } = await import("../viewer/toolbar.ts");
+const { buildCiGroups, setCiSplit, getCiSplit, ciSplitDiagnostics } = await import(
+  "../viewer/toolbar.ts"
+);
 
 function rows(...cis) {
-  return cis.map(configItem => ({ configItem }));
+  return cis.map((configItem) => ({ configItem }));
 }
 
 test("one item collapses environment-suffixed config items into a single group", () => {
@@ -81,27 +83,42 @@ test("unmatched and empty config items go to Others", () => {
 
 test("Others omitted when every ticket matches a group", () => {
   setCiSplit({ enabled: true, groups: [{ name: "Payments", items: ["Payment Gateway"] }] });
-  assert.equal(buildCiGroups(rows("Payment Gateway PRD")).some(g => g.name === "Others"), false);
+  assert.equal(
+    buildCiGroups(rows("Payment Gateway PRD")).some((g) => g.name === "Others"),
+    false
+  );
 });
 
 test("empty groups route everything to Others", () => {
   setCiSplit({ enabled: false, groups: [] });
-  assert.deepEqual(buildCiGroups(rows("Anything", "")), [{ name: "Others", rows: rows("Anything", "") }]);
+  assert.deepEqual(buildCiGroups(rows("Anything", "")), [
+    { name: "Others", rows: rows("Anything", "") }
+  ]);
 });
 
 test("legacy flat items config still prefixes", () => {
   setCiSplit({ enabled: true, groups: [{ name: "Biz", items: ["BIZ.NZ"] }] });
-  assert.deepEqual(buildCiGroups(rows("biz.nz-prelive")), [{ name: "Biz", rows: rows("biz.nz-prelive") }]);
+  assert.deepEqual(buildCiGroups(rows("biz.nz-prelive")), [
+    { name: "Biz", rows: rows("biz.nz-prelive") }
+  ]);
 });
 
 test("disabled split keeps groups usable after Disable button shape", () => {
   setCiSplit({ enabled: false, items: [] });
   assert.deepEqual(getCiSplit(), { enabled: false, groups: [] });
-  assert.deepEqual(buildCiGroups(rows("Anything", "")), [{ name: "Others", rows: rows("Anything", "") }]);
+  assert.deepEqual(buildCiGroups(rows("Anything", "")), [
+    { name: "Others", rows: rows("Anything", "") }
+  ]);
 });
 
 test("setCiSplit normalizes group entries", () => {
-  setCiSplit({ enabled: true, groups: [{ name: "G", items: ["A"] }, { name: "H", items: [42, "  "] }] });
+  setCiSplit({
+    enabled: true,
+    groups: [
+      { name: "G", items: ["A"] },
+      { name: "H", items: [42, "  "] }
+    ]
+  });
   assert.equal(getCiSplit().groups.length, 2);
   assert.deepEqual(getCiSplit().groups[1], { name: "H", items: [] });
 });

@@ -70,8 +70,16 @@ test("membersFromMembershipNames reads dot-walked user.name (full name), not the
   const rows = [
     // On this instance the `user` reference display value is the login/email;
     // the full name lives in the dot-walked user.name field.
-    { user: ref("me@ba.com", "u-self"), "user.name": ref("Abbas Nagoor Kani", "Abbas Nagoor Kani"), "user.active": ref("true", "true") },
-    { user: ref("alice@ba.com", "u1"), "user.name": ref("Alice Adams", "Alice Adams"), "user.active": ref("true", "true") }
+    {
+      user: ref("me@ba.com", "u-self"),
+      "user.name": ref("Abbas Nagoor Kani", "Abbas Nagoor Kani"),
+      "user.active": ref("true", "true")
+    },
+    {
+      user: ref("alice@ba.com", "u1"),
+      "user.name": ref("Alice Adams", "Alice Adams"),
+      "user.active": ref("true", "true")
+    }
   ];
   assert.deepEqual(membersFromMembershipNames(rows), ["Abbas Nagoor Kani", "Alice Adams"]);
 });
@@ -136,7 +144,9 @@ test("cisFromRows extracts cmdb_ci names, deduped case-insensitively", () => {
 });
 
 test("cisFromRows skips blank names and handles empty input", () => {
-  assert.deepEqual(cisFromRows([{ name: ref("", "") }, { name: ref("Real CI", "Real CI") }]), ["Real CI"]);
+  assert.deepEqual(cisFromRows([{ name: ref("", "") }, { name: ref("Real CI", "Real CI") }]), [
+    "Real CI"
+  ]);
   assert.deepEqual(cisFromRows([]), []);
   assert.deepEqual(cisFromRows(null), []);
 });

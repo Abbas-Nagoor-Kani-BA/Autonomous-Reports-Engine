@@ -66,5 +66,6 @@ reports pulled, total, missing-audit counts, and any skipped sets.
 - Keep the ServiceNow tab open during pulls and exports (relay + node affinity).
 
 ---
+
 Related: [Authentication Chain](Authentication-Chain) ·
 [Timeline and SLA Rules](Timeline-and-SLA-Rules) · [Caching](Caching)

@@ -52,12 +52,12 @@ Ticking **Pull change requests for Weekly Summary** adds data for the WSR
 workbook's Summary sheet. Weeks are **Monday–Sunday**, and the derivation
 (`core/summarydetails.ts`) buckets rows into:
 
-| Summary section | Source | Rule |
-|---|---|---|
-| **Key Incidents** | already-pulled incident rows | P1/P2 incidents resolved **last** week |
-| **Changes Implemented** | change_request | `end_date` in **last** week, not failed and not cancelled |
-| **Changes Failed** | change_request | `end_date` in **last** week with `review_status = fail` |
-| **Changes Planned** | change_request | `start_date` in the **current** week (this bucket is labelled "next week" in the UI) |
+| Summary section         | Source                       | Rule                                                                                 |
+| ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------ |
+| **Key Incidents**       | already-pulled incident rows | P1/P2 incidents resolved **last** week                                               |
+| **Changes Implemented** | change_request               | `end_date` in **last** week, not failed and not cancelled                            |
+| **Changes Failed**      | change_request               | `end_date` in **last** week with `review_status = fail`                              |
+| **Changes Planned**     | change_request               | `start_date` in the **current** week (this bucket is labelled "next week" in the UI) |
 
 The change requests are pulled as **two scoped requests** — kept separate
 because OR-ing the queue scope across both windows makes the encoded query long
@@ -77,7 +77,7 @@ the **Pull change requests for Weekly Summary** checkbox, so you can see what
 will be pulled. An **Edit** button opens the same condition builder used for
 other ticket types, pre-loaded with the two windows (a **Last week
 (implemented)** / **Next week (planned)** switcher). While editing, the primary
-button reads **Save weekly summary** instead of *Add to filter list*.
+button reads **Save weekly summary** instead of _Add to filter list_.
 
 - You may change the **start/end dates** of each window and add extra
   `change_request` conditions.
@@ -105,5 +105,6 @@ BETWEEN the two required dates. See [Roadmap](Roadmap) for table-specific
 caveats.
 
 ---
+
 Related: [Running a Pull](Running-a-Pull) · [Configuration](Configuration) ·
 [Two-Phase Pipeline](Two-Phase-Pipeline)

@@ -58,15 +58,28 @@ test("classifyMsr returns null on a weak tie", () => {
 });
 
 test("classifyMsr detects solution type - workaround", () => {
-  assertLabel("Applied a temporary workaround until the vendor ships the patch.", RESOLUTION, "Workaround solution");
+  assertLabel(
+    "Applied a temporary workaround until the vendor ships the patch.",
+    RESOLUTION,
+    "Workaround solution"
+  );
 });
 
 test("classifyMsr detects solution type - permanent", () => {
-  assertLabel("Deployed the permanent code change to production.", RESOLUTION, "Permanent solution");
+  assertLabel(
+    "Deployed the permanent code change to production.",
+    RESOLUTION,
+    "Permanent solution"
+  );
 });
 
 test("classifyMsr detects solution type - verification only", () => {
-  assertLabel("Verified in test environment, confirmed working.", RESOLUTION, "Verification only", 0.3);
+  assertLabel(
+    "Verified in test environment, confirmed working.",
+    RESOLUTION,
+    "Verification only",
+    0.3
+  );
 });
 
 test("classifyMsr maps phrase not just single tokens", () => {
@@ -90,7 +103,9 @@ test("classifyMsr scores are per-label and deterministic", () => {
 
 test("classifyMsr works against a P_Ticket root cause list", () => {
   const PTASK_RC = rootCauseFor(MSR_DEFAULT_LISTS.rootCause, msrType("PTASK001"));
-  const r = classifyMsr("Incorrect data entered by the user into the file.", PTASK_RC, { minConfidence: 0.3 });
+  const r = classifyMsr("Incorrect data entered by the user into the file.", PTASK_RC, {
+    minConfidence: 0.3
+  });
   assert.equal(r.label, "User error - data");
 });
 
@@ -105,7 +120,10 @@ test("cosine similarity boosts confidence on a genuine match", () => {
   const keywordOnly = classifyMsr(note, INCIDENT_RC, { cosineWeight: 0 });
   const blended = classifyMsr(note, INCIDENT_RC);
   assert.equal(blended.label, "Certificate expiry");
-  assert.ok(blended.confidence > keywordOnly.confidence, "blending cosine raises confidence over keyword counting");
+  assert.ok(
+    blended.confidence > keywordOnly.confidence,
+    "blending cosine raises confidence over keyword counting"
+  );
 });
 
 test("cosine does not over-fire on generic vocabulary", () => {
@@ -127,7 +145,9 @@ test("learned hint overrides still feed the cosine vector", () => {
 });
 
 test("cascade uses the regex stage first (exact phrasing wins)", () => {
-  const r = classifyMsr("User error: the operator entered wrong data", INCIDENT_RC, { minConfidence: 0.3 });
+  const r = classifyMsr("User error: the operator entered wrong data", INCIDENT_RC, {
+    minConfidence: 0.3
+  });
   assert.equal(r.label, "User error - procedure", "regex 'user error' wins before keyword/cosine");
   assert.equal(r.level, "regex");
 });
@@ -158,19 +178,22 @@ test("cascade returns null when no stage clears its bar", () => {
   assert.equal(r.level, null);
 });
 
-
 import { categorizeField } from "../core/classification/msrcategorize.ts";
 
 const HINTS = MSR_DEFAULT_LISTS.hints;
 
 test("negation: 'no workaround is needed ... permanent code change' -> not Workaround", () => {
-  const r = classifyMsr("no workaround is needed, applied a permanent code change", RESOLUTION, { hints: HINTS });
+  const r = classifyMsr("no workaround is needed, applied a permanent code change", RESOLUTION, {
+    hints: HINTS
+  });
   assert.notEqual(r.label, "Workaround solution");
   assert.equal(r.label, "Permanent solution");
 });
 
 test("negation: 'without a workaround' does not score workaround", () => {
-  const r = classifyMsr("resolved without a workaround, applied a permanent fix", RESOLUTION, { hints: HINTS });
+  const r = classifyMsr("resolved without a workaround, applied a permanent fix", RESOLUTION, {
+    hints: HINTS
+  });
   assert.notEqual(r.label, "Workaround solution");
 });
 
@@ -180,13 +203,21 @@ test("negation: 'not a network issue' does not score Network", () => {
 });
 
 test("negation-aware cosine: 'no database performance issue, it was a firewall block' -> not Database performance", () => {
-  const r = classifyMsr("no database performance issue, it was a firewall block on the port", INCIDENT_RC, { hints: HINTS });
+  const r = classifyMsr(
+    "no database performance issue, it was a firewall block on the port",
+    INCIDENT_RC,
+    { hints: HINTS }
+  );
   assert.notEqual(r.label, "Database performance");
 });
 
 test("multi-match specificity: a multi-word regex outranks a broad single word", () => {
   // "blocked port" (firewall, 2 words) is more specific than "network"/"connectivity".
-  const r = classifyMsr("network connectivity issue; a firewall rule blocked the port", INCIDENT_RC, { hints: HINTS });
+  const r = classifyMsr(
+    "network connectivity issue; a firewall rule blocked the port",
+    INCIDENT_RC,
+    { hints: HINTS }
+  );
   assert.ok(r.label === "Firewall" || r.label === "Network issue", `got ${r.label}`);
 });
 
@@ -221,9 +252,13 @@ Resolved Supplier:
 });
 
 test("categorizeField Case 2: no labels -> whole-note fallback", () => {
-  const note = "Users could not reach the app; the firewall was blocking port 443 and we opened it. Permanent fix applied.";
+  const note =
+    "Users could not reach the app; the firewall was blocking port 443 and we opened it. Permanent fix applied.";
   assert.equal(categorizeField(note, ["rootCauseCategory"], INCIDENT_RC, HINTS).label, "Firewall");
-  assert.equal(categorizeField(note, ["resolutionType"], RESOLUTION, HINTS).label, "Permanent solution");
+  assert.equal(
+    categorizeField(note, ["resolutionType"], RESOLUTION, HINTS).label,
+    "Permanent solution"
+  );
 });
 
 test("categorizeField Case 5: label value uncategorizable -> whole-note fallback", () => {

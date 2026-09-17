@@ -66,7 +66,9 @@ test("left pane renders the focused row's activity", () => {
 
 test("editing a text input commits the raw value and bumps dirty count", () => {
   const committed = [];
-  const { host, editor } = mount({ onCommit: (sysId, key, value) => committed.push([sysId, key, value]) });
+  const { host, editor } = mount({
+    onCommit: (sysId, key, value) => committed.push([sysId, key, value])
+  });
   editor.show({ colKey: "assignedTo", colLabel: "Assigned to", cls: "", entries, focusIdx: 0 });
   const input = rows(host)[0].querySelector(".ce-input");
   input.value = "New Owner";
@@ -78,7 +80,13 @@ test("editing a text input commits the raw value and bumps dirty count", () => {
 test("date columns parse input to ISO before commit; invalid stays uncommitted", () => {
   const committed = [];
   const { host, editor } = mount({ onCommit: (s, k, v) => committed.push(v) });
-  editor.show({ colKey: "assignTimeUtcIso", colLabel: "Assign time", cls: "inst", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "assignTimeUtcIso",
+    colLabel: "Assign time",
+    cls: "inst",
+    entries,
+    focusIdx: 0
+  });
   const input = rows(host)[0].querySelector(".ce-input");
   input.value = "not a date";
   input.dispatchEvent(new win.Event("change", { bubbles: true }));
@@ -107,7 +115,13 @@ test("choice columns render a select of options and commit the choice", () => {
 
 test("derived columns show the SLA note in the left pane", () => {
   const { host, editor } = mount({ isDerived: (k) => k === "assignTimeUtcIso" });
-  editor.show({ colKey: "assignTimeUtcIso", colLabel: "Assign time", cls: "inst", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "assignTimeUtcIso",
+    colLabel: "Assign time",
+    cls: "inst",
+    entries,
+    focusIdx: 0
+  });
   assert.match(host.querySelector(".ce-left").textContent, /Derived field/);
 });
 
@@ -128,7 +142,13 @@ test("Calclens flags highlight the matching line with a reason tooltip", () => {
   const { host, editor } = mount({
     flagsFor: (sysId) => (sysId === "s2" ? [{ label: "Slow pickup" }] : [])
   });
-  editor.show({ colKey: "assignTimeUtcIso", colLabel: "Assign time", cls: "inst", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "assignTimeUtcIso",
+    colLabel: "Assign time",
+    cls: "inst",
+    entries,
+    focusIdx: 0
+  });
   const r = rows(host);
   assert.equal(r[0].classList.contains("ce-flagged"), false);
   assert.equal(r[1].classList.contains("ce-flagged"), true);
@@ -155,9 +175,16 @@ test("close hides the modal", () => {
 
 test("autocompleteFor renders a text input with a themed suggestion menu on focus", () => {
   const { host, editor } = mount({
-    autocompleteFor: (key) => (key === "configItem" ? ["RMS (prd)", "Billing API", "Web Portal"] : null)
+    autocompleteFor: (key) =>
+      key === "configItem" ? ["RMS (prd)", "Billing API", "Web Portal"] : null
   });
-  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "configItem",
+    colLabel: "Configuration item",
+    cls: "",
+    entries,
+    focusIdx: 0
+  });
   const row0 = rows(host)[0];
   const input = row0.querySelector(".ce-input");
   assert.equal(input.tagName, "INPUT", "an editable text input, not a closed select");
@@ -167,19 +194,37 @@ test("autocompleteFor renders a text input with a themed suggestion menu on focu
   assert.ok(menu.classList.contains("hidden"), "menu starts hidden");
   input.value = "";
   input.dispatchEvent(new win.Event("input", { bubbles: true }));
-  assert.equal(menu.classList.contains("hidden"), false, "menu opens when the field is focused/typed");
-  assert.deepEqual([...menu.querySelectorAll(".ce-ac-opt")].map((o) => o.textContent), ["RMS (prd)", "Billing API", "Web Portal"]);
+  assert.equal(
+    menu.classList.contains("hidden"),
+    false,
+    "menu opens when the field is focused/typed"
+  );
+  assert.deepEqual(
+    [...menu.querySelectorAll(".ce-ac-opt")].map((o) => o.textContent),
+    ["RMS (prd)", "Billing API", "Web Portal"]
+  );
 });
 
 test("typing filters the suggestion menu (case-insensitive substring)", () => {
-  const { host, editor } = mount({ autocompleteFor: () => ["RMS (prd)", "Billing API", "Web Portal"] });
-  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  const { host, editor } = mount({
+    autocompleteFor: () => ["RMS (prd)", "Billing API", "Web Portal"]
+  });
+  editor.show({
+    colKey: "configItem",
+    colLabel: "Configuration item",
+    cls: "",
+    entries,
+    focusIdx: 0
+  });
   const input = rows(host)[0].querySelector(".ce-input");
   input.dispatchEvent(new win.Event("input", { bubbles: true }));
   input.value = "bil";
   input.dispatchEvent(new win.Event("input", { bubbles: true }));
   const menu = rows(host)[0].querySelector(".ce-ac-menu");
-  assert.deepEqual([...menu.querySelectorAll(".ce-ac-opt")].map((o) => o.textContent), ["Billing API"]);
+  assert.deepEqual(
+    [...menu.querySelectorAll(".ce-ac-opt")].map((o) => o.textContent),
+    ["Billing API"]
+  );
 });
 
 test("clicking a suggestion commits it and closes the menu", () => {
@@ -188,7 +233,13 @@ test("clicking a suggestion commits it and closes the menu", () => {
     autocompleteFor: () => ["RMS (prd)", "Billing API"],
     onCommit: (s, k, v) => committed.push([s, k, v])
   });
-  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "configItem",
+    colLabel: "Configuration item",
+    cls: "",
+    entries,
+    focusIdx: 0
+  });
   const row0 = rows(host)[0];
   const input = row0.querySelector(".ce-input");
   input.value = "";
@@ -197,7 +248,10 @@ test("clicking a suggestion commits it and closes the menu", () => {
   opt.dispatchEvent(new win.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
   assert.deepEqual(committed, [["s1", "configItem", "Billing API"]]);
   assert.equal(input.value, "Billing API");
-  assert.ok(row0.querySelector(".ce-ac-menu").classList.contains("hidden"), "menu closed after pick");
+  assert.ok(
+    row0.querySelector(".ce-ac-menu").classList.contains("hidden"),
+    "menu closed after pick"
+  );
 });
 
 test("autocomplete commits a typed value (free text still allowed)", () => {
@@ -206,7 +260,13 @@ test("autocomplete commits a typed value (free text still allowed)", () => {
     autocompleteFor: () => ["RMS (prd)", "Billing API"],
     onCommit: (s, k, v) => committed.push([s, k, v])
   });
-  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "configItem",
+    colLabel: "Configuration item",
+    cls: "",
+    entries,
+    focusIdx: 0
+  });
   const input = rows(host)[0].querySelector(".ce-input");
   input.value = "Brand New CI";
   input.dispatchEvent(new win.Event("change", { bubbles: true }));
@@ -219,12 +279,22 @@ test("ArrowDown + Enter picks a highlighted suggestion", () => {
     autocompleteFor: () => ["RMS (prd)", "Billing API"],
     onCommit: (s, k, v) => committed.push(v)
   });
-  editor.show({ colKey: "configItem", colLabel: "Configuration item", cls: "", entries, focusIdx: 0 });
+  editor.show({
+    colKey: "configItem",
+    colLabel: "Configuration item",
+    cls: "",
+    entries,
+    focusIdx: 0
+  });
   const input = rows(host)[0].querySelector(".ce-input");
   input.value = "";
   input.dispatchEvent(new win.Event("input", { bubbles: true }));
-  input.dispatchEvent(new win.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }));
-  input.dispatchEvent(new win.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  input.dispatchEvent(
+    new win.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true })
+  );
+  input.dispatchEvent(
+    new win.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })
+  );
   assert.deepEqual(committed, ["RMS (prd)"]);
 });
 

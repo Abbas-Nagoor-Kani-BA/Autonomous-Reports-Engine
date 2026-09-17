@@ -25,14 +25,12 @@ Computed in `core/phase2.ts` from timeline events (`assignment_group`,
 
 See [`timeline-scenarios.md`](timeline-scenarios.md) for the full scenario
 catalogue (S1–S7 and the real multi-queue example) with exact inputs and
-outputs.
-3. **suspendTime** — FIRST transition INTO "On Hold" that occurs while the
-   current group is one of our queues, restricted to the CHOSEN stay's queue and
-   at/after assignTime. State labels come from `core/statechoices.ts`. Feed
-   events carry DISPLAY LABELS ("On Hold"); legacy sys_audit rows carried raw
-   values ("3") — both are accepted.
-4. **resumeTime** — FIRST post-suspend transition to "In Progress"; if none,
-   fall back to first post-suspend "Resolved". Null if never resumed.
+outputs. 3. **suspendTime** — FIRST transition INTO "On Hold" that occurs while the
+current group is one of our queues, restricted to the CHOSEN stay's queue and
+at/after assignTime. State labels come from `core/statechoices.ts`. Feed
+events carry DISPLAY LABELS ("On Hold"); legacy sys_audit rows carried raw
+values ("3") — both are accepted. 4. **resumeTime** — FIRST post-suspend transition to "In Progress"; if none,
+fall back to first post-suspend "Resolved". Null if never resumed.
 
 On Hold transitions while in a different queue (including a different one of our
 queues) do NOT count toward the chosen stay's queue. Group changes reset queue

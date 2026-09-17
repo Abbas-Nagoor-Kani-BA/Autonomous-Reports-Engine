@@ -2,9 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  getSearchColumn, setSearchColumn,
-  getSearchMode, setSearchMode,
-  isCaseSensitive, setCaseSensitive
+  getSearchColumn,
+  setSearchColumn,
+  getSearchMode,
+  setSearchMode,
+  isCaseSensitive,
+  setCaseSensitive
 } from "../viewer/search-state.ts";
 
 test("defaults reproduce the original all-column substring search", () => {

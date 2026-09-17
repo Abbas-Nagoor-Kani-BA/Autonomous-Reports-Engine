@@ -14,9 +14,10 @@ function updateColsBtn(): void {
   // Icon-only button: show the hidden count as a badge + in the tooltip, not text.
   btn.classList.toggle("has-badge", n > 0);
   btn.setAttribute("data-badge", n > 0 ? String(n) : "");
-  btn.setAttribute("data-tip", n > 0
-    ? `Choose which columns are shown (${n} hidden)`
-    : "Choose which columns are shown");
+  btn.setAttribute(
+    "data-tip",
+    n > 0 ? `Choose which columns are shown (${n} hidden)` : "Choose which columns are shown"
+  );
 }
 
 export function initCols(): void {
@@ -57,7 +58,9 @@ export function initCols(): void {
     setHiddenCols(new Set());
     try {
       await saveValue(STORAGE.viewerHiddenCols, []);
-    } catch { /* ignored */ }
+    } catch {
+      /* ignored */
+    }
     $("colMenu").classList.add("hidden");
     buildHead();
     render();
@@ -100,7 +103,9 @@ function buildColMenu(): void {
     cb.type = "checkbox";
     cb.checked = !hideStore().has(key);
     // A pointerdown on the checkbox must not begin a row drag.
-    cb.addEventListener("pointerdown", () => { dragSuppressed = true; });
+    cb.addEventListener("pointerdown", () => {
+      dragSuppressed = true;
+    });
     cb.addEventListener("change", () => toggleCol(key, cb.checked));
 
     const span = document.createElement("span");
@@ -130,7 +135,7 @@ function clearRowIndicators(): void {
 /** True when the pointer is in the top half of `row` (insert above). */
 function dragAbove(e: DragEvent, row: HTMLElement): boolean {
   const rect = row.getBoundingClientRect();
-  return (e.clientY - rect.top) < rect.height / 2;
+  return e.clientY - rect.top < rect.height / 2;
 }
 
 function wireRowDrag(row: HTMLElement, key: string): void {
@@ -142,19 +147,29 @@ function wireRowDrag(row: HTMLElement, key: string): void {
   });
 
   row.addEventListener("dragstart", (e) => {
-    if (dragSuppressed) { dragSuppressed = false; e.preventDefault(); return; }
+    if (dragSuppressed) {
+      dragSuppressed = false;
+      e.preventDefault();
+      return;
+    }
     menuDragKey = key;
     row.classList.add("row-dragging");
     try {
       (e as DragEvent).dataTransfer?.setData("text/plain", key);
       (e as DragEvent).dataTransfer!.effectAllowed = "move";
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   });
 
   row.addEventListener("dragover", (e) => {
     if (menuDragKey === null || menuDragKey === key) return;
     e.preventDefault();
-    try { (e as DragEvent).dataTransfer!.dropEffect = "move"; } catch { /* best-effort */ }
+    try {
+      (e as DragEvent).dataTransfer!.dropEffect = "move";
+    } catch {
+      /* best-effort */
+    }
     const above = dragAbove(e as DragEvent, row);
     clearRowIndicators();
     row.classList.add(above ? "drop-above" : "drop-below");

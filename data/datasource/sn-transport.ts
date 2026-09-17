@@ -91,7 +91,11 @@ export function createSmartTransport(relayTimeoutMs = RELAY_TIMEOUT_MS): Transpo
     const { value: token, source } = await resolveToken(origin, tab, attempt > 0);
 
     try {
-      const resp = await sendMessageWithTimeout(tab.id, { type: MSG.snFetch, url, token }, relayTimeoutMs);
+      const resp = await sendMessageWithTimeout(
+        tab.id,
+        { type: MSG.snFetch, url, token },
+        relayTimeoutMs
+      );
       if (resp && resp.ok) {
         if (resp.status === 401 && attempt < MAX_AUTH_RETRIES) {
           tokenCache = null;
@@ -229,11 +233,15 @@ export async function getPageUser(
       target: { tabId },
       world: "MAIN",
       func: () => {
-        const out: { userId: string | null; userName: string | null } = { userId: null, userName: null };
+        const out: { userId: string | null; userName: string | null } = {
+          userId: null,
+          userName: null
+        };
         const pick = (obj: any): void => {
           if (!obj || typeof obj !== "object") return;
           if (!out.userId && typeof obj.userID === "string" && obj.userID) out.userId = obj.userID;
-          if (!out.userName && typeof obj.userName === "string" && obj.userName) out.userName = obj.userName;
+          if (!out.userName && typeof obj.userName === "string" && obj.userName)
+            out.userName = obj.userName;
         };
         try {
           const now = (window as any).NOW;
@@ -251,7 +259,8 @@ export async function getPageUser(
           /* ignore */
         }
         try {
-          if (!out.userId && typeof window.g_user_id === "string" && window.g_user_id) out.userId = window.g_user_id;
+          if (!out.userId && typeof window.g_user_id === "string" && window.g_user_id)
+            out.userId = window.g_user_id;
         } catch {
           /* ignore */
         }

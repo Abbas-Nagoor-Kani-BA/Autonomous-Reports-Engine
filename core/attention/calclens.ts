@@ -12,7 +12,12 @@
 
 import { computeDurations } from "../timeline/durations.ts";
 import type { DurationRow } from "../timeline/durations.ts";
-import { buildReport, hmsToHours, responseTargetHours, resolutionTargetHours } from "../sla/report.ts";
+import {
+  buildReport,
+  hmsToHours,
+  responseTargetHours,
+  resolutionTargetHours
+} from "../sla/report.ts";
 import type { Report } from "../sla/report.ts";
 import { snStateMap } from "../sla/statechoices.ts";
 import { classifyMsr } from "../classification/msrcategorize.ts";
@@ -141,12 +146,20 @@ function fmtFullFromRow(ctx: ExplainCtx, row: Record<string, any>, iso: unknown)
   const s = str(iso);
   if (!s) return "";
   const withT = s.includes("T") ? s : s.replace(" ", "T");
-  return fmtOrRaw(ctx, row, withT.endsWith("Z") || /[+-]\d\d:\d\d$/.test(withT) ? withT : withT + "Z");
+  return fmtOrRaw(
+    ctx,
+    row,
+    withT.endsWith("Z") || /[+-]\d\d:\d\d$/.test(withT) ? withT : withT + "Z"
+  );
 }
 
 /** Match a retained activity event to a resolved timestamp by field + epoch. */
-function matchEvent(row: Record<string, any>, field: string, iso: unknown, table: string):
-  { o: string; n: string; atEpoch: number } | null {
+function matchEvent(
+  row: Record<string, any>,
+  field: string,
+  iso: unknown,
+  table: string
+): { o: string; n: string; atEpoch: number } | null {
   if (!iso) return null;
   const target = Date.parse(String(iso).replace(" ", "T"));
   if (!Number.isFinite(target)) return null;
@@ -162,7 +175,13 @@ function matchEvent(row: Record<string, any>, field: string, iso: unknown, table
   return null;
 }
 
-function timelineInputs(ctx: ExplainCtx, row: Record<string, any>, field: string, iso: unknown, display: string): ExplainInput[] {
+function timelineInputs(
+  ctx: ExplainCtx,
+  row: Record<string, any>,
+  field: string,
+  iso: unknown,
+  display: string
+): ExplainInput[] {
   return [
     { label: "Value", value: display },
     { label: "UTC timestamp", value: str(iso) || EMPTY }
@@ -223,11 +242,20 @@ function buildTimeline(ctx: ExplainCtx, row: Record<string, any>, table: string)
 }
 
 /** Mark the event for `field` whose epoch equals `iso` as selected. */
-function selectTimelineEvent(timeline: TimelineStep[], field: string, iso: unknown): TimelineStep[] {
+function selectTimelineEvent(
+  timeline: TimelineStep[],
+  field: string,
+  iso: unknown
+): TimelineStep[] {
   const target = Date.parse(String(iso ?? "").replace(" ", "T"));
   if (!Number.isFinite(target)) return timeline;
   for (const step of timeline) {
-    const evField = step.fieldIcon === "group" ? "assignment_group" : step.fieldIcon === "assignee" ? "assigned_to" : "state";
+    const evField =
+      step.fieldIcon === "group"
+        ? "assignment_group"
+        : step.fieldIcon === "assignee"
+          ? "assigned_to"
+          : "state";
     if (evField === field && Date.parse(step.atIso) === target) {
       step.selected = true;
       break;
@@ -242,7 +270,11 @@ function epochOf(iso: unknown): number {
 }
 
 /** Find the timeline step for a field whose timestamp equals `iso`. */
-function findStepFor(timeline: TimelineStep[], fieldIcon: TimelineFieldIcon, iso: unknown): TimelineStep | undefined {
+function findStepFor(
+  timeline: TimelineStep[],
+  fieldIcon: TimelineFieldIcon,
+  iso: unknown
+): TimelineStep | undefined {
   const target = epochOf(iso);
   if (!Number.isFinite(target)) return undefined;
   return timeline.find((s) => s.fieldIcon === fieldIcon && epochOf(s.atIso) === target);
@@ -255,10 +287,20 @@ function findStepAt(timeline: TimelineStep[], iso: unknown): TimelineStep | unde
   return timeline.find((s) => epochOf(s.atIso) === target);
 }
 
-const KEY_MOMENTS: Array<{ label: string; fieldIcon: TimelineFieldIcon | null; key: string; iso: (row: Record<string, any>) => unknown }> = [
+const KEY_MOMENTS: Array<{
+  label: string;
+  fieldIcon: TimelineFieldIcon | null;
+  key: string;
+  iso: (row: Record<string, any>) => unknown;
+}> = [
   { label: "Assign", fieldIcon: "group", key: "assignTimeUtcIso", iso: (r) => r.assignTimeUtcIso },
   { label: "Ackn", fieldIcon: "assignee", key: "acknTimeUtcIso", iso: (r) => r.acknTimeUtcIso },
-  { label: "Suspend", fieldIcon: "state", key: "suspendTimeUtcIso", iso: (r) => r.suspendTimeUtcIso },
+  {
+    label: "Suspend",
+    fieldIcon: "state",
+    key: "suspendTimeUtcIso",
+    iso: (r) => r.suspendTimeUtcIso
+  },
   { label: "Resume", fieldIcon: "state", key: "resumeTimeUtcIso", iso: (r) => r.resumeTimeUtcIso }
 ];
 
@@ -276,7 +318,11 @@ function markKeyMoments(timeline: TimelineStep[], row: Record<string, any>): Tim
 }
 
 /** Total change counts by feed field, read from the retained activity events. */
-function countsFor(row: Record<string, any>): { assignments: number; states: number; groups: number } {
+function countsFor(row: Record<string, any>): {
+  assignments: number;
+  states: number;
+  groups: number;
+} {
   const counts = { assignments: 0, states: 0, groups: 0 };
   const evs = Array.isArray(row.activity) ? (row.activity as ActivityEv[]) : [];
   for (const ev of evs) {
@@ -299,15 +345,22 @@ function fmtPct(n: unknown): string {
 }
 
 /** Friendly label + the MSR list backing a choice column, when one exists. */
-function picklistFor(colKey: string, row: Record<string, any>, ctx: ExplainCtx):
-  { label: string; list: string[] } | null {
+function picklistFor(
+  colKey: string,
+  row: Record<string, any>,
+  ctx: ExplainCtx
+): { label: string; list: string[] } | null {
   const lists = ctx.msrLists as any;
   if (!lists || typeof lists !== "object") return null;
   if (colKey === "subCategory") {
-    return Array.isArray(lists.subCategory) ? { label: "Sub-category", list: lists.subCategory.map(String) } : null;
+    return Array.isArray(lists.subCategory)
+      ? { label: "Sub-category", list: lists.subCategory.map(String) }
+      : null;
   }
   if (colKey === "duplicateIncident") {
-    return Array.isArray(lists.duplicate) ? { label: "Duplicate", list: lists.duplicate.map(String) } : null;
+    return Array.isArray(lists.duplicate)
+      ? { label: "Duplicate", list: lists.duplicate.map(String) }
+      : null;
   }
   return null;
 }
@@ -331,14 +384,15 @@ function explainRaw(
     kind: "raw",
     label: key,
     value,
-    summary: "Stored value — not computed by the analyzer. Below: this ticket's exact activity timeline with the key moments highlighted.",
+    summary:
+      "Stored value — not computed by the analyzer. Below: this ticket's exact activity timeline with the key moments highlighted.",
     inputs: [
       { label: "Field", value: key },
       { label: "Value", value: value || EMPTY }
     ],
     steps: [
       `The \`${key}\` cell is copied straight from the ServiceNow record during the pull; ` +
-      "the analyzer does not derive or change it (unless you edit it in the grid)."
+        "the analyzer does not derive or change it (unless you edit it in the grid)."
     ],
     warnings: []
   };
@@ -354,15 +408,26 @@ function explainRaw(
 
   // SLA status (response + resolution), when a target applies.
   try {
-    const rep = buildReport(row as Parameters<typeof buildReport>[0], (ctx.fmtInstant as any) ?? null) as Report;
-    out.digests = [responseDigest(row, rep), resolutionDigest(row, rep)].filter((d) => d !== undefined);
+    const rep = buildReport(
+      row as Parameters<typeof buildReport>[0],
+      (ctx.fmtInstant as any) ?? null
+    ) as Report;
+    out.digests = [responseDigest(row, rep), resolutionDigest(row, rep)].filter(
+      (d) => d !== undefined
+    );
     if (out.digests.length) {
-      out.steps.push("Its SLA status is checked below against the priority's response and resolution targets.");
+      out.steps.push(
+        "Its SLA status is checked below against the priority's response and resolution targets."
+      );
     }
-  } catch { /* report unavailable — no digest */ }
+  } catch {
+    /* report unavailable — no digest */
+  }
 
   if (timeline.length) {
-    out.steps.push("The timeline below is the ticket's exact activity feed; the highlighted rows are the assign, ackn, suspend, resume, opened and resolved moments.");
+    out.steps.push(
+      "The timeline below is the ticket's exact activity feed; the highlighted rows are the assign, ackn, suspend, resume, opened and resolved moments."
+    );
   }
 
   return out;
@@ -376,7 +441,8 @@ function explainTimeline(
   display: string,
   table: string
 ): Explanation {
-  const field = { assignTimeUtcIso: "assignment_group", acknTimeUtcIso: "assigned_to" }[key] ?? "state";
+  const field =
+    { assignTimeUtcIso: "assignment_group", acknTimeUtcIso: "assigned_to" }[key] ?? "state";
   const ev = matchEvent(row, field, iso, table);
 
   const out: Explanation = {
@@ -410,7 +476,10 @@ function explainTimeline(
       ];
       out.warnings.push("Ticket started in this queue, so assign time = opened time.");
     }
-    if (opened) out.steps.push(`The assign time can't be before the ticket was opened (${opened}), so we keep it no earlier than that.`);
+    if (opened)
+      out.steps.push(
+        `The assign time can't be before the ticket was opened (${opened}), so we keep it no earlier than that.`
+      );
   } else if (key === "acknTimeUtcIso") {
     out.summary = "The moment a member of the team picked the ticket up.";
     const queueName = str(row.assignmentGroup);
@@ -429,7 +498,9 @@ function explainTimeline(
         "No team member was assigned to this ticket after it entered the queue, so there's nothing to count.",
         "The acknowledge time is therefore empty."
       ];
-      out.warnings.push("Ackn needs a team member (Settings list) assigned after the ticket entered the queue.");
+      out.warnings.push(
+        "Ackn needs a team member (Settings list) assigned after the ticket entered the queue."
+      );
     }
   } else if (key === "suspendTimeUtcIso") {
     out.summary = "The first time this ticket went On Hold in the selected queue.";
@@ -443,7 +514,7 @@ function explainTimeline(
         `In all, this ticket went On Hold **${Number(row.onHoldCount) || 0}** time${Number(row.onHoldCount) === 1 ? "" : "s"}.`
       ];
     } else {
-      out.steps = ["No move into \"On Hold\" happened at this time, so suspend is empty."];
+      out.steps = ['No move into "On Hold" happened at this time, so suspend is empty.'];
     }
   } else if (key === "resumeTimeUtcIso") {
     out.summary = "The first time the ticket came back from being On Hold.";
@@ -490,23 +561,34 @@ function explainDuration(
   const queueName = str(row.assignmentGroup);
   const assigneeName = str(row.assignedTo);
   const person = assigneeName || "the assigned engineer";
-  let left = "", right = "", leftLabel = "", rightLabel = "", summary = "";
-  let clockLeft = "", clockRight = "";
+  let left = "",
+    right = "",
+    leftLabel = "",
+    rightLabel = "",
+    summary = "";
+  let clockLeft = "",
+    clockRight = "";
   if (durLabel === "assignToAckn") {
-    leftLabel = "Ackn time"; left = str(row.acknTimeUtcIso);
-    rightLabel = "Assign time"; right = str(row.assignTimeUtcIso);
+    leftLabel = "Ackn time";
+    left = str(row.acknTimeUtcIso);
+    rightLabel = "Assign time";
+    right = str(row.assignTimeUtcIso);
     clockRight = fmtOrRaw(ctx, row, right);
     clockLeft = fmtOrRaw(ctx, row, left);
     summary = "How long from when the ticket reached this team until it was picked up.";
   } else if (durLabel === "assignToResolve") {
-    leftLabel = "Resolved"; left = str(row.resolvedAtRaw ?? row.resolvedAt);
-    rightLabel = "Assign time"; right = str(row.assignTimeUtcIso);
+    leftLabel = "Resolved";
+    left = str(row.resolvedAtRaw ?? row.resolvedAt);
+    rightLabel = "Assign time";
+    right = str(row.assignTimeUtcIso);
     clockRight = fmtOrRaw(ctx, row, right);
     clockLeft = fmtOrRaw(ctx, row, left);
     summary = "The total time from assignment to resolution.";
   } else {
-    leftLabel = "Resume"; left = str(row.resumeTimeUtcIso);
-    rightLabel = "Suspend"; right = str(row.suspendTimeUtcIso);
+    leftLabel = "Resume";
+    left = str(row.resumeTimeUtcIso);
+    rightLabel = "Suspend";
+    right = str(row.suspendTimeUtcIso);
     clockRight = fmtOrRaw(ctx, row, right);
     clockLeft = fmtOrRaw(ctx, row, left);
     summary = "How long the ticket stayed On Hold.";
@@ -531,21 +613,37 @@ function explainDuration(
 
   if (value) {
     if (durLabel === "assignToAckn") {
-      out.steps.push(`The ticket reached the **${dflt(queueName)}** queue at **${dflt(clockRight)}**.`);
+      out.steps.push(
+        `The ticket reached the **${dflt(queueName)}** queue at **${dflt(clockRight)}**.`
+      );
       out.steps.push(`It was picked up by **${person}** at **${dflt(clockLeft)}**.`);
-      out.steps.push(`Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
+      out.steps.push(
+        `Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`
+      );
       out.steps.push(`How it's measured: ${bizNote}.`);
     } else if (durLabel === "assignToResolve") {
-      out.steps.push(`The ticket was assigned at **${dflt(clockRight)}** and resolved at **${dflt(clockLeft)}**.`);
-      out.steps.push(`Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
+      out.steps.push(
+        `The ticket was assigned at **${dflt(clockRight)}** and resolved at **${dflt(clockLeft)}**.`
+      );
+      out.steps.push(
+        `Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`
+      );
       out.steps.push(`How it's measured: ${bizNote}.`);
     } else {
-      out.steps.push(`This ticket went On Hold at **${dflt(clockRight)}** and came back at **${dflt(clockLeft)}**.`);
-      out.steps.push(`Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`);
-      out.steps.push("Only the first On Hold \u2192 first resume window is counted here; a ticket held more than once shows less time on purpose.");
+      out.steps.push(
+        `This ticket went On Hold at **${dflt(clockRight)}** and came back at **${dflt(clockLeft)}**.`
+      );
+      out.steps.push(
+        `Arithmetic (raw elapsed): **${dflt(clockLeft)}** − **${dflt(clockRight)}** = **${value}**${decimal ? ` (${fmtHoursDecimal(decimal)})` : ""}.`
+      );
+      out.steps.push(
+        "Only the first On Hold \u2192 first resume window is counted here; a ticket held more than once shows less time on purpose."
+      );
     }
   } else {
-    out.steps.push("There isn't enough to work out this duration \u2014 an endpoint is missing, happened in the wrong order, or is zero.");
+    out.steps.push(
+      "There isn't enough to work out this duration \u2014 an endpoint is missing, happened in the wrong order, or is zero."
+    );
     out.warnings.push("Empty duration = missing/inverted/zero endpoint pair.");
   }
   return out;
@@ -555,7 +653,7 @@ function hmsToDecimalHours(hms: string | undefined | null): number {
   if (!hms) return NaN;
   const m = String(hms).match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);
   if (!m) return NaN;
-  return parseInt(m[1]) + parseInt(m[2]) / 60 + (parseInt(m[3] || "0")) / 3600;
+  return parseInt(m[1]) + parseInt(m[2]) / 60 + parseInt(m[3] || "0") / 3600;
 }
 
 function responseDigest(row: Record<string, any>, rep: Report): SlDigest | undefined {
@@ -569,9 +667,10 @@ function responseDigest(row: Record<string, any>, rep: Report): SlDigest | undef
     { label: "Assigned", value: rep.assigned || EMPTY },
     { label: "Ack", value: rep.ackn || EMPTY }
   ];
-  const op = p === 1 || p === 2
-    ? "Ack \u2212 Assigned (straight elapsed)"
-    : "Ack \u2212 Assigned (business hours, minus suspend window)";
+  const op =
+    p === 1 || p === 2
+      ? "Ack \u2212 Assigned (straight elapsed)"
+      : "Ack \u2212 Assigned (business hours, minus suspend window)";
   return {
     targetLabel: "Response target",
     target: `${fmtHoursDecimal(targetH)} (P${p})`,
@@ -580,11 +679,12 @@ function responseDigest(row: Record<string, any>, rep: Report): SlDigest | undef
     metLabel,
     sourceTimes,
     op,
-    line: met === null
-      ? `Response target ${fmtHoursDecimal(targetH)} (P${p}); actual ${rep.responseSLA || "—"}.`
-      : met
-        ? `Acknowledged within the ${fmtHoursDecimal(targetH)} target (P${p}) → Met.`
-        : `Acknowledged in ${rep.responseSLA} against a ${fmtHoursDecimal(targetH)} target (P${p}) → Breached.`
+    line:
+      met === null
+        ? `Response target ${fmtHoursDecimal(targetH)} (P${p}); actual ${rep.responseSLA || "—"}.`
+        : met
+          ? `Acknowledged within the ${fmtHoursDecimal(targetH)} target (P${p}) → Met.`
+          : `Acknowledged in ${rep.responseSLA} against a ${fmtHoursDecimal(targetH)} target (P${p}) → Breached.`
   };
 }
 
@@ -593,15 +693,17 @@ function resolutionDigest(row: Record<string, any>, rep: Report): SlDigest | und
   const t = resolutionTargetHours(p);
   if (!t.min && !t.max) return undefined;
   const actualH = hmsToHours(rep.incCurrentHours);
-  const met = rep.metMaxResolutionSLA === "NO" ? false : rep.metMinResolutionSLA === "YES" ? true : null;
+  const met =
+    rep.metMaxResolutionSLA === "NO" ? false : rep.metMinResolutionSLA === "YES" ? true : null;
   const metLabel = met === null ? "unknown" : met ? "Met" : "Breached";
   const sourceTimes: ExplainInput[] = [
     { label: "Assigned", value: rep.assigned || EMPTY },
     { label: rep.resolved ? "Resolved" : "Now", value: rep.resolved || EMPTY }
   ];
-  const op = p === 1 || p === 2
-    ? "Resolved \u2212 Assigned (straight elapsed)"
-    : "Resolved \u2212 Assigned (business hours, minus suspend window)";
+  const op =
+    p === 1 || p === 2
+      ? "Resolved \u2212 Assigned (straight elapsed)"
+      : "Resolved \u2212 Assigned (business hours, minus suspend window)";
   return {
     targetLabel: "Resolution target",
     target: `${fmtHoursDecimal(t.min)}–${fmtHoursDecimal(t.max)} (P${p})`,
@@ -610,11 +712,12 @@ function resolutionDigest(row: Record<string, any>, rep: Report): SlDigest | und
     metLabel,
     sourceTimes,
     op,
-    line: met === null
-      ? `Resolution target ${fmtHoursDecimal(t.min)}–${fmtHoursDecimal(t.max)} (P${p}); current ${rep.incCurrentHours || "—"}.`
-      : met
-        ? `Resolved within the ${fmtHoursDecimal(t.max)} max target (P${p}) → Met.`
-        : `At ${rep.incCurrentHours} current hours, past the ${fmtHoursDecimal(t.max)} max target (P${p}) → Breached.`
+    line:
+      met === null
+        ? `Resolution target ${fmtHoursDecimal(t.min)}–${fmtHoursDecimal(t.max)} (P${p}); current ${rep.incCurrentHours || "—"}.`
+        : met
+          ? `Resolved within the ${fmtHoursDecimal(t.max)} max target (P${p}) → Met.`
+          : `At ${rep.incCurrentHours} current hours, past the ${fmtHoursDecimal(t.max)} max target (P${p}) → Breached.`
   };
 }
 
@@ -625,11 +728,7 @@ function slaPriorityFor(priority: unknown): number {
   return n > 0 ? n : 0;
 }
 
-function explainReport(
-  row: Record<string, any>,
-  key: string,
-  rep: Report
-): Explanation {
+function explainReport(row: Record<string, any>, key: string, rep: Report): Explanation {
   const field = key.slice(4);
   const value = String((rep as Record<string, any>)[field] ?? "");
 
@@ -653,7 +752,9 @@ function explainReport(
 
   if (field === "type") {
     out.summary = "What kind of ticket this is.";
-    out.steps = [`The number starts with **\`${dflt(row.number).slice(0, 3)}\`**, which tells us this is an **\`${value}\`** ticket.`];
+    out.steps = [
+      `The number starts with **\`${dflt(row.number).slice(0, 3)}\`**, which tells us this is an **\`${value}\`** ticket.`
+    ];
   } else if (field === "metResponseSLA" || field === "responseSLA") {
     out.summary = "Whether this ticket was picked up quickly enough.";
     out.digest = responseDigest(row, rep);
@@ -663,13 +764,21 @@ function explainReport(
       `The ticket reached **${dflt(queueName)}** and was picked up by **${person}** at **${dflt(rep.acknClock || rep.ackn)}**.`,
       `That's about **${respH != null ? fmtHoursDecimal(respH) : dflt(rep.responseSLA)}**${respH != null ? ` (\`${dflt(rep.responseSLA)}\`)` : ""} of wait time.`,
       tgt != null
-        ? `For a priority-${dflt(row.priority)} ticket the target is **${fmtHoursDecimal(tgt)}**, so this one ${respH != null
-            ? (respH < tgt ? "made it in time (**Met**)." : "ran past the target (**Breached**).")
-            : `reads as \`${dflt(rep.metResponseSLA)}\`.`}`
+        ? `For a priority-${dflt(row.priority)} ticket the target is **${fmtHoursDecimal(tgt)}**, so this one ${
+            respH != null
+              ? respH < tgt
+                ? "made it in time (**Met**)."
+                : "ran past the target (**Breached**)."
+              : `reads as \`${dflt(rep.metResponseSLA)}\`.`
+          }`
         : `It's checked against the priority-${dflt(row.priority)} response target.`
     ];
-    if (field === "metResponseSLA") out.steps.push(`The reported answer is \`${dflt(rep.metResponseSLA)}\`.`);
-    if (value === "No") out.warnings.push("Response SLA was missed \u2014 this adds an 'R' to the SLA-breach marker.");
+    if (field === "metResponseSLA")
+      out.steps.push(`The reported answer is \`${dflt(rep.metResponseSLA)}\`.`);
+    if (value === "No")
+      out.warnings.push(
+        "Response SLA was missed \u2014 this adds an 'R' to the SLA-breach marker."
+      );
   } else if (field === "metMinResolutionSLA" || field === "metMaxResolutionSLA") {
     out.summary = "Whether the ticket was resolved inside its target window.";
     out.digest = resolutionDigest(row, rep);
@@ -678,17 +787,21 @@ function explainReport(
     const hi = rep.resMaxTarget;
     out.steps = [
       `This ticket took about **${cur != null ? fmtHoursDecimal(cur) : dflt(rep.incCurrentHours)}**${cur != null ? ` (\`${dflt(rep.incCurrentHours)}\`)` : ""} from assignment to ${rep.resolved ? "resolution" : "now"}.`,
-      (lo != null && hi != null)
+      lo != null && hi != null
         ? `For a priority-${dflt(row.priority)} ticket the target window is **${fmtHoursDecimal(lo)} \u2013 ${fmtHoursDecimal(hi)}**.`
         : `It's checked against the priority-${dflt(row.priority)} resolution window.`,
       field === "metMinResolutionSLA"
         ? `Against the lower bound that reads \`${dflt(rep.metMinResolutionSLA)}\`.`
-        : (cur != null && hi != null
-            ? (cur < hi ? `It finished inside the window, so it's **met** (\`${dflt(rep.metMaxResolutionSLA)}\`).` : `It ran past the window, so it's **missed** (\`${dflt(rep.metMaxResolutionSLA)}\`).`)
-            : `Against the upper bound that reads \`${dflt(rep.metMaxResolutionSLA)}\`.`)
+        : cur != null && hi != null
+          ? cur < hi
+            ? `It finished inside the window, so it's **met** (\`${dflt(rep.metMaxResolutionSLA)}\`).`
+            : `It ran past the window, so it's **missed** (\`${dflt(rep.metMaxResolutionSLA)}\`).`
+          : `Against the upper bound that reads \`${dflt(rep.metMaxResolutionSLA)}\`.`
     ];
     if (field === "metMaxResolutionSLA" && value === "NO") {
-      out.warnings.push("The resolution window was missed \u2014 this adds an 'M' to the SLA-breach marker.");
+      out.warnings.push(
+        "The resolution window was missed \u2014 this adds an 'M' to the SLA-breach marker."
+      );
     }
   } else if (field === "incidentHours") {
     out.summary = "How long the ticket was open, from Created to Resolved.";
@@ -696,12 +809,14 @@ function explainReport(
     out.steps = [
       `Created **${dflt(rep.createdClock || rep.created)}** → Resolved **${dflt(rep.resolvedClock || rep.resolved)}**.`,
       `Gross (${businessBranchNote(row.priority)}): **${rep.grossIncHours != null ? fmtHoursDecimal(rep.grossIncHours) : "?"} h**.`,
-      ...(rep.suspendWindowHours != null && rep.suspendWindowHours > 0 ? [
-        `Suspend window (On Hold **${dflt(rep.suspClock)}** → Resumed **${dflt(rep.resumedClock)}**): − **${fmtHoursDecimal(rep.suspendWindowHours)} h**.`,
-        `Net = gross − suspend = **${rep.grossIncHours != null ? fmtHoursDecimal(rep.grossIncHours) : "?"} h** − **${fmtHoursDecimal(rep.suspendWindowHours)} h** = **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}** (\`${dflt(rep.incidentHours)}\`).`
-      ] : [
-        `Result: **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}** (\`${dflt(rep.incidentHours)}\`).`
-      ])
+      ...(rep.suspendWindowHours != null && rep.suspendWindowHours > 0
+        ? [
+            `Suspend window (On Hold **${dflt(rep.suspClock)}** → Resumed **${dflt(rep.resumedClock)}**): − **${fmtHoursDecimal(rep.suspendWindowHours)} h**.`,
+            `Net = gross − suspend = **${rep.grossIncHours != null ? fmtHoursDecimal(rep.grossIncHours) : "?"} h** − **${fmtHoursDecimal(rep.suspendWindowHours)} h** = **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}** (\`${dflt(rep.incidentHours)}\`).`
+          ]
+        : [
+            `Result: **${rep.incHoursRaw != null ? fmtHoursDecimal(rep.incHoursRaw) : dflt(rep.incidentHours)}** (\`${dflt(rep.incidentHours)}\`).`
+          ])
     ];
   } else if (field === "incidentTotalAge") {
     out.summary = "How many working days the ticket was open.";
@@ -716,12 +831,14 @@ function explainReport(
     out.steps = [
       `Assigned **${dflt(rep.assignedClock || rep.assigned)}** → ${rep.resolved ? "Resolved" : "now"} **${dflt(rep.resolvedClock || rep.resolved || "now")}**.`,
       `Gross (${businessBranchNote(row.priority)}): **${rep.grossIncCurrentHours != null ? fmtHoursDecimal(rep.grossIncCurrentHours) : "?"} h**.`,
-      ...(rep.suspendWindowHours != null && rep.suspendWindowHours > 0 ? [
-        `Suspend window (On Hold **${dflt(rep.suspClock)}** → Resumed **${dflt(rep.resumedClock)}**): − **${fmtHoursDecimal(rep.suspendWindowHours)} h**.`,
-        `Net = gross − suspend = **${rep.grossIncCurrentHours != null ? fmtHoursDecimal(rep.grossIncCurrentHours) : "?"} h** − **${fmtHoursDecimal(rep.suspendWindowHours)} h** = **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}** (\`${dflt(rep.incCurrentHours)}\`).`
-      ] : [
-        `Result: **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}** (\`${dflt(rep.incCurrentHours)}\`).`
-      ]),
+      ...(rep.suspendWindowHours != null && rep.suspendWindowHours > 0
+        ? [
+            `Suspend window (On Hold **${dflt(rep.suspClock)}** → Resumed **${dflt(rep.resumedClock)}**): − **${fmtHoursDecimal(rep.suspendWindowHours)} h**.`,
+            `Net = gross − suspend = **${rep.grossIncCurrentHours != null ? fmtHoursDecimal(rep.grossIncCurrentHours) : "?"} h** − **${fmtHoursDecimal(rep.suspendWindowHours)} h** = **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}** (\`${dflt(rep.incCurrentHours)}\`).`
+          ]
+        : [
+            `Result: **${rep.incCurrentRaw != null ? fmtHoursDecimal(rep.incCurrentRaw) : dflt(rep.incCurrentHours)}** (\`${dflt(rep.incCurrentHours)}\`).`
+          ]),
       "This starts at assignment, not creation — slightly different from the full incident hours."
     ];
   } else if (field === "incidentCurrentAge") {
@@ -733,7 +850,8 @@ function explainReport(
     ];
   } else if (field === "cumulativeSla" || field === "cumulativeDays") {
     out.summary = "The ticket's totals across its whole lifetime.";
-    const cumMet = rep.metMaxResolutionSLA === "NO" ? false : rep.metMinResolutionSLA === "YES" ? true : null;
+    const cumMet =
+      rep.metMaxResolutionSLA === "NO" ? false : rep.metMinResolutionSLA === "YES" ? true : null;
     out.digest = {
       targetLabel: "Cumulative (lifetime)",
       target: rep.cumulativeSla ? `${dflt(rep.cumulativeSla)}` : EMPTY,
@@ -758,7 +876,10 @@ function explainReport(
     ];
   } else if (field === "analysedDate") {
     out.summary = "When the analysis for this ticket ran.";
-    out.steps = [`The report ran on **\`${dflt(rep.analysedDate)}\`**.`, "This is just the timestamp of the analysis."];
+    out.steps = [
+      `The report ran on **\`${dflt(rep.analysedDate)}\`**.`,
+      "This is just the timestamp of the analysis."
+    ];
   } else {
     out.summary = "A value the report worked out from this ticket's details.";
     out.steps = [`The value is \`${value || EMPTY}\`.`];
@@ -768,11 +889,7 @@ function explainReport(
 }
 
 /** Explains a picklist-backed choice column (subCategory, duplicateIncident). */
-function explainMsrChoice(
-  row: Record<string, any>,
-  colKey: string,
-  ctx: ExplainCtx
-): Explanation {
+function explainMsrChoice(row: Record<string, any>, colKey: string, ctx: ExplainCtx): Explanation {
   const pick = picklistFor(colKey, row, ctx);
   const value = str(row[colKey]);
   const isMember = pick ? inList(pick.list, value) : false;
@@ -800,7 +917,10 @@ function explainMsrChoice(
   } else {
     out.steps = ["This is a picklist value read from the row; the option list was not available."];
   }
-  if (value && !isMember) out.warnings.push(`Value is not in the active ${pick ? pick.label : ""} picklist (off-list).`.trim());
+  if (value && !isMember)
+    out.warnings.push(
+      `Value is not in the active ${pick ? pick.label : ""} picklist (off-list).`.trim()
+    );
 
   return out;
 }
@@ -841,9 +961,8 @@ function explainClassification(
     return out;
   }
 
-  const lists = field === "rootCause"
-    ? (buildRootCauseList(row, ctx))
-    : (buildResolutionList(row, ctx));
+  const lists =
+    field === "rootCause" ? buildRootCauseList(row, ctx) : buildResolutionList(row, ctx);
 
   const source = field === "rootCause" ? str(row.__rcSource) : str(row.__solSource);
   const conf = Number(field === "rootCause" ? row.__rcConf : row.__solConf);
@@ -852,11 +971,15 @@ function explainClassification(
   // The keyword side is always re-scored so the drawer can show both engines.
   let reclass: MsrScore | null = null;
   if (notes && lists.length) {
-    try { reclass = classifyMsr(notes, lists, { hints: (ctx.msrLists as any)?.hints || {} }); } catch { reclass = null; }
+    try {
+      reclass = classifyMsr(notes, lists, { hints: (ctx.msrLists as any)?.hints || {} });
+    } catch {
+      reclass = null;
+    }
   }
   const kwLabel = reclass?.label || null;
   const kwConf = reclass?.confidence || 0;
-  const kwScore = kwLabel ? (reclass?.scores[kwLabel] || 0) : 0;
+  const kwScore = kwLabel ? reclass?.scores[kwLabel] || 0 : 0;
 
   const confPct = Number.isFinite(conf) && conf > 0 ? fmtPct(conf) : undefined;
   const stageLabel: Record<string, string> = {
@@ -869,7 +992,11 @@ function explainClassification(
     source === "ml"
       ? { kind: "ml", label: "ML model", confidence: confPct }
       : stageLabel[source]
-        ? { kind: "heuristic", label: stageLabel[source], confidence: Number.isFinite(kwConf) && kwConf > 0 ? fmtPct(kwConf) : confPct }
+        ? {
+            kind: "heuristic",
+            label: stageLabel[source],
+            confidence: Number.isFinite(kwConf) && kwConf > 0 ? fmtPct(kwConf) : confPct
+          }
         : { kind: "manual", label: "Manual" };
 
   const out: Explanation = {
@@ -901,7 +1028,9 @@ function explainClassification(
       notes ? `From the note: \`${truncate(notes, 80)}\`.` : ""
     ].filter(Boolean);
     if (Number.isFinite(conf) && conf < 0.5) {
-      out.warnings.push(`The model's confidence here is low (${fmtPct(conf)}) \u2014 you may want to double-check this ${labelName}.`);
+      out.warnings.push(
+        `The model's confidence here is low (${fmtPct(conf)}) \u2014 you may want to double-check this ${labelName}.`
+      );
     }
   } else if (stageLabel[source]) {
     out.confidence = fmtPct(kwConf || conf);
@@ -916,7 +1045,9 @@ function explainClassification(
       notes ? `From the note: \`${truncate(notes, 80)}\`.` : ""
     ].filter(Boolean);
     if (Number.isFinite(kwConf) && kwConf < 0.5) {
-      out.warnings.push(`The match confidence is low (${fmtPct(kwConf)}) \u2014 you may want to double-check this ${labelName}.`);
+      out.warnings.push(
+        `The match confidence is low (${fmtPct(kwConf)}) \u2014 you may want to double-check this ${labelName}.`
+      );
     }
   } else {
     if (value) {
@@ -925,15 +1056,22 @@ function explainClassification(
         "No classification was re-run for this cell.",
         notes ? `From the note: \`${truncate(notes, 80)}\`.` : ""
       ].filter(Boolean);
-      if (inChoice) out.steps.push("Re-classify to refresh or verify it against the current model.");
+      if (inChoice)
+        out.steps.push("Re-classify to refresh or verify it against the current model.");
     } else {
-      out.steps = ["No category here yet \u2014 the note didn't produce a confident match, or none was applied."];
-      if (notes) out.warnings.push("The ticket has notes but no category \u2014 confidence was below the bar or nothing matched.");
+      out.steps = [
+        "No category here yet \u2014 the note didn't produce a confident match, or none was applied."
+      ];
+      if (notes)
+        out.warnings.push(
+          "The ticket has notes but no category \u2014 confidence was below the bar or nothing matched."
+        );
     }
   }
 
   if (row.parseReview) out.warnings.push("The parse was low-confidence \u2014 flagged for review.");
-  if (value && !inChoice) out.warnings.push("This value isn't in the active option list (off-list).");
+  if (value && !inChoice)
+    out.warnings.push("This value isn't in the active option list (off-list).");
 
   return out;
 }
@@ -948,7 +1086,11 @@ function buildRootCauseList(row: Record<string, any>, ctx: ExplainCtx): string[]
 function buildResolutionList(row: Record<string, any>, ctx: ExplainCtx): string[] {
   return listFor(row, "resolution", ctx);
 }
-function listFor(row: Record<string, any>, kind: "rootCause" | "resolution", ctx: ExplainCtx): string[] {
+function listFor(
+  row: Record<string, any>,
+  kind: "rootCause" | "resolution",
+  ctx: ExplainCtx
+): string[] {
   const lists = ctx.msrLists;
   if (lists && typeof lists === "object") {
     if (kind === "resolution") {
@@ -958,9 +1100,12 @@ function listFor(row: Record<string, any>, kind: "rootCause" | "resolution", ctx
       const rc = (lists as any).rootCause;
       if (rc && typeof rc === "object") {
         const n = String(row.number ?? "");
-        const bucket = (n.startsWith("REQ") || n.startsWith("SCTASK")) ? "RFS"
-          : (n.startsWith("PRB") || n.startsWith("PTASK")) ? "P_Ticket"
-          : "Incident";
+        const bucket =
+          n.startsWith("REQ") || n.startsWith("SCTASK")
+            ? "RFS"
+            : n.startsWith("PRB") || n.startsWith("PTASK")
+              ? "P_Ticket"
+              : "Incident";
         const arr = (rc as any)[bucket];
         if (Array.isArray(arr) && arr.length) return arr.map(String);
       }
@@ -976,19 +1121,44 @@ function listFor(row: Record<string, any>, kind: "rootCause" | "resolution", ctx
 }
 
 const INC_RC = [
-  "Application bug", "Application performance", "Database performance",
-  "Server performance", "Hardware", "Environment", "Interface data error",
-  "Interfacing application error", "Network issue", "Firewall", "Certificate expiry",
-  "User error - procedure", "False alert", "User query", "Information request",
-  "User access issue", "Password reset", "Job schedule/scheduler error",
-  "External-3rd party", "Duplicate incident", "Not an issue", "Invalid issue",
-  "Dependent Application Failure", "Configuration Issue"
+  "Application bug",
+  "Application performance",
+  "Database performance",
+  "Server performance",
+  "Hardware",
+  "Environment",
+  "Interface data error",
+  "Interfacing application error",
+  "Network issue",
+  "Firewall",
+  "Certificate expiry",
+  "User error - procedure",
+  "False alert",
+  "User query",
+  "Information request",
+  "User access issue",
+  "Password reset",
+  "Job schedule/scheduler error",
+  "External-3rd party",
+  "Duplicate incident",
+  "Not an issue",
+  "Invalid issue",
+  "Dependent Application Failure",
+  "Configuration Issue"
 ];
 const RFS_RC = [] as string[];
 const PTASK_RC = [
-  "Application bug", "Application performance", "Database performance",
-  "Server performance", "Hardware", "Environment", "Interface data error",
-  "Interfacing application error", "Network issue", "Firewall", "Certificate expiry",
+  "Application bug",
+  "Application performance",
+  "Database performance",
+  "Server performance",
+  "Hardware",
+  "Environment",
+  "Interface data error",
+  "Interfacing application error",
+  "Network issue",
+  "Firewall",
+  "Certificate expiry",
   "User error - data"
 ];
 
@@ -1018,8 +1188,15 @@ export function explainCell(
 
   // Raw stored columns.
   const rawKeys = new Set([
-    "number", "shortDescription", "assignedTo", "priority", "state",
-    "assignmentGroup", "configItem", "incidentState", "createdOn",
+    "number",
+    "shortDescription",
+    "assignedTo",
+    "priority",
+    "state",
+    "assignmentGroup",
+    "configItem",
+    "incidentState",
+    "createdOn",
     "resolvedAt"
   ]);
   if (rawKeys.has(colKey)) {
@@ -1036,7 +1213,11 @@ export function explainCell(
   // Durations.
   if (colKey.startsWith("dur:")) {
     let dur: Record<string, string>;
-    try { dur = computeDurations(row as DurationRow); } catch { dur = {} as Record<string, string>; }
+    try {
+      dur = computeDurations(row as DurationRow);
+    } catch {
+      dur = {} as Record<string, string>;
+    }
     return explainDuration(row, ctx, colKey, dur);
   }
 
@@ -1044,7 +1225,10 @@ export function explainCell(
   if (colKey.startsWith("rep:")) {
     let rep: Report;
     try {
-      rep = buildReport(row as Parameters<typeof buildReport>[0], (ctx.fmtInstant as any) ?? null) as Report;
+      rep = buildReport(
+        row as Parameters<typeof buildReport>[0],
+        (ctx.fmtInstant as any) ?? null
+      ) as Report;
     } catch {
       return null;
     }

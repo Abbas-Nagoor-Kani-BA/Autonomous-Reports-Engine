@@ -27,7 +27,9 @@ export type DurationRow = {
 };
 
 function parseUtcMs(s: unknown): number {
-  const str = String(s ?? "").trim().replace(" ", "T");
+  const str = String(s ?? "")
+    .trim()
+    .replace(" ", "T");
   if (!str) return NaN;
   return Date.parse(/(Z|[+-]\d\d:?\d\d)$/.test(str) ? str : str + "Z");
 }

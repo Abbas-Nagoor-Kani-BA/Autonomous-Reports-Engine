@@ -63,5 +63,6 @@ This is a template integrity issue handled in
 `fullCalcOnLoad`). If you hit it, report the template you used.
 
 ---
+
 Related: [Authentication Chain](Authentication-Chain) · [Caching](Caching) ·
 [Timezone Contract](Timezone-Contract)

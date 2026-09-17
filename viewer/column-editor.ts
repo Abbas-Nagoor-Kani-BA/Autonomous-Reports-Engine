@@ -26,7 +26,10 @@ import { iconize } from "../lib/icons.ts";
 let editor: ColumnEditor | null = null;
 
 const DERIVED_KEYS = new Set([
-  "assignTimeUtcIso", "acknTimeUtcIso", "suspendTimeUtcIso", "resumeTimeUtcIso"
+  "assignTimeUtcIso",
+  "acknTimeUtcIso",
+  "suspendTimeUtcIso",
+  "resumeTimeUtcIso"
 ]);
 
 function colMeta(key: string): { label: string; cls: string } {
@@ -35,7 +38,12 @@ function colMeta(key: string): { label: string; cls: string } {
 }
 
 function isDerived(key: string): boolean {
-  return DERIVED_KEYS.has(key) || colMeta(key).cls === "inst" || colMeta(key).cls === "rep" || colMeta(key).cls === "dur";
+  return (
+    DERIVED_KEYS.has(key) ||
+    colMeta(key).cls === "inst" ||
+    colMeta(key).cls === "rep" ||
+    colMeta(key).cls === "dur"
+  );
 }
 
 function flagsFor(sysId: string, key: string): ColumnFlag[] {
@@ -52,7 +60,9 @@ function flagsFor(sysId: string, key: string): ColumnFlag[] {
 /** Suggestions for the configuration-item column autocomplete: the CIs present
  *  in the current view unioned with the CIs resolved in Settings. */
 function ciSuggestions(): string[] {
-  const dataItems = currentRows().map((r) => String((r as { configItem?: unknown }).configItem ?? "").trim());
+  const dataItems = currentRows().map((r) =>
+    String((r as { configItem?: unknown }).configItem ?? "").trim()
+  );
   return ciAvailablePool(dataItems, getStoredConfigItems());
 }
 
@@ -76,41 +86,50 @@ export function initColumnEditor(): void {
 
   const reflect = (on: boolean): void => {
     btn.classList.toggle("edit-on", on);
-    btn.setAttribute("data-tip", on
-      ? "Edit mode ON — click a cell to bulk-edit that column. Click to turn off."
-      : "Edit mode OFF — turn on, then click a cell to bulk-edit that column across the current view.");
+    btn.setAttribute(
+      "data-tip",
+      on
+        ? "Edit mode ON — click a cell to bulk-edit that column. Click to turn off."
+        : "Edit mode OFF — turn on, then click a cell to bulk-edit that column across the current view."
+    );
   };
 
   const host = $("columnEditorModal");
   if (host) {
-    editor = new ColumnEditor(host, {}, {
-      activityFor: (sysId) => {
-        const row = findRowBySysId(sysId);
-        return row ? timelinePaneEl(row as ViewerRow) : null;
-      },
-      displayFor: (key, sysId, cls) => {
-        const row = findRowBySysId(sysId);
-        if (!row) return "";
-        return cls === "inst" ? fmtInstant(String(row[key] ?? ""), row) : String(row[key] ?? "");
-      },
-      optionsFor: (key, sysId) => {
-        const row = findRowBySysId(sysId);
-        return row ? columnOptionList(key, row) : null;
-      },
-      autocompleteFor: (key) => (key === "configItem" ? ciSuggestions() : null),
-      parseValue: (v) => parseLocalInput(v),
-      onCommit: (sysId, key, value) => {
-        const row = findRowBySysId(sysId);
-        if (!row) return;
-        row[key] = value;
-        scheduleSave();
-        updateGridRows([sysId]);
-        render();
-      },
-      onFocusRow: () => { /* left pane refresh handled by the component patch */ },
-      flagsFor,
-      isDerived
-    });
+    editor = new ColumnEditor(
+      host,
+      {},
+      {
+        activityFor: (sysId) => {
+          const row = findRowBySysId(sysId);
+          return row ? timelinePaneEl(row as ViewerRow) : null;
+        },
+        displayFor: (key, sysId, cls) => {
+          const row = findRowBySysId(sysId);
+          if (!row) return "";
+          return cls === "inst" ? fmtInstant(String(row[key] ?? ""), row) : String(row[key] ?? "");
+        },
+        optionsFor: (key, sysId) => {
+          const row = findRowBySysId(sysId);
+          return row ? columnOptionList(key, row) : null;
+        },
+        autocompleteFor: (key) => (key === "configItem" ? ciSuggestions() : null),
+        parseValue: (v) => parseLocalInput(v),
+        onCommit: (sysId, key, value) => {
+          const row = findRowBySysId(sysId);
+          if (!row) return;
+          row[key] = value;
+          scheduleSave();
+          updateGridRows([sysId]);
+          render();
+        },
+        onFocusRow: () => {
+          /* left pane refresh handled by the component patch */
+        },
+        flagsFor,
+        isDerived
+      }
+    );
   }
 
   btn.addEventListener("click", () => {

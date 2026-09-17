@@ -16,14 +16,23 @@ test("openFor renders a checkbox per member, all checked by default", () => {
   assert.equal(root.classList.contains("hidden"), false, "dialog is open");
   const boxes = root.querySelectorAll(".memberCheckbox");
   assert.equal(boxes.length, 3);
-  assert.ok([...boxes].every((b) => b.checked), "all checked by default");
+  assert.ok(
+    [...boxes].every((b) => b.checked),
+    "all checked by default"
+  );
   assert.match(root.querySelector("h2").textContent, /Network Ops/);
 });
 
 test("Add returns only the checked members and closes", () => {
   const { root, picker } = mount();
   let got = null;
-  picker.openFor({ group: "G", members: ["Alice", "Bob", "Carol"], onConfirm: (names) => { got = names; } });
+  picker.openFor({
+    group: "G",
+    members: ["Alice", "Bob", "Carol"],
+    onConfirm: (names) => {
+      got = names;
+    }
+  });
   // Uncheck Bob (index 1).
   const boxes = root.querySelectorAll(".memberCheckbox");
   boxes[1].checked = false;
@@ -36,7 +45,13 @@ test("Add returns only the checked members and closes", () => {
 test("Select none then Add returns an empty list", () => {
   const { root, picker } = mount();
   let got = null;
-  picker.openFor({ group: "G", members: ["Alice", "Bob"], onConfirm: (names) => { got = names; } });
+  picker.openFor({
+    group: "G",
+    members: ["Alice", "Bob"],
+    onConfirm: (names) => {
+      got = names;
+    }
+  });
   const buttons = [...root.querySelectorAll("button")];
   buttons.find((b) => b.textContent === "Select none").click();
   root.querySelector(".primary").click();
@@ -46,7 +61,13 @@ test("Select none then Add returns an empty list", () => {
 test("Select all re-checks everything", () => {
   const { root, picker } = mount();
   let got = null;
-  picker.openFor({ group: "G", members: ["Alice", "Bob"], onConfirm: (names) => { got = names; } });
+  picker.openFor({
+    group: "G",
+    members: ["Alice", "Bob"],
+    onConfirm: (names) => {
+      got = names;
+    }
+  });
   const buttons = [...root.querySelectorAll("button")];
   buttons.find((b) => b.textContent === "Select none").click();
   buttons.find((b) => b.textContent === "Select all").click();
@@ -57,7 +78,13 @@ test("Select all re-checks everything", () => {
 test("Cancel closes without calling onConfirm", () => {
   const { root, picker } = mount();
   let called = false;
-  picker.openFor({ group: "G", members: ["Alice"], onConfirm: () => { called = true; } });
+  picker.openFor({
+    group: "G",
+    members: ["Alice"],
+    onConfirm: () => {
+      called = true;
+    }
+  });
   [...root.querySelectorAll("button")].find((b) => b.textContent === "Cancel").click();
   assert.equal(called, false);
   assert.equal(root.classList.contains("hidden"), true);
@@ -82,6 +109,11 @@ test("empty member list shows a 'no active members' count", () => {
 
 test("an explicit title overrides the default 'Members of' heading (e.g. for CIs)", () => {
   const { root, picker } = mount();
-  picker.openFor({ group: "Network Ops", members: ["RMS (prd)"], title: 'Configuration items of "Network Ops"', onConfirm: () => {} });
+  picker.openFor({
+    group: "Network Ops",
+    members: ["RMS (prd)"],
+    title: 'Configuration items of "Network Ops"',
+    onConfirm: () => {}
+  });
   assert.equal(root.querySelector("h2").textContent, 'Configuration items of "Network Ops"');
 });

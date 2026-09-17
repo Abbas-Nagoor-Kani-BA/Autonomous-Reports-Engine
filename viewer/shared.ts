@@ -10,13 +10,15 @@ function copyText(text: string): Promise<void> {
     ta.focus();
     ta.select();
     let ok = false;
-    try { ok = document.execCommand("copy"); } catch { /* ignored */ }
+    try {
+      ok = document.execCommand("copy");
+    } catch {
+      /* ignored */
+    }
     ta.remove();
     if (ok) resolve();
     else reject(new Error("copy blocked by browser"));
   });
 }
 
-export {
-  copyText
-};
+export { copyText };

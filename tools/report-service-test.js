@@ -6,7 +6,9 @@ let failed = 0;
 function check(name, got, want) {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) failed++;
-  console.log(`  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`);
+  console.log(
+    `  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`
+  );
 }
 
 const svc = new ReportService();
@@ -35,21 +37,21 @@ const mkRow = () => ({
 
 console.log("== ReportService.rep — fmt normalises dates into the SLA math ==");
 
-check("identity fmt: 8h incident time",
-  svc.rep(mkRow(), identity).incCurrentHours,
-  "8:00:00");
+check("identity fmt: 8h incident time", svc.rep(mkRow(), identity).incCurrentHours, "8:00:00");
 
-check("day-shifted fmt changes derived SLA (resolvedAt does NOT go through fmt)",
+check(
+  "day-shifted fmt changes derived SLA (resolvedAt does NOT go through fmt)",
   svc.rep(mkRow(), shiftPlusDay).incCurrentHours,
-  "0:00:00");
+  "0:00:00"
+);
 
-check("slaBreach baseline under identity fmt",
-  svc.rep(mkRow(), identity).slaBreach,
-  "RM");
+check("slaBreach baseline under identity fmt", svc.rep(mkRow(), identity).slaBreach, "RM");
 
-check("slaBreach flips once the formatter shifts assigned past resolved",
+check(
+  "slaBreach flips once the formatter shifts assigned past resolved",
   svc.rep(mkRow(), shiftPlusDay).slaBreach,
-  "R");
+  "R"
+);
 
 console.log("== ReportService.slaSummary — a non-identity fmt moves counts ==");
 
@@ -70,27 +72,39 @@ function item(s, sla) {
   return it ? { count: it.count, total: it.total, status: it.status } : null;
 }
 
-check("identity fmt: 2h resolution misses the 1h target",
+check(
+  "identity fmt: 2h resolution misses the 1h target",
   item(svc.slaSummary([mkP1Row()], identity), "Within 1 hour"),
-  { count: 0, total: 1, status: "AMBER" });
+  { count: 0, total: 1, status: "AMBER" }
+);
 
-check("shifted fmt: clamping to 0h makes the same row count as met",
+check(
+  "shifted fmt: clamping to 0h makes the same row count as met",
   item(svc.slaSummary([mkP1Row()], shiftPlusDay), "Within 1 hour"),
-  { count: 1, total: 1, status: "GREEN" });
+  { count: 1, total: 1, status: "GREEN" }
+);
 
-check("incidentTotals unchanged by the formatter",
+check(
+  "incidentTotals unchanged by the formatter",
   svc.slaSummary([mkP1Row()], identity).incidentTotals,
-  { 1: 1, 2: 0, 3: 0, 4: 0 });
+  { 1: 1, 2: 0, 3: 0, 4: 0 }
+);
 
 console.log("== pure core still reachable through the service boundary ==");
 
-check("core buildReport identity fmt direct",
+check(
+  "core buildReport identity fmt direct",
   buildReport(mkRow(), identity).incCurrentHours,
-  "8:00:00");
+  "8:00:00"
+);
 
-check("slaSummaryRows returns SlaSummaryItem[]",
-  (Array.isArray(svc.slaSummaryRows([mkP1Row()], identity))
-    && svc.slaSummaryRows([mkP1Row()], identity).every((i) => typeof i.sla === "string" && typeof i.status === "string")),
-  true);
+check(
+  "slaSummaryRows returns SlaSummaryItem[]",
+  Array.isArray(svc.slaSummaryRows([mkP1Row()], identity)) &&
+    svc
+      .slaSummaryRows([mkP1Row()], identity)
+      .every((i) => typeof i.sla === "string" && typeof i.status === "string"),
+  true
+);
 
 process.exit(failed ? 1 : 0);

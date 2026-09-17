@@ -37,7 +37,9 @@ export function normalizeCiSplit(raw: unknown): CiSplit {
       .filter((g): g is Record<string, unknown> => !!g && typeof g === "object")
       .map((g) => ({
         name: String(g.name ?? ""),
-        items: Array.isArray(g.items) ? g.items.filter((x): x is string => typeof x === "string" && !!x.trim()) : []
+        items: Array.isArray(g.items)
+          ? g.items.filter((x): x is string => typeof x === "string" && !!x.trim())
+          : []
       }))
       .filter((g) => g.name || g.items.length);
     return { enabled, groups };

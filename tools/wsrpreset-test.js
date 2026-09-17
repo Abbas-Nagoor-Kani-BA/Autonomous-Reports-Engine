@@ -13,7 +13,7 @@ test("buildWsrFilterSets returns exactly 7 sets in table/state order", () => {
   const sets = buildWsrFilterSets(NOW);
   assert.equal(sets.length, 7);
   assert.deepEqual(
-    sets.map((s) => `${s.table}:${(s.conditions[0]).field}=${(s.conditions[0]).value}`),
+    sets.map((s) => `${s.table}:${s.conditions[0].field}=${s.conditions[0].value}`),
     [
       "incident:state=7",
       "incident:state=3",
@@ -29,15 +29,16 @@ test("buildWsrFilterSets returns exactly 7 sets in table/state order", () => {
 test("problem sets use problem_state; others use state", () => {
   const sets = buildWsrFilterSets(NOW);
   for (const s of sets) {
-    const field = (s.conditions[0]).field;
+    const field = s.conditions[0].field;
     assert.equal(field, s.table === "problem" ? "problem_state" : "state");
   }
 });
 
 test("closed states carry a last-week closed_at between condition; open states carry none", () => {
   const sets = buildWsrFilterSets(NOW);
-  const isClosed = (s) => s.table === "incident" && s.conditions[0].value === "7"
-    || s.table === "sc_task" && s.conditions[0].value === "3";
+  const isClosed = (s) =>
+    (s.table === "incident" && s.conditions[0].value === "7") ||
+    (s.table === "sc_task" && s.conditions[0].value === "3");
   for (const s of sets) {
     if (isClosed(s)) {
       // state + closed_at between + parent_incident isEmpty
@@ -49,7 +50,11 @@ test("closed states carry a last-week closed_at between condition; open states c
       assert.equal(d.value2, LAST.to);
     } else {
       // state + parent_incident isEmpty
-      assert.equal(s.conditions.length, 2, `${s.table} ${s.conditions[0].value} should have 2 conditions`);
+      assert.equal(
+        s.conditions.length,
+        2,
+        `${s.table} ${s.conditions[0].value} should have 2 conditions`
+      );
     }
   }
 });

@@ -89,7 +89,15 @@ export function createPanel(options: {
     await filterSets.load();
   })();
 
-  return { container, bridge: container.resolve(REMOTE_BRIDGE), logCard, progressCard, conditions, filterSets, ready };
+  return {
+    container,
+    bridge: container.resolve(REMOTE_BRIDGE),
+    logCard,
+    progressCard,
+    conditions,
+    filterSets,
+    ready
+  };
 }
 
 export function filterKey(set: FilterSet): string {
@@ -109,10 +117,7 @@ const COND_OP_LABELS: Record<string, string> = {
   between: "between"
 };
 
-export function describeFilterSet(
-  set: FilterSet,
-  condFields: CondFieldDef[]
-): string {
+export function describeFilterSet(set: FilterSet, condFields: CondFieldDef[]): string {
   const byTable = (key: string) => panelChoiceList(key, set.table);
   const bits = [snTableLabel(set.table)];
   const summary = conditionsSummary(set.conditions, condFields, byTable, set.table);
@@ -132,7 +137,13 @@ export function filterSetToRows(set: FilterSet, condFields: CondFieldDef[]): Con
   const conds = Array.isArray(set.conditions) ? set.conditions : [];
   const rows: ConditionRow[] = [];
   for (const raw of conds) {
-    const c = raw as { join?: string; field?: string; oper?: string; value?: unknown; value2?: unknown };
+    const c = raw as {
+      join?: string;
+      field?: string;
+      oper?: string;
+      value?: unknown;
+      value2?: unknown;
+    };
     const def = condFields.find(
       (f) => f.field === c.field || f.fieldByTable?.[set.table] === c.field
     );
@@ -156,7 +167,13 @@ function conditionsSummary(
 ): string {
   let out = "";
   (Array.isArray(conds) ? conds : []).forEach((raw, i) => {
-    const c = raw as { join?: string; field?: string; oper?: string; value?: unknown; value2?: unknown };
+    const c = raw as {
+      join?: string;
+      field?: string;
+      oper?: string;
+      value?: unknown;
+      value2?: unknown;
+    };
     if (i > 0) out += c.join === "OR" ? " OR " : " AND ";
     out += conditionText(c, condFields, choiceList, table);
   });

@@ -83,10 +83,17 @@ export type ServiceNowClientLike = {
     signal?: AbortSignal,
     tableName?: string
   ): Promise<Record<string, TimelineEvent[]>>;
-  fetchRecords(table: string, encodedQuery: string, fields: string[], limit?: number): Promise<Record<string, any>[]>;
+  fetchRecords(
+    table: string,
+    encodedQuery: string,
+    fields: string[],
+    limit?: number
+  ): Promise<Record<string, any>[]>;
   currentUserId(): Promise<string | null>;
   userNameById(userId: string): Promise<string | null>;
-  fetchGroupMemberRows(groupName: string): Promise<{ rows: Record<string, any>[]; truncated: boolean }>;
+  fetchGroupMemberRows(
+    groupName: string
+  ): Promise<{ rows: Record<string, any>[]; truncated: boolean }>;
   fetchGroupCiRows(groupName: string): Promise<{ rows: Record<string, any>[]; truncated: boolean }>;
 };
 
@@ -109,7 +116,14 @@ export class ServiceNowRemote implements SnRemote {
     signal?: AbortSignal,
     expectedTotal = 0
   ): Promise<TicketRecord[]> {
-    return this.client.fetchAllRecords(table, encodedQuery, fields, onProgress, signal, expectedTotal);
+    return this.client.fetchAllRecords(
+      table,
+      encodedQuery,
+      fields,
+      onProgress,
+      signal,
+      expectedTotal
+    );
   }
 
   fetchTimelineEvents(
@@ -125,7 +139,9 @@ export class ServiceNowRemote implements SnRemote {
   async resolveUserScope(currentUserId?: string | null): Promise<ResolvedScope> {
     const userId = String(currentUserId ?? "").trim() || (await this.client.currentUserId()) || "";
     if (!userId) {
-      throw new Error("Could not determine the current ServiceNow user. Open and refresh your ServiceNow tab, then try again.");
+      throw new Error(
+        "Could not determine the current ServiceNow user. Open and refresh your ServiceNow tab, then try again."
+      );
     }
 
     // 1. The user's active group memberships → queue names. Request the
@@ -180,7 +196,11 @@ export type ClientOptions = {
   onDiagnostic?: (d: Record<string, any>) => void;
 };
 
-export function createServiceNowRemote(instanceUrl: string, transport: any, options: ClientOptions = {}): SnRemote {
+export function createServiceNowRemote(
+  instanceUrl: string,
+  transport: any,
+  options: ClientOptions = {}
+): SnRemote {
   const client = new ServiceNowClient(instanceUrl, {
     transport,
     onDiagnostic: options.onDiagnostic

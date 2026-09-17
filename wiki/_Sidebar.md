@@ -1,6 +1,7 @@
 ### [Home](Home)
 
 **User Guide**
+
 - [Installation](Installation)
 - [Quick Start](Quick-Start)
 - [Configuration](Configuration)
@@ -16,6 +17,7 @@
 - [Troubleshooting and FAQ](Troubleshooting-and-FAQ)
 
 **Developer Guide**
+
 - [Architecture](Architecture)
 - [DI Container](DI-Container)
 - [Component Contract](Component-Contract)

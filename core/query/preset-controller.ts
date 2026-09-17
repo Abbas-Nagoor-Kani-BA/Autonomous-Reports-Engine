@@ -18,7 +18,11 @@ export function presetOptions(userPresets: UserPreset[]): PresetOption[] {
  * is synthesized fresh (last-week dates recompute); a user value returns its
  * stored sets; an unknown value returns [].
  */
-export function resolvePresetSets(value: string, userPresets: UserPreset[], now: Date = new Date()): FilterSet[] {
+export function resolvePresetSets(
+  value: string,
+  userPresets: UserPreset[],
+  now: Date = new Date()
+): FilterSet[] {
   if (value === WSR_PRESET_VALUE) return buildWsrFilterSets(now);
   return userPresets.find((p) => p.name === value)?.sets ?? [];
 }

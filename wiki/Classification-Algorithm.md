@@ -24,7 +24,7 @@ your allowed lists. It works like a careful human reader:
 Two important rules keep it honest:
 
 - It **ignores negatives**: "no workaround needed" does **not** count as
-  *Workaround*.
+  _Workaround_.
 - It only auto-classifies **closed Incident / RFS** tickets; everything else is
   left untouched.
 
@@ -128,14 +128,14 @@ and tolerate misspellings. If you add a phrase in Settings, it goes to Stage 2.
 
 **Examples of built-in phrases:**
 
-| Label | Examples of exact built-in phrases |
-|---|---|
-| Network issue | `network`, `connectivity`, `packet loss`, `latency` |
-| Firewall | `firewall`, `port blocked`, `blocked port` |
-| Certificate expiry | `certificate expired`, `cert expiry`, `expired certificate` |
-| User access issue | `access denied`, `cannot access`, `no access`, `permission denied` |
-| Permanent solution | `permanent`, `patched`, `permanent fix`, `code change` |
-| Workaround solution | `workaround`, `restart`, `reboot`, `temporary fix` |
+| Label               | Examples of exact built-in phrases                                 |
+| ------------------- | ------------------------------------------------------------------ |
+| Network issue       | `network`, `connectivity`, `packet loss`, `latency`                |
+| Firewall            | `firewall`, `port blocked`, `blocked port`                         |
+| Certificate expiry  | `certificate expired`, `cert expiry`, `expired certificate`        |
+| User access issue   | `access denied`, `cannot access`, `no access`, `permission denied` |
+| Permanent solution  | `permanent`, `patched`, `permanent fix`, `code change`             |
+| Workaround solution | `workaround`, `restart`, `reboot`, `temporary fix`                 |
 
 **Negation rule:** if any of the 3 words before a phrase is a negator (no / not
 / never / without / cannot / don't / doesn't...), the match is **ignored**.
@@ -147,18 +147,20 @@ most-word phrase** matched wins. Example: `port blocked` (2 words) beats
 **Stage 1 example:**
 
 Closure note:
+
 ```
 Firewall change left a port blocked to the payment gateway.
 Reconfigured the ACL — permanent fix applied.
 ```
 
 What Stage 1 finds:
-- `firewall` → *Firewall* match (1 word)
-- `port blocked` → *Firewall* match (2 words, more specific)
-- `permanent` → *Permanent solution* match (1 word)
 
-Both are non-negated. *Firewall* wins root cause (most specific phrase: `port
-blocked`). *Permanent solution* wins solution type.
+- `firewall` → _Firewall_ match (1 word)
+- `port blocked` → _Firewall_ match (2 words, more specific)
+- `permanent` → _Permanent solution_ match (1 word)
+
+Both are non-negated. _Firewall_ wins root cause (most specific phrase: `port
+blocked`). _Permanent solution_ wins solution type.
 
 Result: **Root cause = Firewall** (`regex`), **Solution type = Permanent
 solution** (`regex`). Done — Stages 2 and 3 not reached.
@@ -166,16 +168,18 @@ solution** (`regex`). Done — Stages 2 and 3 not reached.
 **Negation example:**
 
 Closure note:
+
 ```
 This was not a network issue. A firewall rule was blocking traffic;
 unblocked it permanently.
 ```
 
 What Stage 1 finds:
+
 - `network` — the 3 words before it are "was", "not", "a" — "not" is a negator
   → **this match is ignored**.
-- `firewall` — no negator before it → *Firewall* match.
-- `permanent` (inside "permanently") → *Permanent solution* match.
+- `firewall` — no negator before it → _Firewall_ match.
+- `permanent` (inside "permanently") → _Permanent solution_ match.
 
 Result: **Root cause = Firewall** (`regex`), **Solution type = Permanent
 solution** (`regex`). "Network issue" was correctly avoided.
@@ -190,11 +194,11 @@ list appear in the note. The label with the most hits wins — provided it has
 
 **How it differs from Stage 1:**
 
-| | Stage 1 | Stage 2 |
-|---|---|---|
-| Phrases | Fixed, developer-written | Editable in Settings |
-| Matching | Exact (case-insensitive) | Fuzzy — tolerates misspellings |
-| Decision | One match is enough | Needs at least 2 hits |
+|             | Stage 1                  | Stage 2                                  |
+| ----------- | ------------------------ | ---------------------------------------- |
+| Phrases     | Fixed, developer-written | Editable in Settings                     |
+| Matching    | Exact (case-insensitive) | Fuzzy — tolerates misspellings           |
+| Decision    | One match is enough      | Needs at least 2 hits                    |
 | Typical use | Common, reliable phrases | Synonyms, domain names, typo-prone words |
 
 **Why at least 2 hits?** A single keyword can appear in a note by coincidence.
@@ -202,33 +206,35 @@ Two separate hint phrases pointing at the same label is a much stronger signal.
 
 **Fuzzy matching:** Stage 2 tolerates spelling mistakes based on word length:
 
-| Word length | Typos tolerated |
-|---|---|
+| Word length | Typos tolerated   |
+| ----------- | ----------------- |
 | < 5 letters | 0 — must be exact |
-| 5–7 letters | 1 letter off |
-| ≥ 8 letters | 2 letters off |
+| 5–7 letters | 1 letter off      |
+| ≥ 8 letters | 2 letters off     |
 
 Examples of what matches and what does not:
 
-| Note word | Hint word | Length | Tolerance | Match? |
-|---|---|---|---|---|
-| `workarround` | `workaround` | 10/11 | 2 | ✓ yes |
-| `permanant` | `permanent` | 9/9 | 2 | ✓ yes |
-| `cfg` | `config` | 3/6 | 0 | ✗ no (too short) |
-| `ntwk` | `network` | 4/7 | 0 | ✗ no (too short) |
+| Note word     | Hint word    | Length | Tolerance | Match?           |
+| ------------- | ------------ | ------ | --------- | ---------------- |
+| `workarround` | `workaround` | 10/11  | 2         | ✓ yes            |
+| `permanant`   | `permanent`  | 9/9    | 2         | ✓ yes            |
+| `cfg`         | `config`     | 3/6    | 0         | ✗ no (too short) |
+| `ntwk`        | `network`    | 4/7    | 0         | ✗ no (too short) |
 
 **Stage 2 example — application-specific names reach 2 hits:**
 
 Closure note:
+
 ```
 Raised a case with Amadeus technical support. SITA also confirmed
 the feed interruption was on their infrastructure side.
 ```
 
-Stage 1 check: no *External-3rd party* exact phrases (`third party`, `3rd
+Stage 1 check: no _External-3rd party_ exact phrases (`third party`, `3rd
 party`, `external`, `vendor`, `supplier`) appear → Stage 1 inconclusive.
 
-Stage 2 hint count for *External-3rd party*:
+Stage 2 hint count for _External-3rd party_:
+
 - `amadeus` — in hints list → hit #1
 - `sita` — in hints list → hit #2
 - No other label reaches 2 hits.
@@ -238,6 +244,7 @@ Result: **Root cause = External-3rd party** (`keyword`).
 **Stage 2 example — misspelling still matches:**
 
 Closure note:
+
 ```
 Confirmed permanant fix deployed — code change went live at 14:00
 and issue has not recurred since.
@@ -246,7 +253,8 @@ and issue has not recurred since.
 Stage 1 check: `/permanent/i` expects exact spelling — `permanant` does not
 match → Stage 1 inconclusive.
 
-Stage 2 hint count for *Permanent solution*:
+Stage 2 hint count for _Permanent solution_:
+
 - `permanant` vs hint `permanent` (9 letters, 1 difference) → within tolerance → hit #1
 - `code change` — exact match in hints → hit #2
 
@@ -270,6 +278,7 @@ presence is a strong signal. A word like "issue" or "error" appears everywhere,
 so it barely moves the needle.
 
 **The rules:**
+
 - Negated tokens are removed before scoring, so a negated cue cannot lift the
   wrong label's similarity.
 - A label wins only if its similarity score is **≥ 0.15** (has meaningful
@@ -279,6 +288,7 @@ so it barely moves the needle.
 **Stage 3 example — technical jargon, no exact phrase or 2 hints:**
 
 Closure note:
+
 ```
 The handshake between our proxy and the vendor portal was failing.
 SSL version mismatch — TLS 1.0 had been disabled on their side.
@@ -289,14 +299,14 @@ certificates and validated the end-to-end connection.
 Stage 1: none of `certificate expired`, `cert expiry`, `expired certificate`,
 `certificate expiry` appear in the note → Stage 1 inconclusive.
 
-Stage 2: *Certificate expiry* hints include `certificate`, `ssl`, `tls`.
+Stage 2: _Certificate expiry_ hints include `certificate`, `ssl`, `tls`.
 Note has `ssl`, `tls`, `certificates` (fuzzy matches). But only 1 distinct hint
 phrase clearly present → below the 2-hit bar → Stage 2 inconclusive.
 
-Stage 3: the note is rich in vocabulary associated with *Certificate expiry*:
+Stage 3: the note is rich in vocabulary associated with _Certificate expiry_:
 `ssl`, `tls`, `certificates`, `handshake`, `proxy`. These words appear in very
 few other labels' hint documents, so they get high weight. The cosine similarity
-for *Certificate expiry* leads all other labels by more than 0.05.
+for _Certificate expiry_ leads all other labels by more than 0.05.
 
 Result: **Root cause = Certificate expiry** (`cosine`).
 
@@ -320,7 +330,7 @@ left blank — a barely-winning guess is worse than nothing.
 
 Every filled cell is stamped with the stage that produced it (`regex` /
 `keyword` / `cosine`). [Calclens](Calclens) shows this on each cell so you can
-always see exactly *why* a value was chosen.
+always see exactly _why_ a value was chosen.
 
 ## Step 4 — The optional AI model
 
@@ -335,6 +345,7 @@ and returns the best one. It has no knowledge of the fixed phrases or hints — 
 works purely from language understanding.
 
 **Key rules:**
+
 - The model's token limit is ~512. Long notes are trimmed (stopwords removed
   first to preserve as much content as possible).
 - If the model is not downloaded, classification falls back to the deterministic
@@ -367,6 +378,7 @@ Five complete examples using realistic closure notes.
 ### Example A — Explicit section heading (fastest path)
 
 Closure note:
+
 ```
 User called about login failure on the payments portal.
 
@@ -379,6 +391,7 @@ Verified login working post-change.
 ```
 
 Trace:
+
 1. Section extraction finds `Root Cause Category:` → value = `Certificate expiry`.
 2. `classifyMsr("Certificate expiry", rootCauseLabels)` → regex
    `/certificate expiry/i` matches → **Root cause = Certificate expiry**
@@ -399,6 +412,7 @@ correct classification.
 ### Example B — No heading, Stage 1 exact phrase decides
 
 Closure note:
+
 ```
 User could not open the Apex reporting dashboard — access denied error
 shown on every attempt. Checked role assignments: the Apex viewer role
@@ -407,14 +421,15 @@ screen share with the user.
 ```
 
 Trace:
+
 1. No `Root Cause Category:` or `Resolution Type:` heading → whole note used.
 2. **Root cause — Stage 1:** scan for exact phrases.
-   - `access denied` — contiguous, not negated → *User access issue* match.
+   - `access denied` — contiguous, not negated → _User access issue_ match.
    - No other label matches at equal or higher specificity.
-   → **Root cause = User access issue** (source `regex`).
+     → **Root cause = User access issue** (source `regex`).
 3. **Solution type — Stage 1:**
-   - `confirmed working` — matches *Verification only* regex.
-   → **Solution type = Verification only** (source `regex`).
+   - `confirmed working` — matches _Verification only_ regex.
+     → **Solution type = Verification only** (source `regex`).
 
 Result: both fields from Stage 1. Stages 2 and 3 not reached.
 
@@ -428,6 +443,7 @@ fall to Stage 2 and look for hint counts.
 ### Example C — Negation prevents a wrong label; Stage 2 decides
 
 Closure note:
+
 ```
 This was NOT a network issue — all pings and traceroutes were clean.
 Raised a case with Amadeus; SITA confirmed feed interruption was on
@@ -435,19 +451,20 @@ their side causing our data import to fail.
 ```
 
 Trace:
+
 1. No heading → whole note used.
 2. **Root cause — Stage 1:** scan for exact phrases.
    - `network` — the 3 words before it are "not", "a" — "not" is a negator
      → **match is ignored**.
    - No other Stage 1 phrase matches.
-   → Stage 1 inconclusive.
+     → Stage 1 inconclusive.
 3. **Stage 2 — keyword hints for each label:**
-   - *External-3rd party*: `amadeus` → hit #1, `sita` → hit #2 → **2 hits,
+   - _External-3rd party_: `amadeus` → hit #1, `sita` → hit #2 → **2 hits,
      clear lead over all other labels**.
-   → **Root cause = External-3rd party** (source `keyword`).
+     → **Root cause = External-3rd party** (source `keyword`).
 4. **Solution type** — the note mentions "raising a case" and "confirmed
    interruption" but no resolution phrase. Both Stage 1 and Stage 2 are
-   inconclusive. Stage 3 may score *Verification only* if vocabulary overlaps.
+   inconclusive. Stage 3 may score _Verification only_ if vocabulary overlaps.
 
 Result: **Root cause = External-3rd party** (`keyword`). Network issue
 correctly avoided via negation.
@@ -457,6 +474,7 @@ correctly avoided via negation.
 ### Example D — Paraphrased note, Stage 3 word similarity decides
 
 Closure note:
+
 ```
 The handshake between our proxy and the vendor portal kept failing.
 SSL version mismatch — TLS 1.0 had been disabled on their end.
@@ -465,22 +483,23 @@ the certificates and validated end-to-end connection successfully.
 ```
 
 Trace:
+
 1. No heading → whole note used.
-2. **Root cause — Stage 1:** none of the *Certificate expiry* exact phrases
+2. **Root cause — Stage 1:** none of the _Certificate expiry_ exact phrases
    (`certificate expired`, `cert expiry`, `expired certificate`,
    `certificate expiry`) appear → Stage 1 inconclusive.
-3. **Stage 2:** checking *Certificate expiry* hints (`certificate`, `ssl`,
+3. **Stage 2:** checking _Certificate expiry_ hints (`certificate`, `ssl`,
    `tls`, etc.). The note has `ssl`, `tls`, `certificates` — but these are
    individual tokens, not the full multi-word hint phrases, so hint-phrase
    count stays below 2 → Stage 2 inconclusive.
 4. **Stage 3 — word similarity:** the note is full of vocabulary concentrated
-   in the *Certificate expiry* document — `ssl`, `tls`, `certificates`,
+   in the _Certificate expiry_ document — `ssl`, `tls`, `certificates`,
    `handshake`. These words appear in very few other labels' hint documents, so
-   they carry high weight. The cosine score for *Certificate expiry* leads all
+   they carry high weight. The cosine score for _Certificate expiry_ leads all
    others by more than 0.05.
    → **Root cause = Certificate expiry** (source `cosine`).
 5. **Solution type — Stage 3:** "updated config", "regenerated", "validated" —
-   vocabulary leans toward *Permanent solution*. If the cosine margin clears the
+   vocabulary leans toward _Permanent solution_. If the cosine margin clears the
    threshold: **Permanent solution** (`cosine`); otherwise blank.
 
 Result: Stage 3 handled a real-world note written in technical language without
@@ -494,6 +513,7 @@ accurate notes without using the MSR label wording.
 ### Example E — AI fills a gap the deterministic scorer cannot
 
 Closure note:
+
 ```
 The self-check kiosk at gate B12 kept freezing during bag-drop.
 Technician attended site, identified a faulty touchscreen module,
@@ -501,25 +521,26 @@ and replaced the entire unit. No further incidents reported.
 ```
 
 Trace:
+
 1. No heading → whole note used.
-2. **Root cause — Stage 1:** *Hardware* exact phrases are `hard drive`, `disk
-   failure`, `memory module`, `power supply`, `hardware` — none appear.
+2. **Root cause — Stage 1:** _Hardware_ exact phrases are `hard drive`, `disk
+failure`, `memory module`, `power supply`, `hardware` — none appear.
    Stage 1 inconclusive.
-3. **Stage 2:** *Hardware* hints include `kiosk`, `barcode scanner`, `ssd`.
+3. **Stage 2:** _Hardware_ hints include `kiosk`, `barcode scanner`, `ssd`.
    Note has `kiosk` → hit #1. Only 1 hit — below the 2-hit bar.
    Stage 2 inconclusive.
 4. **Stage 3:** "kiosk", "touchscreen", "module", "unit" — partially overlaps
-   *Hardware* vocabulary, but may not reach the 0.05 margin over the runner-up
+   _Hardware_ vocabulary, but may not reach the 0.05 margin over the runner-up
    with certainty.
    Stage 3 may be inconclusive.
 5. **Deterministic root cause = blank.**
 6. **AI model (Hybrid / ML mode):** the note is fed to the zero-shot NLI model.
    The model reads "kiosk", "faulty touchscreen module", "replaced the entire
-   unit" and scores *Hardware* highest.
+   unit" and scores _Hardware_ highest.
    → **Root cause = Hardware** (source `ml`).
 7. **Solution type — Stage 1:** `replaced` is not in the exact phrase list.
    Stage 2: `permanent` not present; Stage 3: "replaced the entire unit" may
-   lean toward *Permanent solution*. Or add `replaced` to *Permanent solution*
+   lean toward _Permanent solution_. Or add `replaced` to _Permanent solution_
    keywords in Settings → Stage 2 fills it immediately.
 
 Result: deterministic scorer fills solution type; AI fills root cause.
@@ -563,5 +584,6 @@ Practical tips:
   domain-specific language that built-in patterns miss.
 
 ---
+
 Related: [Classification](Classification) · [Configuration](Configuration) ·
 [Calclens](Calclens) · [Caching](Caching)

@@ -1,11 +1,18 @@
 import { fmtInstant } from "./grid.ts";
 import {
-  ExportService, DEFAULT_EXPORT_MAP, MAP_MAX_COL, TPL_SHEET_NAME, expStr
+  ExportService,
+  DEFAULT_EXPORT_MAP,
+  MAP_MAX_COL,
+  TPL_SHEET_NAME,
+  expStr
 } from "./services/export-service.ts";
 import type { ReportFmt } from "./services/report-service.ts";
 
 export type {
-  TplCol, ExportGroup, ExportFieldGet, ExportFieldDef
+  TplCol,
+  ExportGroup,
+  ExportFieldGet,
+  ExportFieldDef
 } from "./services/export-service.ts";
 
 export { DEFAULT_EXPORT_MAP, MAP_MAX_COL, TPL_SHEET_NAME, expStr };

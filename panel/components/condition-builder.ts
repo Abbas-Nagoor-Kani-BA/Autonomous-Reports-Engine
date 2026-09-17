@@ -83,7 +83,9 @@ export function validateConditions(
     const def = deps.fields.find((f) => f.key === row.field);
     if (!def) throw new Error(`Condition ${i + 1}: unknown column`);
     if (!allowed.includes(def)) {
-      throw new Error(`Condition ${i + 1}: ${def.label} does not exist on ${deps.tableLabel(table)}`);
+      throw new Error(
+        `Condition ${i + 1}: ${def.label} does not exist on ${deps.tableLabel(table)}`
+      );
     }
     const known = (COND_OPS[def.type] || []).some(([v]) => v === row.op);
     if (!known) throw new Error(`Condition ${i + 1}: pick an operator`);
@@ -114,8 +116,12 @@ export function validateConditions(
  * mutates state without touching the DOM, because rebuilding mid-keystroke
  * would drop focus and the caret.
  */
-export class ConditionBuilder extends Component<ConditionBuilderState, ComponentProps, ConditionBuilderDeps> {
-  protected declare refs: { list: HTMLElement; addBtn: HTMLElement };
+export class ConditionBuilder extends Component<
+  ConditionBuilderState,
+  ComponentProps,
+  ConditionBuilderDeps
+> {
+  declare protected refs: { list: HTMLElement; addBtn: HTMLElement };
 
   protected initialState(): ConditionBuilderState {
     return { table: "incident", rows: [] };
@@ -208,7 +214,12 @@ export class ConditionBuilder extends Component<ConditionBuilderState, Component
     });
   }
 
-  protected renderRow(row: ConditionRow, index: number, table: string, nextRow: ConditionRow | null): HTMLElement {
+  protected renderRow(
+    row: ConditionRow,
+    index: number,
+    table: string,
+    nextRow: ConditionRow | null
+  ): HTMLElement {
     const def = this.deps.fields.find((f) => f.key === row.field);
     if (!def) throw new Error(`Condition ${index + 1}: unknown column`);
 
@@ -327,7 +338,11 @@ export class ConditionBuilder extends Component<ConditionBuilderState, Component
   }
 
   protected deleteButton(index: number): HTMLElement {
-    const button = el("button", "cdel flex-none ml-auto bg-transparent border-0 text-dim cursor-pointer px-1 py-0.5 text-[13px] hover:text-bad", "\u2715");
+    const button = el(
+      "button",
+      "cdel flex-none ml-auto bg-transparent border-0 text-dim cursor-pointer px-1 py-0.5 text-[13px] hover:text-bad",
+      "\u2715"
+    );
     button.type = "button";
     setTip(button, "Remove condition");
     button.addEventListener("click", () => {
@@ -339,7 +354,6 @@ export class ConditionBuilder extends Component<ConditionBuilderState, Component
     });
     return button;
   }
-
 }
 
 /** Identity of the row shapes, ignoring values. Changes force a rebuild. */

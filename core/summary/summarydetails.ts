@@ -116,7 +116,11 @@ function windowFrom(base: Date, mondayOffsetDays: number): Window {
   const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
   const dow = d.getDay(); // 0=Sun..6=Sat
   const backToMonday = dow === 0 ? 6 : dow - 1;
-  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - backToMonday + mondayOffsetDays);
+  const monday = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate() - backToMonday + mondayOffsetDays
+  );
   const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
   // Bounds are UTC epoch ms because inWindow compares them against
   // parseSnDisplayMs(start_date), which interprets the SN display datetime as
@@ -205,7 +209,10 @@ function changeRow(row: SummarySourceRow, dateStr: string): ChangeRow {
  *
  * Failed takes precedence over implemented; cancelled rows are excluded.
  */
-export function bucketChanges(rows: SummarySourceRow[], weeks: WeekRanges): {
+export function bucketChanges(
+  rows: SummarySourceRow[],
+  weeks: WeekRanges
+): {
   implemented: ChangeRow[];
   planned: ChangeRow[];
   failed: ChangeRow[];
@@ -236,7 +243,8 @@ export function keyIncidents(rows: SummarySourceRow[], weeks: WeekRanges): KeyIn
   const out: KeyIncidentRow[] = [];
   for (const row of rows) {
     if (!isP1OrP2(row)) continue;
-    const dateStr = pick(row, ["resolved_at", "resolvedAt"]) || pick(row, ["closed_at", "closedAt"]);
+    const dateStr =
+      pick(row, ["resolved_at", "resolvedAt"]) || pick(row, ["closed_at", "closedAt"]);
     if (!inWindow(parseSnDisplayMs(dateStr), weeks.last)) continue;
     out.push({
       resolutionDate: serial(dateStr),

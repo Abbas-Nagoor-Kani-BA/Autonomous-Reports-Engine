@@ -4,8 +4,15 @@ import { snStateChoices, SN_PRIORITY_CHOICES, snTableLabel } from "../core/sla/s
 import { presetOptions, resolvePresetSets } from "../core/query/preset-controller.ts";
 import { FILTER_PRESET_REPO } from "../di/tokens.ts";
 import { CHANGE_SUMMARY_REPO } from "../di/tokens.ts";
-import { resolveChangeSummaryWindows, defaultChangeSummaryWindows } from "../core/summary/change-summary-filter.ts";
-import type { ChangeSummaryWindows, ChangeSummaryWindow, PanelCondition } from "../core/summary/change-summary-filter.ts";
+import {
+  resolveChangeSummaryWindows,
+  defaultChangeSummaryWindows
+} from "../core/summary/change-summary-filter.ts";
+import type {
+  ChangeSummaryWindows,
+  ChangeSummaryWindow,
+  PanelCondition
+} from "../core/summary/change-summary-filter.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { createPanel, describeFilterSet, filterSetToRows } from "./index.ts";
 import { showToast } from "../lib/toast.ts";
@@ -49,19 +56,74 @@ function choiceList(key: string): { value: string | number; label: string }[] {
 }
 const COND_FIELDS: CondFieldDef[] = [
   { key: "assignedTo", label: "Assigned to", field: "assigned_to", type: "ref" },
-  { key: "parentIncident", label: "Parent incident", field: "parent_incident", type: "ref", tables: ["incident"] },
-  { key: "state", label: "State", field: "state", type: "choice", choicesKey: "states", fieldByTable: { problem: "problem_state" } },
-  { key: "priority", label: "Priority", field: "priority", type: "choice", choicesKey: "priorities" },
-  { key: "incidentState", label: "Incident state", field: "incident_state", type: "choice", choicesKey: "incidentStates", tables: ["incident"] },
+  {
+    key: "parentIncident",
+    label: "Parent incident",
+    field: "parent_incident",
+    type: "ref",
+    tables: ["incident"]
+  },
+  {
+    key: "state",
+    label: "State",
+    field: "state",
+    type: "choice",
+    choicesKey: "states",
+    fieldByTable: { problem: "problem_state" }
+  },
+  {
+    key: "priority",
+    label: "Priority",
+    field: "priority",
+    type: "choice",
+    choicesKey: "priorities"
+  },
+  {
+    key: "incidentState",
+    label: "Incident state",
+    field: "incident_state",
+    type: "choice",
+    choicesKey: "incidentStates",
+    tables: ["incident"]
+  },
   { key: "group", label: "Group", field: "assignment_group", type: "ref" },
   { key: "configItem", label: "Configuration item", field: "cmdb_ci.name", type: "string" },
-  { key: "shortDescription", label: "Short description", field: "short_description", type: "string" },
+  {
+    key: "shortDescription",
+    label: "Short description",
+    field: "short_description",
+    type: "string"
+  },
   { key: "number", label: "Number", field: "number", type: "string" },
   { key: "createdOn", label: "Created", field: "sys_created_on", type: "date" },
-  { key: "closedOn", label: "Closed", field: "closed_at", type: "date", tables: ["incident", "problem", "sc_req_item", "sc_task"] },
-  { key: "resolvedOn", label: "Resolved", field: "resolved_at", type: "date", tables: ["incident", "problem", "sc_req_item"] },
-  { key: "plannedStart", label: "Planned start", field: "start_date", type: "date", tables: ["change_request"] },
-  { key: "plannedEnd", label: "Planned end", field: "end_date", type: "date", tables: ["change_request"] }
+  {
+    key: "closedOn",
+    label: "Closed",
+    field: "closed_at",
+    type: "date",
+    tables: ["incident", "problem", "sc_req_item", "sc_task"]
+  },
+  {
+    key: "resolvedOn",
+    label: "Resolved",
+    field: "resolved_at",
+    type: "date",
+    tables: ["incident", "problem", "sc_req_item"]
+  },
+  {
+    key: "plannedStart",
+    label: "Planned start",
+    field: "start_date",
+    type: "date",
+    tables: ["change_request"]
+  },
+  {
+    key: "plannedEnd",
+    label: "Planned end",
+    field: "end_date",
+    type: "date",
+    tables: ["change_request"]
+  }
 ];
 
 const panel = createPanel({
@@ -94,11 +156,15 @@ let cfgMembers: Entry[] = [];
 const toEntry = (m: unknown): Entry | null => {
   if (typeof m === "string") return { name: m, sysId: "" };
   if (m && typeof m === "object" && typeof (m as { name?: unknown }).name === "string") {
-    return { name: String((m as { name: unknown }).name), sysId: String((m as { name: unknown; sysId?: unknown }).sysId || "") };
+    return {
+      name: String((m as { name: unknown }).name),
+      sysId: String((m as { name: unknown; sysId?: unknown }).sysId || "")
+    };
   }
   return null;
 };
-const asEntries = (raw: unknown[]): Entry[] => raw.map(toEntry).filter((x): x is Entry => x !== null);
+const asEntries = (raw: unknown[]): Entry[] =>
+  raw.map(toEntry).filter((x): x is Entry => x !== null);
 function legacySnGroupQueues(): Entry[] {
   try {
     const raw = localStorage.getItem("snGroup");
@@ -122,8 +188,12 @@ async function applyPluginSettings(): Promise<void> {
         teamMembers?: unknown[];
       };
     };
-    if (!els.instance.value && settings.instanceUrl) els.instance.value = String(settings.instanceUrl);
-    if (settings.defaults?.ticketType && [...els.ticketType.options].some((o) => o.value === settings.defaults?.ticketType)) {
+    if (!els.instance.value && settings.instanceUrl)
+      els.instance.value = String(settings.instanceUrl);
+    if (
+      settings.defaults?.ticketType &&
+      [...els.ticketType.options].some((o) => o.value === settings.defaults?.ticketType)
+    ) {
       els.ticketType.value = String(settings.defaults.ticketType);
     }
     const rawQueues =
@@ -133,43 +203,52 @@ async function applyPluginSettings(): Promise<void> {
           ? [{ name: String(settings.defaults.queueName), sysId: "" }]
           : legacySnGroupQueues();
     cfgQueues = asEntries(rawQueues);
-    cfgMembers = asEntries(Array.isArray(settings.defaults?.teamMembers) ? (settings.defaults!.teamMembers! as unknown[]) : []);
+    cfgMembers = asEntries(
+      Array.isArray(settings.defaults?.teamMembers)
+        ? (settings.defaults!.teamMembers! as unknown[])
+        : []
+    );
   }
   conditions.setTable(els.ticketType.value);
   refreshGenerated();
 }
 $("settingsBtn").addEventListener("click", () => chrome.runtime.openOptionsPage());
 initTooltips();
-panel.ready.then(async () => {
-  refreshGenerated();
-  userPresets = await presetRepo.load();
-  refreshPresetDropdown();
-  summaryWindows = resolveChangeSummaryWindows(await changeSummaryRepo.load());
-  renderSummaryFilter();
-}).catch(() => {});
-chrome.storage.local.get(["snInstance", "lastRun", STORAGE.includeSummary], async (cfg: { snInstance?: unknown; lastRun?: unknown; includeSummary?: unknown }) => {
-  await applyPluginSettings();
-  els.includeSummary.checked = cfg.includeSummary === true;
-  renderSummaryFilter();
-  if (cfg.snInstance && !els.instance.value) els.instance.value = String(cfg.snInstance);
-  const effective = els.instance.value || cfg.snInstance;
-  if (effective) {
-    els.instance.value = String(effective);
+panel.ready
+  .then(async () => {
     refreshGenerated();
-    connect();
-  } else {
-    const detected = await detectInstanceFromTabs();
-    if (detected) {
-      els.instance.value = detected;
-      logger.log(`Detected instance from open tab: ${detected}`);
+    userPresets = await presetRepo.load();
+    refreshPresetDropdown();
+    summaryWindows = resolveChangeSummaryWindows(await changeSummaryRepo.load());
+    renderSummaryFilter();
+  })
+  .catch(() => {});
+chrome.storage.local.get(
+  ["snInstance", "lastRun", STORAGE.includeSummary],
+  async (cfg: { snInstance?: unknown; lastRun?: unknown; includeSummary?: unknown }) => {
+    await applyPluginSettings();
+    els.includeSummary.checked = cfg.includeSummary === true;
+    renderSummaryFilter();
+    if (cfg.snInstance && !els.instance.value) els.instance.value = String(cfg.snInstance);
+    const effective = els.instance.value || cfg.snInstance;
+    if (effective) {
+      els.instance.value = String(effective);
+      refreshGenerated();
       connect();
+    } else {
+      const detected = await detectInstanceFromTabs();
+      if (detected) {
+        els.instance.value = detected;
+        logger.log(`Detected instance from open tab: ${detected}`);
+        connect();
+      }
+    }
+    if (cfg.lastRun) {
+      const lastRun = cfg.lastRun as { tickets?: unknown; group?: unknown; at?: string };
+      els.lastRun.textContent = `Last export: ${lastRun.tickets} tickets for "${lastRun.group}" \xB7 ${String(lastRun.at).slice(0, 16).replace("T", " ")}`;
     }
   }
-  if (cfg.lastRun) {
-    const lastRun = cfg.lastRun as { tickets?: unknown; group?: unknown; at?: string };
-    els.lastRun.textContent = `Last export: ${lastRun.tickets} tickets for "${lastRun.group}" \xB7 ${String(lastRun.at).slice(0, 16).replace("T", " ")}`;
-  }
-});
+);
 chrome.storage.onChanged.addListener((ch: Record<string, { newValue?: unknown }>, area: string) => {
   if (area === "local") {
     if (ch.pluginSettings) applyPluginSettings();
@@ -180,7 +259,9 @@ chrome.storage.onChanged.addListener((ch: Record<string, { newValue?: unknown }>
       });
     }
     if (ch.lastRun) {
-      const cfg = ch.lastRun.newValue as { tickets?: unknown; group?: unknown; at?: string } | undefined;
+      const cfg = ch.lastRun.newValue as
+        | { tickets?: unknown; group?: unknown; at?: string }
+        | undefined;
       if (cfg) {
         els.lastRun.textContent = `Last run: ${cfg.tickets} tickets for "${cfg.group}" \xB7 ${String(cfg.at).slice(0, 16).replace("T", " ")}`;
       } else {
@@ -194,7 +275,9 @@ async function detectInstanceFromTabs(): Promise<string | null> {
     const tabs = await chrome.tabs.query({ url: "https://*.service-now.com/*" });
     if (!tabs.length) return null;
     type RecentTab = { lastAccessed?: number; url?: string };
-    const recent = tabs.sort((a: RecentTab, b: RecentTab) => (b.lastAccessed || 0) - (a.lastAccessed || 0))[0];
+    const recent = tabs.sort(
+      (a: RecentTab, b: RecentTab) => (b.lastAccessed || 0) - (a.lastAccessed || 0)
+    )[0];
     return new URL(recent.url).origin;
   } catch {
     return null;
@@ -372,9 +455,18 @@ async function savePreset(): Promise<void> {
     return;
   }
   const outcome = await presetRepo.add(name, sets);
-  if (outcome === "empty-name") { showPresetNameError("Enter a preset name"); return; }
-  if (outcome === "reserved") { showPresetNameError("That name is reserved for the built-in WSR preset"); return; }
-  if (outcome === "duplicate") { showPresetNameError(`A preset named "${name.trim()}" already exists`); return; }
+  if (outcome === "empty-name") {
+    showPresetNameError("Enter a preset name");
+    return;
+  }
+  if (outcome === "reserved") {
+    showPresetNameError("That name is reserved for the built-in WSR preset");
+    return;
+  }
+  if (outcome === "duplicate") {
+    showPresetNameError(`A preset named "${name.trim()}" already exists`);
+    return;
+  }
   userPresets = await presetRepo.load();
   refreshPresetDropdown();
   refreshPresetMenuList();
@@ -382,10 +474,18 @@ async function savePreset(): Promise<void> {
   logger.log(`Saved preset "${name.trim()}" (${sets.length} filter sets)`, "success");
   showToast(`Preset "${name.trim()}" saved`);
 }
-$("presetNameSave").addEventListener("click", () => { void savePreset(); });
+$("presetNameSave").addEventListener("click", () => {
+  void savePreset();
+});
 $("presetNameInput").addEventListener("keydown", (e: KeyboardEvent) => {
-  if (e.key === "Enter") { e.preventDefault(); void savePreset(); }
-  if (e.key === "Escape") { e.preventDefault(); closePresetNameModal(); }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    void savePreset();
+  }
+  if (e.key === "Escape") {
+    e.preventDefault();
+    closePresetNameModal();
+  }
 });
 async function editFilterSet(set: FilterSet, index: number): Promise<void> {
   try {
@@ -417,9 +517,13 @@ function currentFilters(): PanelFilters {
   };
 }
 function configuredGroups(): string[] {
-  if (!cfgQueues.length) throw new Error("No queues configured \u2014 open Settings and add assignment group names, one per line");
+  if (!cfgQueues.length)
+    throw new Error(
+      "No queues configured \u2014 open Settings and add assignment group names, one per line"
+    );
   const badComma = cfgQueues.find((g) => g.name.includes(","));
-  if (badComma) throw new Error(`Queue name "${badComma.name}" contains a comma \u2014 rename it in Settings`);
+  if (badComma)
+    throw new Error(`Queue name "${badComma.name}" contains a comma \u2014 rename it in Settings`);
   return cfgQueues.map((g) => g.name);
 }
 function savePrefs(): void {
@@ -438,7 +542,10 @@ async function connect(manual = false): Promise<void> {
       `Ready (no setup server calls): ${groups.length} queue(s), ${cfgMembers.length} team member(s) from settings`,
       "success"
     );
-    if (manual) showToast(`Ready \u2014 ${groups.length} queue${groups.length > 1 ? "s" : ""}, ${cfgMembers.length} member${cfgMembers.length > 1 ? "s" : ""}`);
+    if (manual)
+      showToast(
+        `Ready \u2014 ${groups.length} queue${groups.length > 1 ? "s" : ""}, ${cfgMembers.length} member${cfgMembers.length > 1 ? "s" : ""}`
+      );
     savePrefs();
     refreshGenerated();
   } catch (err) {
@@ -453,7 +560,8 @@ async function connect(manual = false): Promise<void> {
 function refreshGenerated(): void {
   try {
     const q = buildEncodedQuery(currentFilters());
-    els.generatedQuery.textContent = q || `(no filters \u2014 all ${snTableLabel(els.ticketType.value)} you can read)`;
+    els.generatedQuery.textContent =
+      q || `(no filters \u2014 all ${snTableLabel(els.ticketType.value)} you can read)`;
   } catch (e) {
     els.generatedQuery.textContent = (e as Error).message;
   }
@@ -463,8 +571,8 @@ function updateAddFilterButton(): void {
   els.addFilter.disabled = !conditions.hasConditions();
 }
 ["change", "input"].forEach((ev) => {
-  [els.ticketType].forEach(
-    (el) => el.addEventListener(ev, () => {
+  [els.ticketType].forEach((el) =>
+    el.addEventListener(ev, () => {
       refreshGenerated();
     })
   );
@@ -500,7 +608,8 @@ els.preview.addEventListener("click", async () => {
     const saved = filterSets.getSets();
     const sets = saved.length ? saved.map((f) => ({ ...f, rawQuery: live.rawQuery })) : [live];
     if (!sets.some((s) => hasQueryConstraint(s as QueryBuilderConfig))) {
-      const msg = "Add at least one condition before running \u2014 a pull with no conditions would fetch the entire table";
+      const msg =
+        "Add at least one condition before running \u2014 a pull with no conditions would fetch the entire table";
       setBusy(false);
       progressCard.setLabel(msg);
       logger.log(msg, "error");
@@ -522,7 +631,10 @@ els.preview.addEventListener("click", async () => {
       logger.log(`${label}: ${res.total} tickets match`);
       if (res.limit && res.limit > 0 && res.total! > res.limit) {
         overLimit++;
-        logger.log(`${label}: ${res.total} tickets EXCEEDS the max-tickets limit (${res.limit}) \u2014 this set will be SKIPPED on run. Narrow it or raise the limit in Settings`, "error");
+        logger.log(
+          `${label}: ${res.total} tickets EXCEEDS the max-tickets limit (${res.limit}) \u2014 this set will be SKIPPED on run. Narrow it or raise the limit in Settings`,
+          "error"
+        );
       } else {
         pullable += res.total!;
       }
@@ -549,7 +661,8 @@ els.runBtn.addEventListener("click", async () => {
     const saved = filterSets.getSets();
     const sets = saved.length ? saved.map((f) => ({ ...f, rawQuery: live.rawQuery })) : [live];
     if (!sets.some((s) => hasQueryConstraint(s as QueryBuilderConfig))) {
-      const msg = "Add at least one condition before running \u2014 a pull with no conditions would fetch the entire table";
+      const msg =
+        "Add at least one condition before running \u2014 a pull with no conditions would fetch the entire table";
       setBusy(false);
       logger.log(msg, "error");
       showToast(msg, "error");
@@ -563,7 +676,9 @@ els.runBtn.addEventListener("click", async () => {
       includeChangeSummary: els.includeSummary.checked,
       changeSummaryWindows: els.includeSummary.checked ? summaryWindows : undefined
     });
-    logger.log(`Run started with ${sets.length} filter set${sets.length > 1 ? "s" : ""}${els.includeSummary.checked ? " \xB7 + Weekly Summary change requests" : ""}\u2026`);
+    logger.log(
+      `Run started with ${sets.length} filter set${sets.length > 1 ? "s" : ""}${els.includeSummary.checked ? " \xB7 + Weekly Summary change requests" : ""}\u2026`
+    );
   } catch (err) {
     setBusy(false);
     progressCard.setLabel((err as Error).message);
@@ -712,7 +827,8 @@ function captureWindowFromBuilder(prior: ChangeSummaryWindow): ChangeSummaryWind
   const rest: PanelCondition[] = [];
   let anchorSeen = false;
   for (const r of rows) {
-    const isAnchor = !anchorSeen && (r.field === "start_date" || r.field === "end_date") && r.oper === "between";
+    const isAnchor =
+      !anchorSeen && (r.field === "start_date" || r.field === "end_date") && r.oper === "between";
     if (isAnchor) {
       anchorSeen = true;
       dateField = r.field === "end_date" ? "end_date" : "start_date";
@@ -788,7 +904,10 @@ function exitSummaryEditMode(_persist: boolean): void {
  * by captureWindowFromBuilder splitting the anchor out into dateField/from/to),
  * or a user-facing error message naming the offending window.
  */
-function summaryWindowGuardError(which: "lastWeek" | "nextWeek", window: ChangeSummaryWindow): string | null {
+function summaryWindowGuardError(
+  which: "lastWeek" | "nextWeek",
+  window: ChangeSummaryWindow
+): string | null {
   const expectedField = which === "lastWeek" ? "end_date" : "start_date";
   const label = which === "lastWeek" ? "last week" : "next week";
   const rangeName = which === "lastWeek" ? "end date range" : "start date range";
@@ -825,7 +944,9 @@ async function saveSummaryDraft(): Promise<void> {
     showToast(msg, "error");
     return;
   }
-  summaryDraft[summaryEditActiveWindow] = captureWindowFromBuilder(summaryDraft[summaryEditActiveWindow]);
+  summaryDraft[summaryEditActiveWindow] = captureWindowFromBuilder(
+    summaryDraft[summaryEditActiveWindow]
+  );
   summaryDraft.lastWeek.dateField = "end_date";
   summaryDraft.nextWeek.dateField = "start_date";
   for (const which of ["lastWeek", "nextWeek"] as const) {

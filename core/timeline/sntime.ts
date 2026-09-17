@@ -11,11 +11,17 @@ function pmHour(h: number, ap: string): number {
 function parseSnDisplayMs(s: string): number | null {
   const str = String(s || "").trim();
   if (!str) return null;
-  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
+  let m = str.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/
+  );
   if (!m) {
-    m = str.match(/^(\d{1,2})[-.](\d{1,2})[-.](\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
+    m = str.match(
+      /^(\d{1,2})[-.](\d{1,2})[-.](\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/
+    );
     if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1], pmHour(+m[4], m[7]), +m[5], +(m[6] || 0));
-    m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
+    m = str.match(
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?/
+    );
     if (m) return Date.UTC(+m[3], +m[1] - 1, +m[2], pmHour(+m[4], m[7]), +m[5], +(m[6] || 0));
     const p = Date.parse(str);
     return Number.isFinite(p) ? p : null;
@@ -55,7 +61,7 @@ function detectSnOffsetMs(rows: OffsetRow[] | null | undefined): number {
  */
 function rowOffsetMs(row: OffsetRow | undefined | null, fallback: number): number {
   const o = pairOffsetMs(row?.openedAt, row?.openedAtRaw);
-  return o == null ? (fallback || 0) : o;
+  return o == null ? fallback || 0 : o;
 }
 
 /** Format v (epoch ms string/number) with the given offset, as ISO-ish text. */
@@ -64,8 +70,10 @@ function fmtWithOffset(v: string | number, offsetMs: number): string {
   if (isNaN(d.getTime())) return String(v);
   const p = (n: number) => String(n).padStart(2, "0");
   const s = new Date(d.getTime() + (offsetMs || 0));
-  return `${s.getUTCFullYear()}-${p(s.getUTCMonth() + 1)}-${p(s.getUTCDate())} ` +
-    `${p(s.getUTCHours())}:${p(s.getUTCMinutes())}:${p(s.getUTCSeconds())}`;
+  return (
+    `${s.getUTCFullYear()}-${p(s.getUTCMonth() + 1)}-${p(s.getUTCDate())} ` +
+    `${p(s.getUTCHours())}:${p(s.getUTCMinutes())}:${p(s.getUTCSeconds())}`
+  );
 }
 
 export { parseSnDisplayMs, pmHour, pairOffsetMs, detectSnOffsetMs, rowOffsetMs, fmtWithOffset };

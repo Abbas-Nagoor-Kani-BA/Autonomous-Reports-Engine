@@ -2,7 +2,9 @@ type Row = Record<string, unknown>;
 
 /** True for catalog tasks (SCTASK…), whose parent is a request item (RITM). */
 export function isScTask(row: Row): boolean {
-  return String(row.number ?? "").toUpperCase().startsWith("SCTASK");
+  return String(row.number ?? "")
+    .toUpperCase()
+    .startsWith("SCTASK");
 }
 
 /**

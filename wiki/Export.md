@@ -48,5 +48,6 @@ For the technical details of template patching and the download path, see
 [Export Internals](Export-Internals).
 
 ---
+
 Related: [Data Viewer](Data-Viewer) · [Configuration](Configuration) ·
 [Filters and Presets](Filters-and-Presets) · [Export Internals](Export-Internals)

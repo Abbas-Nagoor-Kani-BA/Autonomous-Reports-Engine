@@ -24,11 +24,13 @@ function setReportChoices(v: unknown): void {
 
 function normalizeGroups(groups: unknown[]): CiGroup[] {
   return groups
-    .filter(g => g && typeof g === "object")
-    .map(g => ({
+    .filter((g) => g && typeof g === "object")
+    .map((g) => ({
       name: String((g as Record<string, unknown>).name ?? ""),
       items: Array.isArray((g as Record<string, unknown>).items)
-        ? ((g as Record<string, unknown>).items as unknown[]).filter(x => typeof x === "string" && x.trim()) as string[]
+        ? (((g as Record<string, unknown>).items as unknown[]).filter(
+            (x) => typeof x === "string" && x.trim()
+          ) as string[])
         : []
     }));
 }
@@ -36,17 +38,19 @@ function normalizeGroups(groups: unknown[]): CiGroup[] {
 function setCiSplit(v: unknown) {
   const src = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
   ciSplit = {
-    enabled: !!(src.enabled),
-    groups: Array.isArray(src.groups)
-      ? normalizeGroups(src.groups as unknown[])
-      : []
+    enabled: !!src.enabled,
+    groups: Array.isArray(src.groups) ? normalizeGroups(src.groups as unknown[]) : []
   };
 }
 
 const getSavedMapPresent = (): boolean => savedMapPresent;
-const setSavedMapPresent = (v: unknown): void => { savedMapPresent = !!v; };
+const setSavedMapPresent = (v: unknown): void => {
+  savedMapPresent = !!v;
+};
 
-const setOnConfigChange = (fn: (() => void) | null): void => { onConfigChange = fn || (() => {}); };
+const setOnConfigChange = (fn: (() => void) | null): void => {
+  onConfigChange = fn || (() => {});
+};
 const notifyConfigChange = (): void => onConfigChange();
 
 function syncSplitRadio() {
@@ -75,8 +79,8 @@ chrome.storage.local.get([STORAGE.ciSplit], ({ ciSplit: cs }: { ciSplit?: unknow
       ciSplit = {
         enabled: !!c.enabled,
         groups: (c.items as unknown[])
-          .filter(x => typeof x === "string" && x.trim())
-          .map(ci => ({ name: ci as string, items: [ci as string] }))
+          .filter((x) => typeof x === "string" && x.trim())
+          .map((ci) => ({ name: ci as string, items: [ci as string] }))
       };
     }
     syncSplitRadio();
@@ -84,16 +88,23 @@ chrome.storage.local.get([STORAGE.ciSplit], ({ ciSplit: cs }: { ciSplit?: unknow
 });
 
 chrome.storage.local.get([STORAGE.exportColMap], ({ exportColMap }: { exportColMap?: unknown }) => {
-  savedMapPresent = !!(exportColMap && typeof exportColMap === "object" && Object.keys(exportColMap as object).length);
+  savedMapPresent = !!(
+    exportColMap &&
+    typeof exportColMap === "object" &&
+    Object.keys(exportColMap as object).length
+  );
   notifyConfigChange();
 });
 
-chrome.storage.local.get([STORAGE.reportChoices], ({ reportChoices: rc }: { reportChoices?: unknown }) => {
-  if (rc && typeof rc === "object") {
-    setReportChoices(rc);
-    notifyConfigChange();
+chrome.storage.local.get(
+  [STORAGE.reportChoices],
+  ({ reportChoices: rc }: { reportChoices?: unknown }) => {
+    if (rc && typeof rc === "object") {
+      setReportChoices(rc);
+      notifyConfigChange();
+    }
   }
-});
+);
 
 export {
   getCiSplit,

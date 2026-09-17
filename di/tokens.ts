@@ -9,7 +9,11 @@ import type { IdbDatabase } from "../data/idb.ts";
 import type { MsrListsRepository } from "../data/repositories/msr-lists-repository.ts";
 import type { SnRemote } from "../data/datasource/sn-remote.ts";
 import type { KeyValueStore } from "../data/key-value-store.ts";
-import type { DatasetRepository, Notifier, TicketRow } from "../data/repositories/dataset-repository.ts";
+import type {
+  DatasetRepository,
+  Notifier,
+  TicketRow
+} from "../data/repositories/dataset-repository.ts";
 import type { ChangeSummaryRepository } from "../data/repositories/change-summary-repository.ts";
 import type { ExportConfigRepository } from "../data/repositories/export-config-repository.ts";
 import type { FilterListRepository } from "../data/repositories/filter-list-repository.ts";

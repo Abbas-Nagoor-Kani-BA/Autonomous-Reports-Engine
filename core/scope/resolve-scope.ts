@@ -15,7 +15,13 @@ import { normalizeNames } from "../summary/names.ts";
  * accepted.
  */
 
-export type SnCell = string | number | boolean | null | undefined | { display_value?: unknown; value?: unknown };
+export type SnCell =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | { display_value?: unknown; value?: unknown };
 export type SnRow = Record<string, SnCell>;
 
 /** The display label of a reference/plain cell, trimmed. */
@@ -42,9 +48,14 @@ export function valueOf(cell: SnCell): string {
 export function isActive(row: SnRow): boolean {
   const cell = row.active;
   if (cell === undefined || cell === null) return true;
-  const raw = typeof cell === "object" ? (cell as { value?: unknown }).value ?? (cell as { display_value?: unknown }).display_value : cell;
+  const raw =
+    typeof cell === "object"
+      ? ((cell as { value?: unknown }).value ?? (cell as { display_value?: unknown }).display_value)
+      : cell;
   if (raw === false) return false;
-  const s = String(raw ?? "").trim().toLowerCase();
+  const s = String(raw ?? "")
+    .trim()
+    .toLowerCase();
   if (s === "false" || s === "0" || s === "no") return false;
   return true;
 }
@@ -184,7 +195,10 @@ export function cisFromRows(rows: SnRow[] | null | undefined): string[] {
  * case-insensitive, matching the chip list's own `normalizeNames` rule, so the
  * merge is idempotent.
  */
-export function mergeNames(existing: string[] | null | undefined, resolved: string[] | null | undefined): string[] {
+export function mergeNames(
+  existing: string[] | null | undefined,
+  resolved: string[] | null | undefined
+): string[] {
   return normalizeNames([...(existing || []), ...(resolved || [])]);
 }
 
@@ -202,7 +216,10 @@ export function sortNames(names: string[] | null | undefined): string[] {
  * returns the result sorted A–Z. Used by the Settings Resolve button so both
  * the queues and team-member lists come out alphabetical.
  */
-export function mergeSortedNames(existing: string[] | null | undefined, resolved: string[] | null | undefined): string[] {
+export function mergeSortedNames(
+  existing: string[] | null | undefined,
+  resolved: string[] | null | undefined
+): string[] {
   return sortNames(mergeNames(existing, resolved));
 }
 
@@ -212,7 +229,10 @@ export function mergeSortedNames(existing: string[] | null | undefined, resolved
  * de-duplicated. Used so the per-queue member picker only offers names the Team
  * members list does not already contain.
  */
-export function subtractNames(candidates: string[] | null | undefined, existing: string[] | null | undefined): string[] {
+export function subtractNames(
+  candidates: string[] | null | undefined,
+  existing: string[] | null | undefined
+): string[] {
   const have = new Set(normalizeNames(existing).map((n) => n.toLowerCase()));
   return normalizeNames(candidates).filter((n) => !have.has(n.toLowerCase()));
 }

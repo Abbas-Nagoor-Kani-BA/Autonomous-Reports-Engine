@@ -52,7 +52,16 @@ export type ColumnEditorDeps = {
  */
 export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, ColumnEditorDeps> {
   protected initialState(): ColumnEditorState {
-    return { open: false, colKey: "", colLabel: "", cls: "", entries: [], focusIdx: 0, dirtyCount: 0, filter: "" };
+    return {
+      open: false,
+      colKey: "",
+      colLabel: "",
+      cls: "",
+      entries: [],
+      focusIdx: 0,
+      dirtyCount: 0,
+      filter: ""
+    };
   }
 
   protected build(): void {
@@ -103,7 +112,9 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
       this.q<HTMLElement>(".ce-right").innerHTML = "";
       return;
     }
-    this.q<HTMLElement>(".ce-title").textContent = next.colLabel ? `Edit column \u2014 "${next.colLabel}"` : "Edit column";
+    this.q<HTMLElement>(".ce-title").textContent = next.colLabel
+      ? `Edit column \u2014 "${next.colLabel}"`
+      : "Edit column";
     this.renderDirty(next.dirtyCount);
     this.renderList(next);
     this.renderLeft(next);
@@ -127,7 +138,9 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
     if (pane) left.appendChild(pane);
     else left.appendChild(el("div", "ce-empty", "No activity for this ticket."));
     if (this.deps.isDerived?.(next.colKey)) {
-      left.appendChild(el("div", "ce-derived-note", "\u26a0 Derived field \u2014 editing changes SLA results."));
+      left.appendChild(
+        el("div", "ce-derived-note", "\u26a0 Derived field \u2014 editing changes SLA results.")
+      );
     }
   }
 
@@ -165,19 +178,25 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
     row.appendChild(num);
 
     const options = this.deps.optionsFor?.(next.colKey, entry.sysId) ?? null;
-    const suggestions = options && options.length ? null : (this.deps.autocompleteFor?.(next.colKey) ?? null);
-    const control = options && options.length
-      ? this.selectControl(next, entry, options)
-      : suggestions && suggestions.length
-        ? this.autocompleteControl(next, entry, suggestions, i)
-        : this.textControl(next, entry);
+    const suggestions =
+      options && options.length ? null : (this.deps.autocompleteFor?.(next.colKey) ?? null);
+    const control =
+      options && options.length
+        ? this.selectControl(next, entry, options)
+        : suggestions && suggestions.length
+          ? this.autocompleteControl(next, entry, suggestions, i)
+          : this.textControl(next, entry);
     row.appendChild(control);
 
     row.addEventListener("focusin", () => this.focusTo(i));
     return row;
   }
 
-  protected selectControl(next: ColumnEditorState, entry: ColumnEntry, options: string[]): HTMLElement {
+  protected selectControl(
+    next: ColumnEditorState,
+    entry: ColumnEntry,
+    options: string[]
+  ): HTMLElement {
     const sel = el("select", "ce-input");
     const cur = entry.value;
     const seen = new Set<string>();
@@ -196,7 +215,9 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
       sel.appendChild(o);
     }
     (sel as HTMLSelectElement).value = cur;
-    sel.addEventListener("change", () => this.commit(next, entry, (sel as HTMLSelectElement).value));
+    sel.addEventListener("change", () =>
+      this.commit(next, entry, (sel as HTMLSelectElement).value)
+    );
     return sel;
   }
 
@@ -214,9 +235,16 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
       const raw = (input as HTMLInputElement).value;
       if (isInst) {
         const t = raw.trim();
-        if (!t) { this.commit(next, entry, ""); input.classList.remove("invalid"); return; }
+        if (!t) {
+          this.commit(next, entry, "");
+          input.classList.remove("invalid");
+          return;
+        }
         const parsed = this.deps.parseValue?.(t, next.colKey) ?? null;
-        if (!parsed) { input.classList.add("invalid"); return; }
+        if (!parsed) {
+          input.classList.add("invalid");
+          return;
+        }
         input.classList.remove("invalid");
         this.commit(next, entry, parsed.toISOString());
       } else {
@@ -241,7 +269,12 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
    * blur to close. Free typing is preserved (commit on change/blur). Used for
    * open columns like the configuration item.
    */
-  protected autocompleteControl(next: ColumnEditorState, entry: ColumnEntry, suggestions: string[], _i: number): HTMLElement {
+  protected autocompleteControl(
+    next: ColumnEditorState,
+    entry: ColumnEntry,
+    suggestions: string[],
+    _i: number
+  ): HTMLElement {
     const wrap = el("div", "ce-ac");
     const input = el("input", "ce-input") as HTMLInputElement;
     input.type = "text";
@@ -312,18 +345,35 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
 
     input.addEventListener("focus", () => renderMenu());
     input.addEventListener("click", () => renderMenu());
-    input.addEventListener("input", () => { active = -1; renderMenu(); });
+    input.addEventListener("input", () => {
+      active = -1;
+      renderMenu();
+    });
     input.addEventListener("change", () => this.commit(next, entry, input.value));
     input.addEventListener("blur", () => setTimeout(closeMenu, 120));
     input.addEventListener("keydown", (e) => {
       const key = (e as KeyboardEvent).key;
       const open = !menu.classList.contains("hidden");
-      if (key === "ArrowDown") { e.preventDefault(); e.stopPropagation(); highlight(1); }
-      else if (key === "ArrowUp") { e.preventDefault(); e.stopPropagation(); highlight(-1); }
-      else if (key === "Enter") {
-        if (open && active >= 0 && filtered[active]) { e.preventDefault(); e.stopPropagation(); pick(filtered[active]); }
+      if (key === "ArrowDown") {
+        e.preventDefault();
+        e.stopPropagation();
+        highlight(1);
+      } else if (key === "ArrowUp") {
+        e.preventDefault();
+        e.stopPropagation();
+        highlight(-1);
+      } else if (key === "Enter") {
+        if (open && active >= 0 && filtered[active]) {
+          e.preventDefault();
+          e.stopPropagation();
+          pick(filtered[active]);
+        }
       } else if (key === "Escape") {
-        if (open) { e.preventDefault(); e.stopPropagation(); closeMenu(); }
+        if (open) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeMenu();
+        }
       }
     });
 
@@ -353,7 +403,10 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
     if (idx === st.focusIdx) return;
     this.focusTo(idx);
     const input = this.inputAt(idx);
-    if (input) { input.focus(); input.scrollIntoView({ block: "nearest" }); }
+    if (input) {
+      input.focus();
+      input.scrollIntoView({ block: "nearest" });
+    }
   }
 
   protected focusTo(idx: number): void {
@@ -370,7 +423,13 @@ export class ColumnEditor extends Component<ColumnEditorState, ComponentProps, C
     return row ? row.querySelector<HTMLElement>(".ce-input") : null;
   }
 
-  show(opts: { colKey: string; colLabel: string; cls: string; entries: ColumnEntry[]; focusIdx: number }): void {
+  show(opts: {
+    colKey: string;
+    colLabel: string;
+    cls: string;
+    entries: ColumnEntry[];
+    focusIdx: number;
+  }): void {
     this.setState({
       open: true,
       colKey: opts.colKey,

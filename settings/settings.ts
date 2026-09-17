@@ -50,7 +50,12 @@ function collect(): SettingsDraft {
       maxTicketsPerPull: $("maxTicketsPerPull").value
     },
     ml: {
-      mode: $("mlMode").value === "ml" ? "ml" : $("mlMode").value === "heuristic" ? "heuristic" : "hybrid",
+      mode:
+        $("mlMode").value === "ml"
+          ? "ml"
+          : $("mlMode").value === "heuristic"
+            ? "heuristic"
+            : "hybrid",
       modelId: $("mlModel").value || ML_MODEL_CATALOG[0].id,
       cacheEnabled: $("mlCacheEnabled").checked
     }
@@ -70,7 +75,8 @@ function fill(s: unknown): void {
   $("maxTicketsPerPull").value = merged.params.maxTicketsPerPull;
   $("mlMode").value = merged.ml.mode;
   $("mlCacheEnabled").checked = merged.ml.cacheEnabled;
-  if (ML_MODEL_CATALOG.some((m) => m.id === merged.ml.modelId)) $("mlModel").value = merged.ml.modelId;
+  if (ML_MODEL_CATALOG.some((m) => m.id === merged.ml.modelId))
+    $("mlModel").value = merged.ml.modelId;
 }
 let suspendSave = false;
 let savedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -105,17 +111,32 @@ async function persistMsrLists(): Promise<void> {
   await page.msrLists.save(collectMsrLists(page));
   flashSaved();
 }
-const savePluginSettings = debounce(() => persistPluginSettings().catch((e) => showToast((e as Error).message, "error")), 400);
-const saveMsrLists = debounce(() => persistMsrLists().catch((e) => showToast((e as Error).message, "error")), 400);
+const savePluginSettings = debounce(
+  () => persistPluginSettings().catch((e) => showToast((e as Error).message, "error")),
+  400
+);
+const saveMsrLists = debounce(
+  () => persistMsrLists().catch((e) => showToast((e as Error).message, "error")),
+  400
+);
 
-for (const id of ["instanceUrl", "ticketType", "tablePageSize", "cacheTtlMinutes", "maxTicketsPerPull", "debugResponses"]) {
+for (const id of [
+  "instanceUrl",
+  "ticketType",
+  "tablePageSize",
+  "cacheTtlMinutes",
+  "maxTicketsPerPull",
+  "debugResponses"
+]) {
   $(id).addEventListener("change", savePluginSettings);
   $(id).addEventListener("input", savePluginSettings);
 }
 
 initTooltips();
 $("resetBtn").addEventListener("click", async () => {
-  const ok = confirm("Reset all settings to defaults? This clears queues, team members, pull parameters, classification options, MSR option lists and classifier keywords. Pulled data and saved filters are not affected.");
+  const ok = confirm(
+    "Reset all settings to defaults? This clears queues, team members, pull parameters, classification options, MSR option lists and classifier keywords. Pulled data and saved filters are not affected."
+  );
   if (!ok) return;
   suspendSave = true;
   fill(null);
@@ -138,7 +159,11 @@ $("kwResetBtn")?.addEventListener("click", async () => {
   await page.msrLists.save(collectMsrLists(page));
   showToast("Classifier keywords restored to defaults");
 });
-page.msrLists.load().then((stored) => { suspendSave = true; fillMsrLists(page, page.settings.msrLists(stored)); suspendSave = false; });
+page.msrLists.load().then((stored) => {
+  suspendSave = true;
+  fillMsrLists(page, page.settings.msrLists(stored));
+  suspendSave = false;
+});
 $("clearCacheBtn").addEventListener("click", async () => {
   try {
     await getDefaultDatabase().clearAll();
@@ -184,87 +209,91 @@ $("resolveScopeBtn").addEventListener("click", async () => {
 // group's members and opens a picker so the user chooses which to add to the
 // Team members list.
 const memberPicker = new MemberPicker($("memberPicker"), {}, {});
-page.chips.queues.setRowActions([{
-  label: "resolve members",
-  title: "Resolve this group's members",
-  onClick: async (group: string) => {
-    const instanceUrl = currentInstanceUrl();
-    if (!instanceUrl) {
-      showToast("Set your ServiceNow instance URL first", "error");
-      return;
-    }
-    try {
-      const res = await page.bridge.resolveGroupMembers({ instanceUrl, group });
-      if (!res.ok) throw new Error(res.error || "Could not resolve this group's members");
-      const members = res.members || [];
-      if (!members.length) {
-        showToast(`No active members found for "${group}"`);
+page.chips.queues.setRowActions([
+  {
+    label: "resolve members",
+    title: "Resolve this group's members",
+    onClick: async (group: string) => {
+      const instanceUrl = currentInstanceUrl();
+      if (!instanceUrl) {
+        showToast("Set your ServiceNow instance URL first", "error");
         return;
       }
-      // Only offer members not already in the Team members list — the picker
-      // consolidates against what is already configured.
-      const newMembers = subtractNames(members, page.chips.teamMembers.getValues());
-      if (!newMembers.length) {
-        showToast(`All ${members.length} member(s) of "${group}" are already in Team members`);
-        return;
-      }
-      memberPicker.openFor({
-        group,
-        members: newMembers,
-        truncated: res.truncated,
-        onConfirm: (chosen) => {
-          if (!chosen.length) return;
-          const merged = mergeSortedNames(page.chips.teamMembers.getValues(), chosen);
-          page.chips.teamMembers.setValues(merged);
-          savePluginSettings();
-          showToast(`Added ${chosen.length} member(s) from "${group}"`);
+      try {
+        const res = await page.bridge.resolveGroupMembers({ instanceUrl, group });
+        if (!res.ok) throw new Error(res.error || "Could not resolve this group's members");
+        const members = res.members || [];
+        if (!members.length) {
+          showToast(`No active members found for "${group}"`);
+          return;
         }
-      });
-    } catch (e) {
-      showToast((e as Error).message, "error");
+        // Only offer members not already in the Team members list — the picker
+        // consolidates against what is already configured.
+        const newMembers = subtractNames(members, page.chips.teamMembers.getValues());
+        if (!newMembers.length) {
+          showToast(`All ${members.length} member(s) of "${group}" are already in Team members`);
+          return;
+        }
+        memberPicker.openFor({
+          group,
+          members: newMembers,
+          truncated: res.truncated,
+          onConfirm: (chosen) => {
+            if (!chosen.length) return;
+            const merged = mergeSortedNames(page.chips.teamMembers.getValues(), chosen);
+            page.chips.teamMembers.setValues(merged);
+            savePluginSettings();
+            showToast(`Added ${chosen.length} member(s) from "${group}"`);
+          }
+        });
+      } catch (e) {
+        showToast((e as Error).message, "error");
+      }
+    }
+  },
+  {
+    label: "resolve CIs",
+    title: "Resolve this group's configuration items",
+    onClick: async (group: string) => {
+      const instanceUrl = currentInstanceUrl();
+      if (!instanceUrl) {
+        showToast("Set your ServiceNow instance URL first", "error");
+        return;
+      }
+      try {
+        const res = await page.bridge.resolveGroupCis({ instanceUrl, group });
+        if (!res.ok)
+          throw new Error(res.error || "Could not resolve this group's configuration items");
+        const items = res.items || [];
+        if (!items.length) {
+          showToast(`No configuration items found for "${group}"`);
+          return;
+        }
+        // Only offer CIs not already in the Configuration items list.
+        const newItems = subtractNames(items, page.chips.configItems.getValues());
+        if (!newItems.length) {
+          showToast(`All ${items.length} configuration item(s) of "${group}" are already listed`);
+          return;
+        }
+        memberPicker.openFor({
+          group,
+          members: newItems,
+          truncated: res.truncated,
+          title: `Configuration items of "${group}"`,
+          onConfirm: (chosen) => {
+            if (!chosen.length) return;
+            const merged = mergeSortedNames(page.chips.configItems.getValues(), chosen);
+            page.chips.configItems.setValues(merged);
+            savePluginSettings();
+            showToast(`Added ${chosen.length} configuration item(s) from "${group}"`);
+          }
+        });
+      } catch (e) {
+        showToast((e as Error).message, "error");
+      }
     }
   }
-}, {
-  label: "resolve CIs",
-  title: "Resolve this group's configuration items",
-  onClick: async (group: string) => {
-    const instanceUrl = currentInstanceUrl();
-    if (!instanceUrl) {
-      showToast("Set your ServiceNow instance URL first", "error");
-      return;
-    }
-    try {
-      const res = await page.bridge.resolveGroupCis({ instanceUrl, group });
-      if (!res.ok) throw new Error(res.error || "Could not resolve this group's configuration items");
-      const items = res.items || [];
-      if (!items.length) {
-        showToast(`No configuration items found for "${group}"`);
-        return;
-      }
-      // Only offer CIs not already in the Configuration items list.
-      const newItems = subtractNames(items, page.chips.configItems.getValues());
-      if (!newItems.length) {
-        showToast(`All ${items.length} configuration item(s) of "${group}" are already listed`);
-        return;
-      }
-      memberPicker.openFor({
-        group,
-        members: newItems,
-        truncated: res.truncated,
-        title: `Configuration items of "${group}"`,
-        onConfirm: (chosen) => {
-          if (!chosen.length) return;
-          const merged = mergeSortedNames(page.chips.configItems.getValues(), chosen);
-          page.chips.configItems.setValues(merged);
-          savePluginSettings();
-          showToast(`Added ${chosen.length} configuration item(s) from "${group}"`);
-        }
-      });
-    } catch (e) {
-      showToast((e as Error).message, "error");
-    }
-  }
-}]);
+]);
 
 function selectedModel(): MlModelOption {
   const id = $("mlModel").value;
@@ -309,7 +338,10 @@ $("mlDownloadBtn").addEventListener("click", async () => {
     status.textContent = verify
       ? `Model downloaded (${new Date(meta.savedAt).toISOString()})`
       : "Download finished but not verified — retry";
-    showToast(verify ? "ML model downloaded and cached" : "Model download incomplete — retry", verify ? "info" : "error");
+    showToast(
+      verify ? "ML model downloaded and cached" : "Model download incomplete — retry",
+      verify ? "info" : "error"
+    );
   } catch (e) {
     status.textContent = "Download failed";
     console.error("[settings] ML model download failed", e);
@@ -339,11 +371,22 @@ $("mlCacheClearBtn").addEventListener("click", async () => {
 });
 
 refreshMlStatus().catch(() => undefined);
-page.settings.load().then((s) => { suspendSave = true; fill(s); suspendSave = false; });
+page.settings.load().then((s) => {
+  suspendSave = true;
+  fill(s);
+  suspendSave = false;
+});
 const CFG_KIND = "autonomous-reports-engine-settings";
 const CFG_KIND_LEGACY = "servicenow-ticket-analyzer-settings";
 const ACCEPTED_CFG_KINDS = [CFG_KIND, CFG_KIND_LEGACY];
-const CFG_KEYS = [STORAGE.pluginSettings, STORAGE.exportColMap, STORAGE.ciSplit, STORAGE.viewerHiddenCols, STORAGE.snXlsxTemplate, STORAGE.msrLists];
+const CFG_KEYS = [
+  STORAGE.pluginSettings,
+  STORAGE.exportColMap,
+  STORAGE.ciSplit,
+  STORAGE.viewerHiddenCols,
+  STORAGE.snXlsxTemplate,
+  STORAGE.msrLists
+];
 const CFG_LOCAL_KEY = STORAGE.snFilterList;
 function validateCfgKey(key: string, v: unknown): void {
   const bad = (): Error => new Error(`Invalid value for "${key}" in the settings file`);
@@ -356,24 +399,53 @@ function validateCfgKey(key: string, v: unknown): void {
       if (!Array.isArray(v)) throw bad();
       break;
     case STORAGE.exportColMap:
-      if (typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([a, b]) => typeof a !== "string" || typeof b !== "string")) throw bad();
+      if (
+        typeof v !== "object" ||
+        Array.isArray(v) ||
+        Object.entries(v).some(([a, b]) => typeof a !== "string" || typeof b !== "string")
+      )
+        throw bad();
       break;
     case STORAGE.ciSplit:
-      if (typeof v !== "object" || Array.isArray(v) || typeof (v as { enabled?: unknown }).enabled !== "boolean" || !Array.isArray((v as { groups?: unknown }).groups)) throw bad();
+      if (
+        typeof v !== "object" ||
+        Array.isArray(v) ||
+        typeof (v as { enabled?: unknown }).enabled !== "boolean" ||
+        !Array.isArray((v as { groups?: unknown }).groups)
+      )
+        throw bad();
       break;
     case STORAGE.msrLists: {
-      const isArr = (x: unknown): boolean => Array.isArray(x) && x.every((y) => typeof y === "string");
+      const isArr = (x: unknown): boolean =>
+        Array.isArray(x) && x.every((y) => typeof y === "string");
       if (typeof v !== "object" || Array.isArray(v)) throw bad();
       const lists = (v as { lists?: unknown }).lists;
       if (lists && typeof lists === "object" && !Array.isArray(lists)) {
-        for (const k of ["opCo", "domain", "type", "status", "resolution", "duplicate", "queue", "subCategory"]) {
-          if ((lists as Record<string, unknown>)[k] !== void 0 && !isArr((lists as Record<string, unknown>)[k])) throw bad();
+        for (const k of [
+          "opCo",
+          "domain",
+          "type",
+          "status",
+          "resolution",
+          "duplicate",
+          "queue",
+          "subCategory"
+        ]) {
+          if (
+            (lists as Record<string, unknown>)[k] !== void 0 &&
+            !isArr((lists as Record<string, unknown>)[k])
+          )
+            throw bad();
         }
         const rootCause = (lists as Record<string, unknown>).rootCause;
         if (rootCause !== void 0) {
           if (typeof rootCause !== "object" || Array.isArray(rootCause)) throw bad();
           for (const t of ["Incident", "RFS", "P_Ticket"]) {
-            if ((rootCause as Record<string, unknown>)[t] !== void 0 && !isArr((rootCause as Record<string, unknown>)[t])) throw bad();
+            if (
+              (rootCause as Record<string, unknown>)[t] !== void 0 &&
+              !isArr((rootCause as Record<string, unknown>)[t])
+            )
+              throw bad();
           }
         }
         const hints = (lists as Record<string, unknown>).hints;
@@ -387,7 +459,13 @@ function validateCfgKey(key: string, v: unknown): void {
       break;
     }
     case STORAGE.snXlsxTemplate:
-      if (typeof v !== "object" || Array.isArray(v) || typeof (v as { name?: unknown }).name !== "string" || typeof (v as { dataB64?: unknown }).dataB64 !== "string") throw bad();
+      if (
+        typeof v !== "object" ||
+        Array.isArray(v) ||
+        typeof (v as { name?: unknown }).name !== "string" ||
+        typeof (v as { dataB64?: unknown }).dataB64 !== "string"
+      )
+        throw bad();
       break;
     case STORAGE.snFilterList:
       if (!Array.isArray(v) || v.some((f) => typeof f !== "object" || f === null)) throw bad();
@@ -397,8 +475,7 @@ function validateCfgKey(key: string, v: unknown): void {
 let filterListRaw = "[]";
 try {
   filterListRaw = localStorage.getItem(CFG_LOCAL_KEY) || "[]";
-} catch {
-}
+} catch {}
 function exportFilterList(): unknown[] {
   try {
     return JSON.parse(filterListRaw);
@@ -411,8 +488,7 @@ function importFilterList(arr: unknown): void {
   filterListRaw = JSON.stringify(arr);
   try {
     localStorage.setItem(CFG_LOCAL_KEY, filterListRaw);
-  } catch {
-  }
+  } catch {}
 }
 $("exportCfgBtn").addEventListener("click", async () => {
   try {
@@ -420,7 +496,7 @@ $("exportCfgBtn").addEventListener("click", async () => {
     const payload = {
       kind: CFG_KIND,
       version: 1,
-      exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      exportedAt: /* @__PURE__ */ new Date().toISOString(),
       settings: {
         ...Object.fromEntries(CFG_KEYS.map((k) => [k, cfg[k] ?? null])),
         [CFG_LOCAL_KEY]: exportFilterList()
@@ -430,7 +506,7 @@ $("exportCfgBtn").addEventListener("click", async () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `autonomous-reports-engine-settings-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 16).replace(/[-:T]/g, "")}.json`;
+    a.download = `autonomous-reports-engine-settings-${/* @__PURE__ */ new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -471,7 +547,7 @@ $("cfgFile").addEventListener("change", async (e: Event) => {
     }
     const localVal = (p.settings as Record<string, unknown>)[CFG_LOCAL_KEY];
     if (localVal !== void 0 && localVal !== null) validateCfgKey(CFG_LOCAL_KEY, localVal);
-    const allKeys = [...Object.keys(updates), ...localVal != null ? [CFG_LOCAL_KEY] : []];
+    const allKeys = [...Object.keys(updates), ...(localVal != null ? [CFG_LOCAL_KEY] : [])];
     if (!allKeys.length) throw new Error("The file contains none of the expected settings");
     const ok = confirm(
       `Replace current configuration with the file's values?

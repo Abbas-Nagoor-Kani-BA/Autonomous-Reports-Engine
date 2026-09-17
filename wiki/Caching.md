@@ -18,12 +18,12 @@ flowchart TD
     ML[(IndexedDB: snAnalyzerMlModel<br/>downloaded model files)]
 ```
 
-| Cache | Store / DB | Key | Reuse rule | TTL / bound | Cleared by |
-|---|---|---|---|---|---|
-| Query (pull) | `queries` in `snAnalyzerCache` | hash of `table` + encoded query | same query within the TTL window | TTL, default 15 min, `0` disables | Clear pull cache |
-| Timeline | `timelines` in `snAnalyzerCache` | `table:sys_id` | cached copy not older than the ticket's `sys_updated_on` | retained max 7 days | Clear pull cache |
-| Classification | `entries` in `snAnalyzerClassCache` | FNV-1a of notes + both label lists + hints + model id | exact input match | ≤ 2000 entries, evicts least-used/oldest | Clear classification cache |
-| ML model | `files` in `snAnalyzerMlModel` | `file:<repoId>:<file>` | files present for the requested model | until cleared | Clear model (repository `clear()`) |
+| Cache          | Store / DB                          | Key                                                   | Reuse rule                                               | TTL / bound                              | Cleared by                         |
+| -------------- | ----------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------- | ---------------------------------- |
+| Query (pull)   | `queries` in `snAnalyzerCache`      | hash of `table` + encoded query                       | same query within the TTL window                         | TTL, default 15 min, `0` disables        | Clear pull cache                   |
+| Timeline       | `timelines` in `snAnalyzerCache`    | `table:sys_id`                                        | cached copy not older than the ticket's `sys_updated_on` | retained max 7 days                      | Clear pull cache                   |
+| Classification | `entries` in `snAnalyzerClassCache` | FNV-1a of notes + both label lists + hints + model id | exact input match                                        | ≤ 2000 entries, evicts least-used/oldest | Clear classification cache         |
+| ML model       | `files` in `snAnalyzerMlModel`      | `file:<repoId>:<file>`                                | files present for the requested model                    | until cleared                            | Clear model (repository `clear()`) |
 
 The substrate is a thin IndexedDB wrapper in `data/idb.ts` (with an in-memory
 twin for tests).
@@ -41,7 +41,7 @@ twin for tests).
   via `setQueryTtlMinutes`, driven by the **Query cache TTL (minutes)** setting
   (0–10080). `0` disables caching so every pull hits the API.
 - **On hit**: the pull logs `CACHE HIT — reused N tickets from M min ago (no API
-  calls)`.
+calls)`.
 - **On miss**: fetch, store `{ at, table, query, records }`, then `purgeExpired`
   drops stale query entries and timeline entries beyond retention.
 
@@ -120,11 +120,11 @@ model re-download or discard expensive classification work.
 
 Not everything is persisted. There are three durability tiers:
 
-| Tier | Where | Lifetime | Examples |
-|---|---|---|---|
-| `chrome.storage.local` | key/value, per-extension | until changed / reset | see the key list below |
-| Persisted caches | IndexedDB (the three DBs above) | TTL / watermark / until cleared | query results, per-ticket timelines, classification outcomes, ML model files |
-| **Session-only (ephemeral)** | **in memory** | **reset on every page load** | viewer toggles below |
+| Tier                         | Where                           | Lifetime                        | Examples                                                                     |
+| ---------------------------- | ------------------------------- | ------------------------------- | ---------------------------------------------------------------------------- |
+| `chrome.storage.local`       | key/value, per-extension        | until changed / reset           | see the key list below                                                       |
+| Persisted caches             | IndexedDB (the three DBs above) | TTL / watermark / until cleared | query results, per-ticket timelines, classification outcomes, ML model files |
+| **Session-only (ephemeral)** | **in memory**                   | **reset on every page load**    | viewer toggles below                                                         |
 
 ### What `chrome.storage.local` holds
 
@@ -132,16 +132,16 @@ All non-cache persistent state lives in `chrome.storage.local` (keys defined in
 `lib/keys.ts`, wrapped by `data/chrome-key-value-store.ts`). It is **not** only
 settings — it also holds the pulled dataset and viewer preferences:
 
-| Key | Contents |
-|---|---|
-| `pluginSettings` | instance URL, ticket type, queues, team members, pull params, classification mode/model, classifier keywords |
-| `msrLists` | MSR option lists |
-| `snFilterList`, `snFilterPresets` | saved filter list and presets |
-| `snXlsxTemplate` | the cached WSR Excel template |
-| `lastData` | the last pulled dataset (rows the viewer renders) |
-| `lastRun`, `snInstance`, `includeSummary` | last-run summary, last instance URL, Weekly Summary toggle |
-| `exportColMap`, `ciSplit` | export column mapping and CI split groups |
-| `viewerHiddenCols`, `viewerColWidths`, `viewerSel`, `viewerActionRail`, `calclensHighlights`, `viewerSummaryNarrative` | viewer preferences that survive reloads |
+| Key                                                                                                                    | Contents                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `pluginSettings`                                                                                                       | instance URL, ticket type, queues, team members, pull params, classification mode/model, classifier keywords |
+| `msrLists`                                                                                                             | MSR option lists                                                                                             |
+| `snFilterList`, `snFilterPresets`                                                                                      | saved filter list and presets                                                                                |
+| `snXlsxTemplate`                                                                                                       | the cached WSR Excel template                                                                                |
+| `lastData`                                                                                                             | the last pulled dataset (rows the viewer renders)                                                            |
+| `lastRun`, `snInstance`, `includeSummary`                                                                              | last-run summary, last instance URL, Weekly Summary toggle                                                   |
+| `exportColMap`, `ciSplit`                                                                                              | export column mapping and CI split groups                                                                    |
+| `viewerHiddenCols`, `viewerColWidths`, `viewerSel`, `viewerActionRail`, `calclensHighlights`, `viewerSummaryNarrative` | viewer preferences that survive reloads                                                                      |
 
 `unlimitedStorage` is granted because `lastData` and `snXlsxTemplate` can be
 large. The [Backup and Transfer](Backup-and-Transfer) export bundles most of
@@ -163,7 +163,7 @@ it always starts fresh when the viewer page loads. These are:
   search state is session-only.
 - **CI split preview** — `surfaces/viewer/split-filter.ts`; "view one CI group"
   scopes the grid for the current session only and is not remembered (the split
-  *groups* under `ciSplit` are persisted; the active preview is not).
+  _groups_ under `ciSplit` are persisted; the active preview is not).
 
 The word "session" also appears in [Authentication Chain](Authentication-Chain),
 where it means the reused ServiceNow **login session** — a separate concept from
@@ -171,16 +171,17 @@ this ephemeral UI state.
 
 ## Tests
 
-| Suite | Covers |
-|---|---|
-| `tools/pull-cache-test.ts` | query cache policy through the repository |
-| `tools/per-row-cache-test.js` | per-row (timeline) cache behaviour |
-| `tools/classification-cache-test.js`, `tools/classify-cache-test.js` | classification result cache |
-| `tools/ml-model-repository-test.js` | model download/caching |
-| `tools/idb-test.ts` | the real IndexedDB path via fake-indexeddb |
+| Suite                                                                | Covers                                     |
+| -------------------------------------------------------------------- | ------------------------------------------ |
+| `tools/pull-cache-test.ts`                                           | query cache policy through the repository  |
+| `tools/per-row-cache-test.js`                                        | per-row (timeline) cache behaviour         |
+| `tools/classification-cache-test.js`, `tools/classify-cache-test.js` | classification result cache                |
+| `tools/ml-model-repository-test.js`                                  | model download/caching                     |
+| `tools/idb-test.ts`                                                  | the real IndexedDB path via fake-indexeddb |
 
 See [Testing](Testing).
 
 ---
+
 Related: [Configuration](Configuration) · [Two-Phase Pipeline](Two-Phase-Pipeline) ·
 [Classification](Classification) · [Architecture](Architecture)

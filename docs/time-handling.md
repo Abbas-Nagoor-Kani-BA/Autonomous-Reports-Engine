@@ -34,11 +34,11 @@ clock from the records themselves and renders every time on that clock.
 A single instant can appear in three forms as it flows through the pipeline.
 Each exists for a reason, and each has an owning function.
 
-| Representation | Example | Produced by | Consumed by | Why it exists |
-|---|---|---|---|---|
-| Raw UTC string (`*Raw`, `*UtcIso`) | `2026-08-01 10:00:00`, `2026-08-01T10:00:00.000Z` | Table API `value`; the four rules in `core/phase2.ts` | `parseUtc` / `parseUtcMs`, `fmtInstant` | Unambiguous, math-safe source of truth |
-| SN display value (`openedAt`, `resolvedAt`, …) | `2026-08-01 11:00:00` | Table API `display_value` | offset detection (`pairOffsetMs`) | What a user recognizes; the instance-clock reference |
-| Epoch milliseconds | `1785535200000` | `parseUtc`, `parseUtcMs`, `parseSnDisplayMs` | duration/SLA arithmetic (`core/durations.ts`, `core/report.ts`) | Numbers subtract cleanly; strings do not |
+| Representation                                 | Example                                           | Produced by                                           | Consumed by                                                     | Why it exists                                        |
+| ---------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| Raw UTC string (`*Raw`, `*UtcIso`)             | `2026-08-01 10:00:00`, `2026-08-01T10:00:00.000Z` | Table API `value`; the four rules in `core/phase2.ts` | `parseUtc` / `parseUtcMs`, `fmtInstant`                         | Unambiguous, math-safe source of truth               |
+| SN display value (`openedAt`, `resolvedAt`, …) | `2026-08-01 11:00:00`                             | Table API `display_value`                             | offset detection (`pairOffsetMs`)                               | What a user recognizes; the instance-clock reference |
+| Epoch milliseconds                             | `1785535200000`                                   | `parseUtc`, `parseUtcMs`, `parseSnDisplayMs`          | duration/SLA arithmetic (`core/durations.ts`, `core/report.ts`) | Numbers subtract cleanly; strings do not             |
 
 The parsing contract that ties raw strings to epochs lives in two matching
 helpers:
@@ -64,8 +64,8 @@ and the Table API returns each as a `{ value, display_value }` pair:
 `core/phase2.ts` `buildRow` reads that same initial record and stores both
 sides:
 
-- `openedAt`  = `fieldValue(rec.opened_at)`  → the display value (instance clock)
-- `openedAtRaw` = `rawValue(rec.opened_at)`   → the raw UTC value
+- `openedAt` = `fieldValue(rec.opened_at)` → the display value (instance clock)
+- `openedAtRaw` = `rawValue(rec.opened_at)` → the raw UTC value
 - `resolvedAt` / `resolvedAtRaw` likewise.
 
 Phase 2 (the per-ticket activity feed) contributes change **epochs** for the

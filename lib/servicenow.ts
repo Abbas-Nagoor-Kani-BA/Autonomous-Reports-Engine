@@ -26,7 +26,13 @@ class ServiceNowClient {
   debugResponses = false;
   activitySource = "";
 
-  constructor(instanceUrl: string, options: { transport?: TransportLike | null; onDiagnostic?: ((d: Diagnostic) => void) | null } = {}) {
+  constructor(
+    instanceUrl: string,
+    options: {
+      transport?: TransportLike | null;
+      onDiagnostic?: ((d: Diagnostic) => void) | null;
+    } = {}
+  ) {
     this.baseUrl = instanceUrl.replace(/\/+$/, "");
     this.transport = options.transport || null;
     this.onDiagnostic = options.onDiagnostic || null;
@@ -36,11 +42,13 @@ class ServiceNowClient {
     if (!this.onDiagnostic) return;
     try {
       this.onDiagnostic(diag);
-    } catch { /* diagnostics must never break the request */ }
+    } catch {
+      /* diagnostics must never break the request */
+    }
   }
 
   async #sleep(ms: number): Promise<void> {
-    await new Promise(r => setTimeout(r, ms));
+    await new Promise((r) => setTimeout(r, ms));
   }
 
   async #request(path: string, params: Record<string, unknown> = {}): Promise<Response> {
@@ -55,8 +63,13 @@ class ServiceNowClient {
     const emit = (extra: Diagnostic) => {
       if (!this.onDiagnostic) return;
       this.#emit({
-        status: null, via: null, hadToken: null, tokenSource: null,
-        path, query: shortQuery, ms: Date.now() - started,
+        status: null,
+        via: null,
+        hadToken: null,
+        tokenSource: null,
+        path,
+        query: shortQuery,
+        ms: Date.now() - started,
         ...extra
       });
     };
@@ -72,7 +85,11 @@ class ServiceNowClient {
           res.snHadToken = raw.hadToken;
           res.snTokenSource = raw.tokenSource || null;
         } else {
-          res = await fetch(target, { method: "GET", credentials: "include", headers: { "Accept": "application/json" } });
+          res = await fetch(target, {
+            method: "GET",
+            credentials: "include",
+            headers: { Accept: "application/json" }
+          });
           res.snVia = "direct";
           res.snHadToken = null;
         }
@@ -99,7 +116,15 @@ class ServiceNowClient {
         const contentType = (res.headers.get("content-type") || "").toLowerCase();
         let loginPage = contentType.includes("text/html");
         if (!loginPage && !contentType.includes("application/json")) {
-          const peek = (await res.clone().text().catch(() => "")).trimStart().slice(0, 20).toLowerCase();
+          const peek = (
+            await res
+              .clone()
+              .text()
+              .catch(() => "")
+          )
+            .trimStart()
+            .slice(0, 20)
+            .toLowerCase();
           loginPage = peek.startsWith("<!doctype") || peek.startsWith("<html");
         }
         if (loginPage) {
@@ -108,22 +133,39 @@ class ServiceNowClient {
             "Not logged in to ServiceNow (received the login page): refresh your ServiceNow browser tab and confirm you are logged in, then press Connect again"
           );
         }
-        emit({ kind: "ok", status: res.status, via: res.snVia, hadToken: res.snHadToken, tokenSource: res.snTokenSource });
+        emit({
+          kind: "ok",
+          status: res.status,
+          via: res.snVia,
+          hadToken: res.snHadToken,
+          tokenSource: res.snTokenSource
+        });
         return res;
       } catch (err) {
         if (err instanceof TypeError) {
           lastError = err;
-          emit({ kind: "warn", status: 0, attempt: attempt + 1, netError: String((err as Error).message || err) });
+          emit({
+            kind: "warn",
+            status: 0,
+            attempt: attempt + 1,
+            netError: String((err as Error).message || err)
+          });
           await this.#sleep(1500 * Math.pow(2, attempt));
         } else {
-          if (!(err instanceof Error) || !/^Auth error|^HTTP |^Not logged in to ServiceNow/.test(err.message)) emit({ kind: "err", status: 0 });
+          if (
+            !(err instanceof Error) ||
+            !/^Auth error|^HTTP |^Not logged in to ServiceNow/.test(err.message)
+          )
+            emit({ kind: "err", status: 0 });
           throw err;
         }
       }
     }
     emit({ kind: "err", status: 0, retriesExhausted: true });
     if (lastError?.message?.startsWith("Rate limited by ServiceNow")) {
-      throw new Error("Rate limited by ServiceNow (HTTP 429) — wait a few minutes before running again");
+      throw new Error(
+        "Rate limited by ServiceNow (HTTP 429) — wait a few minutes before running again"
+      );
     }
     throw lastError || new Error("Request failed after retries");
   }
@@ -194,7 +236,7 @@ class ServiceNowClient {
     try {
       const rows = await this.fetchRecords("sys_user", `sys_id=${userId}`, ["name"], 1);
       const cell = rows?.[0]?.name;
-      const name = cell && typeof cell === "object" ? cell.display_value ?? cell.value : cell;
+      const name = cell && typeof cell === "object" ? (cell.display_value ?? cell.value) : cell;
       const s = String(name ?? "").trim();
       return s || null;
     } catch {
@@ -213,13 +255,15 @@ class ServiceNowClient {
    * (large "assigned to everyone" groups are expected to overflow and are not
    * paginated by design).
    */
-  async fetchGroupMemberRows(groupName: string): Promise<{ rows: Record<string, any>[]; truncated: boolean }> {
+  async fetchGroupMemberRows(
+    groupName: string
+  ): Promise<{ rows: Record<string, any>[]; truncated: boolean }> {
     const name = String(groupName ?? "").trim();
     if (!name) return { rows: [], truncated: false };
     const groups = await this.fetchRecords("sys_user_group", `name=${name}`, ["sys_id", "name"], 1);
     const groupId = (() => {
       const cell = groups?.[0]?.sys_id;
-      const v = cell && typeof cell === "object" ? cell.value ?? cell.display_value : cell;
+      const v = cell && typeof cell === "object" ? (cell.value ?? cell.display_value) : cell;
       return String(v ?? "").trim();
     })();
     if (!groupId) return { rows: [], truncated: false };
@@ -242,13 +286,15 @@ class ServiceNowClient {
    * caller flags `truncated` when the row count hits the page cap so the UI can
    * warn instead of silently dropping items.
    */
-  async fetchGroupCiRows(groupName: string): Promise<{ rows: Record<string, any>[]; truncated: boolean }> {
+  async fetchGroupCiRows(
+    groupName: string
+  ): Promise<{ rows: Record<string, any>[]; truncated: boolean }> {
     const name = String(groupName ?? "").trim();
     if (!name) return { rows: [], truncated: false };
     const groups = await this.fetchRecords("sys_user_group", `name=${name}`, ["sys_id", "name"], 1);
     const groupId = (() => {
       const cell = groups?.[0]?.sys_id;
-      const v = cell && typeof cell === "object" ? cell.value ?? cell.display_value : cell;
+      const v = cell && typeof cell === "object" ? (cell.value ?? cell.display_value) : cell;
       return String(v ?? "").trim();
     })();
     if (!groupId) return { rows: [], truncated: false };
@@ -277,7 +323,9 @@ class ServiceNowClient {
     let pages = 0;
     while (true) {
       if (++pages > maxPages) {
-        throw new Error(`Pagination did not converge after ${maxPages} pages (${rows.length}/${expectedTotal || "?"} rows) — narrow the filter or check the instance page-size cap`);
+        throw new Error(
+          `Pagination did not converge after ${maxPages} pages (${rows.length}/${expectedTotal || "?"} rows) — narrow the filter or check the instance page-size cap`
+        );
       }
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
       const res = await this.#request(`/api/now/table/${table}`, {
@@ -292,7 +340,10 @@ class ServiceNowClient {
         const out: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(r)) {
           if (v && typeof v === "object") {
-            out[k] = { display_value: (v as { display_value?: string }).display_value ?? "", value: (v as { value?: string }).value ?? "" };
+            out[k] = {
+              display_value: (v as { display_value?: string }).display_value ?? "",
+              value: (v as { value?: string }).value ?? ""
+            };
           } else {
             out[k] = v;
           }
@@ -383,13 +434,16 @@ class ServiceNowClient {
     tableName = "incident",
     preloaded: Record<string, ListHistoryPayload> | null = null
   ): Promise<Record<string, { field: string; oldValue: string; newValue: string; at: string }[]>> {
-    const byTicket: Record<string, { field: string; oldValue: string; newValue: string; at: string }[]> = {};
+    const byTicket: Record<
+      string,
+      { field: string; oldValue: string; newValue: string; at: string }[]
+    > = {};
     const filterWanted = wanted.size > 0;
     for (const [idx, sysId] of sysIds.entries()) {
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-      const payload = preloaded?.[sysId] || await this.#fetchListHistory(tableName, sysId);
+      const payload = preloaded?.[sysId] || (await this.#fetchListHistory(tableName, sysId));
       let events = Analysis.extractEventsFromListHistory(payload)[sysId] || [];
-      if (filterWanted) events = events.filter(e => wanted.has(e.field));
+      if (filterWanted) events = events.filter((e) => wanted.has(e.field));
       if (events.length) byTicket[sysId] = events;
       onProgress?.({ ticketsDone: idx + 1, total: sysIds.length });
     }
@@ -431,7 +485,10 @@ class ServiceNowClient {
     tableName = "incident"
   ): Promise<Record<string, { field: string; oldValue: string; newValue: string; at: string }[]>> {
     const parse = Analysis.extractEventsFromActivity;
-    const byTicket: Record<string, { field: string; oldValue: string; newValue: string; at: string }[]> = {};
+    const byTicket: Record<
+      string,
+      { field: string; oldValue: string; newValue: string; at: string }[]
+    > = {};
     const filterWanted = wanted.size > 0;
     for (const [idx, sysId] of sysIds.entries()) {
       if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
@@ -444,7 +501,7 @@ class ServiceNowClient {
         );
       }
       let events = parse(entries) || [];
-      if (filterWanted) events = events.filter(e => wanted.has(e.field));
+      if (filterWanted) events = events.filter((e) => wanted.has(e.field));
       if (events.length) byTicket[sysId] = events;
       onProgress?.({ ticketsDone: idx + 1, total: sysIds.length });
     }
@@ -468,9 +525,7 @@ class ServiceNowClient {
       });
       const data = await res.json();
       const batch =
-        data?.result?.entries ||
-        data?.entries ||
-        (Array.isArray(data?.result) ? data.result : []);
+        data?.result?.entries || data?.entries || (Array.isArray(data?.result) ? data.result : []);
       if (!Array.isArray(batch) || !batch.length) break;
       entries.push(...batch);
       if (batch.length < 200) break;

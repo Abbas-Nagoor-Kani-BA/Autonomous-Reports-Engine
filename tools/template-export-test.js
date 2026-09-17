@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fflate from "../lib/vendor/fflate.cjs";
 import * as T from "../core/export/templatexml.ts";
-import { } from "../lib/markup.ts";
+import {} from "../lib/markup.ts";
 import { setFflate } from "../core/export/templatexml.ts";
 
 setFflate(fflate);
@@ -14,7 +14,7 @@ function check(name, ok, detail) {
   if (!ok) failed++;
   console.log(`  ${ok ? "ok " : "FAIL"} ${name}${ok || !detail ? "" : ` — ${detail}`}`);
 }
-const enc = s => new TextEncoder().encode(s);
+const enc = (s) => new TextEncoder().encode(s);
 const decode = (files, k) => Buffer.from(files[k] || new Uint8Array()).toString();
 
 const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -44,14 +44,19 @@ const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <row r="1"><c r="A1" t="inlineStr"><is><t>S.No</t></is></c><c r="E1" t="inlineStr"><is><t>Reference Number</t></is></c></row>
 <row r="2"><c r="A2" s="4"/><c r="E2" s="7" t="inlineStr"><is><t>INCOLD</t></is></c></row>
 </sheetData></worksheet>`;
-const fixtureBuf = fflate.zipSync({
-  "[Content_Types].xml": enc(ct),
-  "_rels/.rels": enc(rootRels),
-  "xl/workbook.xml": enc(wb),
-  "xl/_rels/workbook.xml.rels": enc(wbRels),
-  "xl/calcChain.xml": enc(`<?xml version="1.0"?><calcChain xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>`),
-  "xl/worksheets/sheet1.xml": enc(sheet)
-}, { level: 0 });
+const fixtureBuf = fflate.zipSync(
+  {
+    "[Content_Types].xml": enc(ct),
+    "_rels/.rels": enc(rootRels),
+    "xl/workbook.xml": enc(wb),
+    "xl/_rels/workbook.xml.rels": enc(wbRels),
+    "xl/calcChain.xml": enc(
+      `<?xml version="1.0"?><calcChain xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>`
+    ),
+    "xl/worksheets/sheet1.xml": enc(sheet)
+  },
+  { level: 0 }
+);
 
 console.log("== fillTemplateBuffer (legacy template surgery) ==");
 const rows = [
@@ -60,8 +65,8 @@ const rows = [
 ];
 const tplCols = [
   { col: 1, get: () => "" },
-  { col: 5, get: r => r.number },
-  { col: 7, get: r => (String(r.priority).match(/\d+/) || [""])[0] }
+  { col: 5, get: (r) => r.number },
+  { col: 7, get: (r) => (String(r.priority).match(/\d+/) || [""])[0] }
 ];
 let out;
 try {
@@ -76,16 +81,36 @@ const xml = decode(files, "xl/worksheets/sheet1.xml");
 
 check("header row preserved verbatim", xml.includes(">Reference Number<"));
 check("old data row replaced", !xml.includes("INCOLD"));
-check("row numbers written as inline strings", xml.includes("INC0001001") && xml.includes("INC0001002"));
-check("numeric cell emitted for G column", /<c r="G2"[^>]*><v>3<\/v><\/c>/.test(xml), (xml.match(/<c r="G2"[^>]*>([\s\S]{0,60})/) || [])[1]);
+check(
+  "row numbers written as inline strings",
+  xml.includes("INC0001001") && xml.includes("INC0001002")
+);
+check(
+  "numeric cell emitted for G column",
+  /<c r="G2"[^>]*><v>3<\/v><\/c>/.test(xml),
+  (xml.match(/<c r="G2"[^>]*>([\s\S]{0,60})/) || [])[1]
+);
 check("styled blank kept for mapped-empty A col", /<c r="A2" s="4"\/>/.test(xml));
-check("dimension extended to last mapped column", /<dimension ref="A1:G3"\/>/.test(xml),
-  (xml.match(/<dimension ref="([^"]*)"/) || [])[1]);
-check("calcChain stripped + fullCalcOnLoad set",
-  !files["xl/calcChain.xml"] && /fullCalcOnLoad="1"/.test(decode(files, "xl/workbook.xml")));
-check("calcChain content-type override pruned", !decode(files, Object.keys(files).find(k => k.toLowerCase() === "[content_types].xml")).includes("calcChain"));
-check("helper exports present",
-  typeof T.normSheetName === "function" && typeof T.findTargetSheetPath === "function");
+check(
+  "dimension extended to last mapped column",
+  /<dimension ref="A1:G3"\/>/.test(xml),
+  (xml.match(/<dimension ref="([^"]*)"/) || [])[1]
+);
+check(
+  "calcChain stripped + fullCalcOnLoad set",
+  !files["xl/calcChain.xml"] && /fullCalcOnLoad="1"/.test(decode(files, "xl/workbook.xml"))
+);
+check(
+  "calcChain content-type override pruned",
+  !decode(
+    files,
+    Object.keys(files).find((k) => k.toLowerCase() === "[content_types].xml")
+  ).includes("calcChain")
+);
+check(
+  "helper exports present",
+  typeof T.normSheetName === "function" && typeof T.findTargetSheetPath === "function"
+);
 
 const realPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "sample.xlsx");
 if (fs.existsSync(realPath)) {
@@ -101,8 +126,9 @@ if (fs.existsSync(realPath)) {
 }
 
 console.log("\n== patchSummarySlaSheet ==");
-const sumCt = ct.replace('PartName="/xl/worksheets/sheet1.xml"', 'PartName="/xl/worksheets/sheet1.xml"')
-  + `<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
+const sumCt =
+  ct.replace('PartName="/xl/worksheets/sheet1.xml"', 'PartName="/xl/worksheets/sheet1.xml"') +
+  `<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
 const sumWb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
 <sheets><sheet name="All_Ticket_Details" sheetId="1" r:id="rId1"/><sheet name="Summary SLA" sheetId="2" r:id="rId2"/></sheets>
@@ -139,23 +165,92 @@ const sumSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <row r="23"><c r="C23" t="s"><v>15</v></c><c r="D23" s="1" t="s"><v>12</v></c><c r="E23" t="s"><v>16</v></c><c r="F23" s="1" t="s"><v>17</v></c><c r="G23" s="40"><v>1</v></c><c r="H23" s="93"><f>IFS(J23=0,0,J23&lt;&gt;0,(I23/J23)*1)</f><v>0</v></c><c r="I23" s="73"><v>0</v></c><c r="J23" s="73"><v>0</v></c></row>
 <row r="30"><c r="C30" s="1" t="s"><v>1</v></c><c r="E30" t="s"><v>4</v></c><c r="F30" t="s"><v>18</v></c><c r="G30" s="40"><v>1</v></c><c r="I30" s="73"><v>5</v></c><c r="J30" s="73"><v>5</v></c></row>
 </sheetData></worksheet>`;
-const sumFixture = fflate.zipSync({
-  "[Content_Types].xml": enc(sumCt),
-  "_rels/.rels": enc(rootRels),
-  "xl/workbook.xml": enc(sumWb),
-  "xl/_rels/workbook.xml.rels": enc(sumWbRels),
-  "xl/sharedStrings.xml": enc(sst),
-  "xl/worksheets/sheet1.xml": enc(sheet),
-  "xl/worksheets/sheet2.xml": enc(sumSheet)
-}, { level: 0 });
+const sumFixture = fflate.zipSync(
+  {
+    "[Content_Types].xml": enc(sumCt),
+    "_rels/.rels": enc(rootRels),
+    "xl/workbook.xml": enc(sumWb),
+    "xl/_rels/workbook.xml.rels": enc(sumWbRels),
+    "xl/sharedStrings.xml": enc(sst),
+    "xl/worksheets/sheet1.xml": enc(sheet),
+    "xl/worksheets/sheet2.xml": enc(sumSheet)
+  },
+  { level: 0 }
+);
 
 const summaryItems = [
-  { metric: "Time to Resolve", ticketType: "Incident", category: "Severity 1 Incidents", sla: "Within 1 hour ", target: 0.85, count: 7, total: 10, actual: 0.7, status: "AMBER", writeStatus: true },
-  { metric: "Time to Resolve", ticketType: "Incident", category: "Severity 1 Incidents", sla: "Within 4 hours", target: 1, count: 9, total: 10, actual: 0.9, status: "GREEN", writeStatus: true },
-  { metric: "Time to Resolve", ticketType: "Incident", category: "Severity 2 Incidents", sla: "Within 6 hours", target: 0.95, count: 5, total: 6, actual: 0.83, status: "AMBER", writeStatus: true },
-  { metric: "Time to Respond", ticketType: "Incident", category: "Severity 4 Incidents", sla: "Within 3 business hours", target: 1, count: 2, total: 4, actual: 0.5, status: "RED", writeStatus: true },
-  { metric: "Known Error Logging", ticketType: "Problem", category: "All other priorities except High", sla: "Plan of action detailing options, dependencies, risks and timescales for fixing the problem to be available within 20 working days", target: 1, count: 3, total: 4, actual: 0.75, status: "AMBER", writeStatus: false },
-  { metric: "Reoccuring Incident - Problem creation", ticketType: "Problem", category: "All ", sla: "Problem creation for reoccuring problems ", target: 1, count: 3, total: 5, actual: 0.6, status: "GREEN", writeStatus: false }
+  {
+    metric: "Time to Resolve",
+    ticketType: "Incident",
+    category: "Severity 1 Incidents",
+    sla: "Within 1 hour ",
+    target: 0.85,
+    count: 7,
+    total: 10,
+    actual: 0.7,
+    status: "AMBER",
+    writeStatus: true
+  },
+  {
+    metric: "Time to Resolve",
+    ticketType: "Incident",
+    category: "Severity 1 Incidents",
+    sla: "Within 4 hours",
+    target: 1,
+    count: 9,
+    total: 10,
+    actual: 0.9,
+    status: "GREEN",
+    writeStatus: true
+  },
+  {
+    metric: "Time to Resolve",
+    ticketType: "Incident",
+    category: "Severity 2 Incidents",
+    sla: "Within 6 hours",
+    target: 0.95,
+    count: 5,
+    total: 6,
+    actual: 0.83,
+    status: "AMBER",
+    writeStatus: true
+  },
+  {
+    metric: "Time to Respond",
+    ticketType: "Incident",
+    category: "Severity 4 Incidents",
+    sla: "Within 3 business hours",
+    target: 1,
+    count: 2,
+    total: 4,
+    actual: 0.5,
+    status: "RED",
+    writeStatus: true
+  },
+  {
+    metric: "Known Error Logging",
+    ticketType: "Problem",
+    category: "All other priorities except High",
+    sla: "Plan of action detailing options, dependencies, risks and timescales for fixing the problem to be available within 20 working days",
+    target: 1,
+    count: 3,
+    total: 4,
+    actual: 0.75,
+    status: "AMBER",
+    writeStatus: false
+  },
+  {
+    metric: "Reoccuring Incident - Problem creation",
+    ticketType: "Problem",
+    category: "All ",
+    sla: "Problem creation for reoccuring problems ",
+    target: 1,
+    count: 3,
+    total: 5,
+    actual: 0.6,
+    status: "GREEN",
+    writeStatus: false
+  }
 ];
 
 let sumOut;
@@ -169,20 +264,50 @@ try {
 const sumFiles = fflate.unzipSync(new Uint8Array(sumOut));
 const sxml = decode(sumFiles, "xl/worksheets/sheet2.xml");
 
-check("missing I/J cells inserted with fallback style", /<c r="I5" s="40"><v>7<\/v><\/c>/.test(sxml) && /<c r="J5" s="40"><v>10<\/v><\/c>/.test(sxml));
+check(
+  "missing I/J cells inserted with fallback style",
+  /<c r="I5" s="40"><v>7<\/v><\/c>/.test(sxml) && /<c r="J5" s="40"><v>10<\/v><\/c>/.test(sxml)
+);
 check("H formula left untouched", /<c r="H5" s="93"><f>IFS\(J5=0,0/.test(sxml));
 check("K formula cell untouched", /<c r="K5" s="94"><f>IFS/.test(sxml));
-check("existing numeric count overwritten", /<c r="I6" s="73"><v>9<\/v><\/c>/.test(sxml) && /<c r="J6" s="73"><v>10<\/v><\/c>/.test(sxml));
-check("literal K replaced with status text", /<c r="K6" s="94" t="inlineStr"><is><t xml:space="preserve">GREEN<\/t><\/is><\/c>/.test(sxml));
-check("carry-forward only: row 7 uses own E/F", /<c r="I7" s="73"><v>5<\/v><\/c>/.test(sxml) && /<c r="J7" s="73"><v>6<\/v><\/c>/.test(sxml));
+check(
+  "existing numeric count overwritten",
+  /<c r="I6" s="73"><v>9<\/v><\/c>/.test(sxml) && /<c r="J6" s="73"><v>10<\/v><\/c>/.test(sxml)
+);
+check(
+  "literal K replaced with status text",
+  /<c r="K6" s="94" t="inlineStr"><is><t xml:space="preserve">GREEN<\/t><\/is><\/c>/.test(sxml)
+);
+check(
+  "carry-forward only: row 7 uses own E/F",
+  /<c r="I7" s="73"><v>5<\/v><\/c>/.test(sxml) && /<c r="J7" s="73"><v>6<\/v><\/c>/.test(sxml)
+);
 check("literal actual overwritten on respond row", /<c r="H8" s="93"><v>0.5<\/v><\/c>/.test(sxml));
-check("respond I/J filled", /<c r="I8" s="40"><v>2<\/v><\/c>/.test(sxml) && /<c r="J8" s="40"><v>4<\/v><\/c>/.test(sxml));
-check("respond K text replaced", /<c r="K8" s="94" t="inlineStr"><is><t xml:space="preserve">RED<\/t><\/is><\/c>/.test(sxml));
-check("block2 count/total filled", /<c r="I22" s="40"><v>3<\/v><\/c>/.test(sxml) && /<c r="J22" s="40"><v>4<\/v><\/c>/.test(sxml));
-check("block2 K untouched (writeStatus false)", /<c r="K22" s="94" t="inlineStr"><is><t>GREEN<\/t><\/is><\/c>/.test(sxml));
-check("row 23 count/total overwritten", /<c r="I23" s="73"><v>3<\/v><\/c>/.test(sxml) && /<c r="J23" s="73"><v>5<\/v><\/c>/.test(sxml));
+check(
+  "respond I/J filled",
+  /<c r="I8" s="40"><v>2<\/v><\/c>/.test(sxml) && /<c r="J8" s="40"><v>4<\/v><\/c>/.test(sxml)
+);
+check(
+  "respond K text replaced",
+  /<c r="K8" s="94" t="inlineStr"><is><t xml:space="preserve">RED<\/t><\/is><\/c>/.test(sxml)
+);
+check(
+  "block2 count/total filled",
+  /<c r="I22" s="40"><v>3<\/v><\/c>/.test(sxml) && /<c r="J22" s="40"><v>4<\/v><\/c>/.test(sxml)
+);
+check(
+  "block2 K untouched (writeStatus false)",
+  /<c r="K22" s="94" t="inlineStr"><is><t>GREEN<\/t><\/is><\/c>/.test(sxml)
+);
+check(
+  "row 23 count/total overwritten",
+  /<c r="I23" s="73"><v>3<\/v><\/c>/.test(sxml) && /<c r="J23" s="73"><v>5<\/v><\/c>/.test(sxml)
+);
 check("unmatched row untouched", /<c r="I30" s="73"><v>5<\/v><\/c>/.test(sxml));
-check("fullCalcOnLoad forced without calcChain.xml", /fullCalcOnLoad="1"/.test(decode(sumFiles, "xl/workbook.xml")));
+check(
+  "fullCalcOnLoad forced without calcChain.xml",
+  /fullCalcOnLoad="1"/.test(decode(sumFiles, "xl/workbook.xml"))
+);
 
 export function patchSummarySlaSheetMissingSheet() {
   let out2;
@@ -193,8 +318,16 @@ export function patchSummarySlaSheetMissingSheet() {
     check("missing summary sheet is a silent no-op", false, err.message);
     process.exit(1);
   }
-  check("no summary sheet added to zip", !fflate.unzipSync(new Uint8Array(out2))["xl/worksheets/sheet2.xml"]);
-  check("main sheet still filled", decode(fflate.unzipSync(new Uint8Array(out2)), "xl/worksheets/sheet1.xml").includes("INC0001001"));
+  check(
+    "no summary sheet added to zip",
+    !fflate.unzipSync(new Uint8Array(out2))["xl/worksheets/sheet2.xml"]
+  );
+  check(
+    "main sheet still filled",
+    decode(fflate.unzipSync(new Uint8Array(out2)), "xl/worksheets/sheet1.xml").includes(
+      "INC0001001"
+    )
+  );
 }
 patchSummarySlaSheetMissingSheet();
 
@@ -226,26 +359,46 @@ const sdSheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <row r="34"><c r="A34" t="inlineStr"><is><t>Operational Health</t></is></c></row>
 <row r="35"><c r="A35" t="inlineStr"><is><t>No impact.</t></is></c></row>
 </sheetData></worksheet>`;
-const sdFixture = fflate.zipSync({
-  "[Content_Types].xml": enc(sumCt),
-  "_rels/.rels": enc(rootRels),
-  "xl/workbook.xml": enc(sdWb),
-  "xl/_rels/workbook.xml.rels": enc(sumWbRels),
-  "xl/sharedStrings.xml": enc(sst),
-  "xl/worksheets/sheet1.xml": enc(sheet),
-  "xl/worksheets/sheet2.xml": enc(sdSheet)
-}, { level: 0 });
+const sdFixture = fflate.zipSync(
+  {
+    "[Content_Types].xml": enc(sumCt),
+    "_rels/.rels": enc(rootRels),
+    "xl/workbook.xml": enc(sdWb),
+    "xl/_rels/workbook.xml.rels": enc(sumWbRels),
+    "xl/sharedStrings.xml": enc(sst),
+    "xl/worksheets/sheet1.xml": enc(sheet),
+    "xl/worksheets/sheet2.xml": enc(sdSheet)
+  },
+  { level: 0 }
+);
 
 const summaryDetails = {
   keyIncidents: [
-    { resolutionDate: 46253.5, systemArea: "RMS (prd)", incidentNumber: "INC2558027", details: "Arrival tasks", status: "Closed", rootCauseResolution: "RC narrative" }
+    {
+      resolutionDate: 46253.5,
+      systemArea: "RMS (prd)",
+      incidentNumber: "INC2558027",
+      details: "Arrival tasks",
+      status: "Closed",
+      rootCauseResolution: "RC narrative"
+    }
   ],
   changesImplemented: [
-    { date: 46253.25, systemArea: "RMS (prd)", crNumber: "CHG0260966", details: "BaseData updates" },
+    {
+      date: 46253.25,
+      systemArea: "RMS (prd)",
+      crNumber: "CHG0260966",
+      details: "BaseData updates"
+    },
     { date: 46251.98, systemArea: "OPS (prd)", crNumber: "CHG0260607", details: "Dashboard reqs" }
   ],
   changesPlanned: [
-    { date: 46259.54, systemArea: "RMS BAGGAGE (prd)", crNumber: "CHG0262212", details: "New ETL job" }
+    {
+      date: 46259.54,
+      systemArea: "RMS BAGGAGE (prd)",
+      crNumber: "CHG0262212",
+      details: "New ETL job"
+    }
   ],
   changesFailed: [
     { date: 46252.2, systemArea: "BROCK (prd)", crNumber: "CHG0261128", details: "Azure patching" }
@@ -264,23 +417,60 @@ try {
 const sdFiles = fflate.unzipSync(new Uint8Array(sdOut));
 const dxml = decode(sdFiles, "xl/worksheets/sheet2.xml");
 
-check("key incident number written to C16", /<c r="C16"[^>]*t="inlineStr"><is><t xml:space="preserve">INC2558027<\/t><\/is><\/c>/.test(dxml));
-check("key incident resolution date as serial A16", /<c r="A16"[^>]*><v>46253.5<\/v><\/c>/.test(dxml));
-check("key incident status to F16", /<c r="F16"[^>]*>INC|<c r="F16"[^>]*t="inlineStr"><is><t xml:space="preserve">Closed<\/t>/.test(dxml));
-check("key incident root cause to G16", /<c r="G16"[^>]*t="inlineStr"><is><t xml:space="preserve">RC narrative<\/t>/.test(dxml));
-check("implemented CR1 to C19", /<c r="C19"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0260966<\/t>/.test(dxml));
-check("implemented CR2 to C20", /<c r="C20"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0260607<\/t>/.test(dxml));
-check("planned CR to C27", /<c r="C27"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0262212<\/t>/.test(dxml));
-check("failed CR to C33 (overwrites None)", /<c r="C33"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0261128<\/t>/.test(dxml));
-check("narrative A2 written", /<c r="A2"[^>]*t="inlineStr"><is><t xml:space="preserve">Highlights: all good<\/t>/.test(dxml));
-check("narrative A35 written", /<c r="A35"[^>]*t="inlineStr"><is><t xml:space="preserve">No operational impact this week.<\/t>/.test(dxml));
+check(
+  "key incident number written to C16",
+  /<c r="C16"[^>]*t="inlineStr"><is><t xml:space="preserve">INC2558027<\/t><\/is><\/c>/.test(dxml)
+);
+check(
+  "key incident resolution date as serial A16",
+  /<c r="A16"[^>]*><v>46253.5<\/v><\/c>/.test(dxml)
+);
+check(
+  "key incident status to F16",
+  /<c r="F16"[^>]*>INC|<c r="F16"[^>]*t="inlineStr"><is><t xml:space="preserve">Closed<\/t>/.test(
+    dxml
+  )
+);
+check(
+  "key incident root cause to G16",
+  /<c r="G16"[^>]*t="inlineStr"><is><t xml:space="preserve">RC narrative<\/t>/.test(dxml)
+);
+check(
+  "implemented CR1 to C19",
+  /<c r="C19"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0260966<\/t>/.test(dxml)
+);
+check(
+  "implemented CR2 to C20",
+  /<c r="C20"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0260607<\/t>/.test(dxml)
+);
+check(
+  "planned CR to C27",
+  /<c r="C27"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0262212<\/t>/.test(dxml)
+);
+check(
+  "failed CR to C33 (overwrites None)",
+  /<c r="C33"[^>]*t="inlineStr"><is><t xml:space="preserve">CHG0261128<\/t>/.test(dxml)
+);
+check(
+  "narrative A2 written",
+  /<c r="A2"[^>]*t="inlineStr"><is><t xml:space="preserve">Highlights: all good<\/t>/.test(dxml)
+);
+check(
+  "narrative A35 written",
+  /<c r="A35"[^>]*t="inlineStr"><is><t xml:space="preserve">No operational impact this week.<\/t>/.test(
+    dxml
+  )
+);
 check("section header row 17 untouched", /Changes implemented this week/.test(dxml));
 
 // Missing Summary sheet => silent no-op
 let sdOut2;
 try {
   sdOut2 = T.fillTemplateBuffer(fixtureBuf, rows, tplCols, undefined, undefined, summaryDetails);
-  check("missing Summary sheet is a silent no-op", !!sdOut2 && !fflate.unzipSync(new Uint8Array(sdOut2))["xl/worksheets/sheet2.xml"]);
+  check(
+    "missing Summary sheet is a silent no-op",
+    !!sdOut2 && !fflate.unzipSync(new Uint8Array(sdOut2))["xl/worksheets/sheet2.xml"]
+  );
 } catch (err) {
   check("missing Summary sheet is a silent no-op", false, err.message);
 }
@@ -309,7 +499,12 @@ console.log("\n== summary-details section growth (overflow) ==");
 {
   const many = [];
   for (let i = 1; i <= 9; i++) {
-    many.push({ date: 46250 + i, systemArea: `SYS${i}`, crNumber: `CHG90${String(i).padStart(2, "0")}`, details: `d${i}` });
+    many.push({
+      date: 46250 + i,
+      systemArea: `SYS${i}`,
+      crNumber: `CHG90${String(i).padStart(2, "0")}`,
+      details: `d${i}`
+    });
   }
   const grow = {
     keyIncidents: [],
@@ -323,7 +518,11 @@ console.log("\n== summary-details section growth (overflow) ==");
   const gsst = T.parseSharedStrings(gf);
   const wrote = T.patchSummaryDetailsSheet(gf, gsst, grow);
   const gx = decode(gf, "xl/worksheets/sheet2.xml");
-  check("growth: reported all implemented + planned + failed rows written", wrote === 9 + 1 + 1, "wrote " + wrote);
+  check(
+    "growth: reported all implemented + planned + failed rows written",
+    wrote === 9 + 1 + 1,
+    "wrote " + wrote
+  );
   // All 9 implemented CRs present (last one previously would have been dropped).
   check("growth: first implemented CHG9001 present", /CHG9001<\/t>/.test(gx));
   check("growth: 6th implemented CHG9006 present (last old slot)", /CHG9006<\/t>/.test(gx));
@@ -336,9 +535,16 @@ console.log("\n== summary-details section growth (overflow) ==");
   // No duplicate row numbers introduced by the shift.
   const rowNums = [...gx.matchAll(/<row\s[^>]*\br="(\d+)"/g)].map((m) => +m[1]);
   const uniq = new Set(rowNums);
-  check("growth: no duplicate row numbers after insertion", uniq.size === rowNums.length,
-    `rows=${rowNums.length} uniq=${uniq.size}`);
-  check("growth: row numbers strictly increasing", rowNums.every((v, i) => i === 0 || v > rowNums[i - 1]), rowNums.join(","));
+  check(
+    "growth: no duplicate row numbers after insertion",
+    uniq.size === rowNums.length,
+    `rows=${rowNums.length} uniq=${uniq.size}`
+  );
+  check(
+    "growth: row numbers strictly increasing",
+    rowNums.every((v, i) => i === 0 || v > rowNums[i - 1]),
+    rowNums.join(",")
+  );
 }
 
 // --- Clearing leftover template sample rows ---
@@ -366,15 +572,18 @@ console.log("\n== summary-details clears leftover template rows ==");
 <row r="16"><c r="A16" t="inlineStr"><is><t>Implementation Date</t></is></c><c r="C16" t="inlineStr"><is><t>CR Number</t></is></c></row>
 <row r="17"><c r="A17" t="inlineStr"><is><t>Operational Health</t></is></c></row>
 </sheetData></worksheet>`;
-  const clFixture = fflate.zipSync({
-    "[Content_Types].xml": enc(sumCt),
-    "_rels/.rels": enc(rootRels),
-    "xl/workbook.xml": enc(sdWb),
-    "xl/_rels/workbook.xml.rels": enc(sumWbRels),
-    "xl/sharedStrings.xml": enc(sst),
-    "xl/worksheets/sheet1.xml": enc(sheet),
-    "xl/worksheets/sheet2.xml": enc(clSheet)
-  }, { level: 0 });
+  const clFixture = fflate.zipSync(
+    {
+      "[Content_Types].xml": enc(sumCt),
+      "_rels/.rels": enc(rootRels),
+      "xl/workbook.xml": enc(sdWb),
+      "xl/_rels/workbook.xml.rels": enc(sumWbRels),
+      "xl/sharedStrings.xml": enc(sst),
+      "xl/worksheets/sheet1.xml": enc(sheet),
+      "xl/worksheets/sheet2.xml": enc(clSheet)
+    },
+    { level: 0 }
+  );
   const cf = fflate.unzipSync(new Uint8Array(clFixture));
   const csst = T.parseSharedStrings(cf);
   T.patchSummaryDetailsSheet(cf, csst, {
@@ -413,33 +622,50 @@ console.log("\n== summary-details mergeCells shift on growth ==");
 </sheetData>
 <mergeCells count="3"><mergeCell ref="A3:D3"/><mergeCell ref="A6:D6"/><mergeCell ref="A7:D12"/></mergeCells>
 </worksheet>`;
-  const mgFixture = fflate.zipSync({
-    "[Content_Types].xml": enc(sumCt),
-    "_rels/.rels": enc(rootRels),
-    "xl/workbook.xml": enc(sdWb),
-    "xl/_rels/workbook.xml.rels": enc(sumWbRels),
-    "xl/sharedStrings.xml": enc(sst),
-    "xl/worksheets/sheet1.xml": enc(sheet),
-    "xl/worksheets/sheet2.xml": enc(mgSheet)
-  }, { level: 0 });
+  const mgFixture = fflate.zipSync(
+    {
+      "[Content_Types].xml": enc(sumCt),
+      "_rels/.rels": enc(rootRels),
+      "xl/workbook.xml": enc(sdWb),
+      "xl/_rels/workbook.xml.rels": enc(sumWbRels),
+      "xl/sharedStrings.xml": enc(sst),
+      "xl/worksheets/sheet1.xml": enc(sheet),
+      "xl/worksheets/sheet2.xml": enc(mgSheet)
+    },
+    { level: 0 }
+  );
   const mf = fflate.unzipSync(new Uint8Array(mgFixture));
   const msst = T.parseSharedStrings(mf);
   // 3 failed rows into a 1-row span (rows 5..5) -> insert 2 before row 6.
   T.patchSummaryDetailsSheet(mf, msst, {
-    keyIncidents: [], changesImplemented: [], changesPlanned: [],
+    keyIncidents: [],
+    changesImplemented: [],
+    changesPlanned: [],
     changesFailed: [
       { date: 46251, systemArea: "F1", crNumber: "MCHGF1", details: "a" },
       { date: 46252, systemArea: "F2", crNumber: "MCHGF2", details: "b" },
       { date: 46253, systemArea: "F3", crNumber: "MCHGF3", details: "c" }
-    ], narrative: {}
+    ],
+    narrative: {}
   });
   const mx = decode(mf, "xl/worksheets/sheet2.xml");
   const mergeRefs = [...mx.matchAll(/<mergeCell ref="([A-Z]+\d+:[A-Z]+\d+)"/g)].map((m) => m[1]);
   check("merge: header A3:D3 unchanged (above insertion)", mergeRefs.includes("A3:D3"));
-  check("merge: op-health A6:D6 shifted to A8:D8", mergeRefs.includes("A8:D8"), mergeRefs.join(","));
-  check("merge: narrative A7:D12 shifted to A9:D14", mergeRefs.includes("A9:D14"), mergeRefs.join(","));
+  check(
+    "merge: op-health A6:D6 shifted to A8:D8",
+    mergeRefs.includes("A8:D8"),
+    mergeRefs.join(",")
+  );
+  check(
+    "merge: narrative A7:D12 shifted to A9:D14",
+    mergeRefs.includes("A9:D14"),
+    mergeRefs.join(",")
+  );
   check("merge: old A6:D6 no longer present", !mergeRefs.includes("A6:D6"));
-  check("merge: all 3 failed CRs written", /MCHGF1/.test(mx) && /MCHGF2/.test(mx) && /MCHGF3/.test(mx));
+  check(
+    "merge: all 3 failed CRs written",
+    /MCHGF1/.test(mx) && /MCHGF2/.test(mx) && /MCHGF3/.test(mx)
+  );
 }
 
 console.log(`\ntemplate-export: ${failed ? failed + " FAILED" : "all passed"}`);

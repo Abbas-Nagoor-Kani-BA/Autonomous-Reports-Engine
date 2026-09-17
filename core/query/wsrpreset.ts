@@ -33,10 +33,22 @@ export function buildWsrFilterSets(now: Date = new Date()): FilterSet[] {
       { join: "AND", field: p.stateField, oper: "eq", value: p.stateValue, value2: "" }
     ];
     if (p.closed) {
-      conditions.push({ join: "AND", field: "closed_at", oper: "between", value: last.from, value2: last.to });
+      conditions.push({
+        join: "AND",
+        field: "closed_at",
+        oper: "between",
+        value: last.from,
+        value2: last.to
+      });
     }
     // Only pull tickets with no parent incident (empty by default).
-    conditions.push({ join: "AND", field: "parent_incident", oper: "isEmpty", value: "", value2: "" });
+    conditions.push({
+      join: "AND",
+      field: "parent_incident",
+      oper: "isEmpty",
+      value: "",
+      value2: ""
+    });
     return { table: p.table, conditions };
   });
 }

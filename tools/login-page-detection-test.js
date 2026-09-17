@@ -3,8 +3,7 @@ import assert from "node:assert/strict";
 
 import { ServiceNowClient } from "../lib/servicenow.ts";
 
-const mkClient = (transport) =>
-  new ServiceNowClient("https://x.service-now.com", { transport });
+const mkClient = (transport) => new ServiceNowClient("https://x.service-now.com", { transport });
 
 test("count throws login error when a 200 HTML login page is returned", async () => {
   const client = mkClient(async () => ({

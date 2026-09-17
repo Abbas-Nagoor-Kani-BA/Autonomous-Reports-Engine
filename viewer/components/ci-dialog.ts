@@ -33,7 +33,10 @@ export type CiDialogRefs = {
   addGroup: HTMLElement;
 };
 
-const norm = (s: unknown): string => String(s ?? "").trim().toLowerCase();
+const norm = (s: unknown): string =>
+  String(s ?? "")
+    .trim()
+    .toLowerCase();
 
 /** Configuration items present in the data but not yet in any group, deduped
  *  case-insensitively and sorted. Pure. */
@@ -59,7 +62,10 @@ export function unassignedItems(available: string[], groups: { items: string[] }
  * and stored in settings. De-duplicated case-insensitively, keeping first
  * spelling. Pure.
  */
-export function ciAvailablePool(dataItems: string[] | null | undefined, storedItems: string[] | null | undefined): string[] {
+export function ciAvailablePool(
+  dataItems: string[] | null | undefined,
+  storedItems: string[] | null | undefined
+): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of [...(dataItems || []), ...(storedItems || [])]) {
@@ -82,7 +88,7 @@ export function ciAvailablePool(dataItems: string[] | null | undefined, storedIt
  * the pool; click chips to select several and drag them together.
  */
 export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogDeps> {
-  protected declare refs: CiDialogRefs;
+  declare protected refs: CiDialogRefs;
 
   /** Transient drag source. gi === -1 means the Ungrouped pool. */
   #dragSrc: { gi: number; item: string } | null = null;
@@ -101,7 +107,9 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
     this.refs.addGroup = this.q("#addGroupBtn");
 
     this.refs.addGroup.addEventListener("click", () => {
-      this.setState({ groups: [...this.getState().groups, { name: this.nextGroupName(), items: [] }] });
+      this.setState({
+        groups: [...this.getState().groups, { name: this.nextGroupName(), items: [] }]
+      });
     });
 
     this.refs.save.addEventListener("click", () => {
@@ -111,7 +119,8 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
 
   protected patch(next: CiDialogState, prev: CiDialogState | null): void {
     if (!prev || next.enabled !== prev.enabled) this.refs.enabled.checked = next.enabled;
-    if (!prev || next.groups !== prev.groups || next.available !== prev.available) this.renderBoard(next);
+    if (!prev || next.groups !== prev.groups || next.available !== prev.available)
+      this.renderBoard(next);
   }
 
   /** Opens on a fresh draft copied from the stored value plus the CI universe. */
@@ -190,7 +199,10 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
 
     const head = el("div", "ciGroupHead");
     const title = el("span", "ciUngroupedTitle");
-    title.append(icon("list", "ciHeadIcon"), document.createTextNode(` Ungrouped (${items.length})`));
+    title.append(
+      icon("list", "ciHeadIcon"),
+      document.createTextNode(` Ungrouped (${items.length})`)
+    );
     head.append(title);
 
     const list = el("div", "ciItems");
@@ -317,7 +329,8 @@ export class CiDialog extends Component<CiDialogState, ComponentProps, CiDialogD
       const keys = this.#selected;
       const all = new Map<string, string>();
       for (const g of this.getState().groups) for (const it of g.items) all.set(norm(it), it);
-      for (const it of unassignedItems(this.getState().available, this.getState().groups)) all.set(norm(it), it);
+      for (const it of unassignedItems(this.getState().available, this.getState().groups))
+        all.set(norm(it), it);
       return [...keys].map((k) => all.get(k) || k);
     }
     return [src.item];

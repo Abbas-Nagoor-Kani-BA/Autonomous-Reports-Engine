@@ -2,7 +2,9 @@ export type StoreState<S> = S;
 export type Patch<S> = Partial<S> | ((prev: S) => Partial<S>);
 export type Subscription = () => void;
 
-export function createStore<S extends object>(initial: S): {
+export function createStore<S extends object>(
+  initial: S
+): {
   getState: () => S;
   setState: (patch: Patch<S>) => void;
   subscribe: (listener: (state: S) => void) => Subscription;

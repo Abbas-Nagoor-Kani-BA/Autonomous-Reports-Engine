@@ -6,17 +6,17 @@ so you always run a **built** folder.
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Build to `dev/` and rebuild on change. Load `dev/` unpacked. |
-| `npm run watch` | Alias for the watch build to `dev/`. |
-| `npm run build` | Production build to `dist/` (bundled, mirrors repo layout). |
-| `npm run zip` | Package `dist/` for distribution. |
-| `npm run css` / `css:watch` | Build the Tailwind CSS to `styles/output.css`. |
-| `npm run typecheck` | `tsc` against `tsconfig.json` + `tsconfig.strict.json`. |
-| `npm run lint` | ESLint. |
-| `npm test` | Offline test suites — see [Testing](Testing). |
-| `npm run release` | typecheck + lint + test + build. |
+| Command                     | What it does                                                 |
+| --------------------------- | ------------------------------------------------------------ |
+| `npm run dev`               | Build to `dev/` and rebuild on change. Load `dev/` unpacked. |
+| `npm run watch`             | Alias for the watch build to `dev/`.                         |
+| `npm run build`             | Production build to `dist/` (bundled, mirrors repo layout).  |
+| `npm run zip`               | Package `dist/` for distribution.                            |
+| `npm run css` / `css:watch` | Build the Tailwind CSS to `styles/output.css`.               |
+| `npm run typecheck`         | `tsc` against `tsconfig.json` + `tsconfig.strict.json`.      |
+| `npm run lint`              | ESLint.                                                      |
+| `npm test`                  | Offline test suites — see [Testing](Testing).                |
+| `npm run release`           | typecheck + lint + test + build.                             |
 
 ## Loading the extension
 
@@ -48,5 +48,6 @@ Connect → Preview count → Run export. The tab refresh is required so the con
 script exists (see [Authentication Chain](Authentication-Chain)).
 
 ---
+
 Related: [Installation](Installation) · [Testing](Testing) ·
 [Release Process](Release-Process)

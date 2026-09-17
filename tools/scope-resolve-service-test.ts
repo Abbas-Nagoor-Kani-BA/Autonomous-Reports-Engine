@@ -17,7 +17,11 @@ function harness(remote) {
 
 test("resolve returns the remote's scope on success", async () => {
   const remote = new FakeSnRemote();
-  remote.scope = { queues: ["Network Ops", "Service Desk"], members: ["Alice", "Bob"], userId: "u1" };
+  remote.scope = {
+    queues: ["Network Ops", "Service Desk"],
+    members: ["Alice", "Bob"],
+    userId: "u1"
+  };
   const svc = harness(remote);
 
   const scope = await svc.resolve({ instanceUrl: INSTANCE, currentUserId: "u1" });
@@ -31,21 +35,30 @@ test("resolve maps a 403 to the friendly add-manually message", async () => {
   const remote = new FakeSnRemote();
   remote.scopeError = new Error("Auth error 403 (relay, token sent)");
   const svc = harness(remote);
-  await assert.rejects(svc.resolve({ instanceUrl: INSTANCE }), /add queues and team members manually/i);
+  await assert.rejects(
+    svc.resolve({ instanceUrl: INSTANCE }),
+    /add queues and team members manually/i
+  );
 });
 
 test("resolve maps a permission-worded error to the friendly message", async () => {
   const remote = new FakeSnRemote();
   remote.scopeError = new Error("You do not have permission to read sys_user_grmember");
   const svc = harness(remote);
-  await assert.rejects(svc.resolve({ instanceUrl: INSTANCE }), /add queues and team members manually/i);
+  await assert.rejects(
+    svc.resolve({ instanceUrl: INSTANCE }),
+    /add queues and team members manually/i
+  );
 });
 
 test("resolve treats an empty membership set as a graceful failure", async () => {
   const remote = new FakeSnRemote();
   remote.scope = { queues: [], members: [], userId: "u1" };
   const svc = harness(remote);
-  await assert.rejects(svc.resolve({ instanceUrl: INSTANCE }), /add queues and team members manually/i);
+  await assert.rejects(
+    svc.resolve({ instanceUrl: INSTANCE }),
+    /add queues and team members manually/i
+  );
 });
 
 test("resolve rethrows unexpected (non-permission) errors unchanged", async () => {
@@ -81,12 +94,18 @@ test("resolveGroupMembers maps a 403 to the friendly add-manually message", asyn
   const remote = new FakeSnRemote();
   remote.groupMembersError = new Error("Auth error 403");
   const svc = harness(remote);
-  await assert.rejects(svc.resolveGroupMembers({ instanceUrl: INSTANCE, group: "X" }), /add queues and team members manually/i);
+  await assert.rejects(
+    svc.resolveGroupMembers({ instanceUrl: INSTANCE, group: "X" }),
+    /add queues and team members manually/i
+  );
 });
 
 test("resolveGroupMembers requires a group name", async () => {
   const svc = harness(new FakeSnRemote());
-  await assert.rejects(svc.resolveGroupMembers({ instanceUrl: INSTANCE, group: "  " }), /group name/i);
+  await assert.rejects(
+    svc.resolveGroupMembers({ instanceUrl: INSTANCE, group: "  " }),
+    /group name/i
+  );
 });
 
 test("resolveGroupConfigItems returns the group's CIs and truncated flag", async () => {
@@ -110,10 +129,16 @@ test("resolveGroupConfigItems maps a 403 to the friendly message", async () => {
   const remote = new FakeSnRemote();
   remote.groupConfigItemsError = new Error("Auth error 403");
   const svc = harness(remote);
-  await assert.rejects(svc.resolveGroupConfigItems({ instanceUrl: INSTANCE, group: "X" }), /add queues and team members manually/i);
+  await assert.rejects(
+    svc.resolveGroupConfigItems({ instanceUrl: INSTANCE, group: "X" }),
+    /add queues and team members manually/i
+  );
 });
 
 test("resolveGroupConfigItems requires a group name", async () => {
   const svc = harness(new FakeSnRemote());
-  await assert.rejects(svc.resolveGroupConfigItems({ instanceUrl: INSTANCE, group: "" }), /group name/i);
+  await assert.rejects(
+    svc.resolveGroupConfigItems({ instanceUrl: INSTANCE, group: "" }),
+    /group name/i
+  );
 });

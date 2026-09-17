@@ -122,11 +122,18 @@ function isMember(set: Set<string>, name: unknown): boolean {
   return !!s && set.has(s.toLowerCase());
 }
 
-function events(row: Record<string, any>): Array<{ f?: string; o?: string; n?: string; atEpoch?: number }> {
+function events(
+  row: Record<string, any>
+): Array<{ f?: string; o?: string; n?: string; atEpoch?: number }> {
   return Array.isArray(row.activity) ? row.activity : [];
 }
 
-function distinctNames(row: Record<string, any>, field: string, set: Set<string>, values: unknown[]): string[] {
+function distinctNames(
+  row: Record<string, any>,
+  field: string,
+  set: Set<string>,
+  values: unknown[]
+): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const ev of events(row)) {
@@ -135,14 +142,22 @@ function distinctNames(row: Record<string, any>, field: string, set: Set<string>
       const raw = v === "o" ? ev.o : ev.n;
       if (isMember(set, raw)) {
         const key = String(raw).trim().toLowerCase();
-        if (!seen.has(key)) { seen.add(key); out.push(String(raw).trim()); }
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push(String(raw).trim());
+        }
       }
     }
   }
   return out;
 }
 
-function flag(id: AttentionRuleId, label: string, detail: string, columnHint?: string | string[]): AttentionFlag {
+function flag(
+  id: AttentionRuleId,
+  label: string,
+  detail: string,
+  columnHint?: string | string[]
+): AttentionFlag {
   return { id, label, detail, columnHint };
 }
 
@@ -153,7 +168,10 @@ function flag(id: AttentionRuleId, label: string, detail: string, columnHint?: s
  * @param opts team membership, report, thresholds
  * @returns an ordered list of flags; empty when nothing needs attention
  */
-export function computeAttention(row: Record<string, any>, opts: AttentionOpts = {}): AttentionFlag[] {
+export function computeAttention(
+  row: Record<string, any>,
+  opts: AttentionOpts = {}
+): AttentionFlag[] {
   if (!row || typeof row !== "object") return [];
 
   const t: AttentionThresholds = { ...DEFAULT_ATTENTION_THRESHOLDS, ...(opts.thresholds || {}) };
@@ -165,8 +183,14 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
   // 1. Multiple assignments within the team — distinct team members ever assigned.
   const teamAssignees = distinctNames(row, "assigned_to", team, ["n", "o"]);
   if (teamAssignees.length > t.maxTeamAssignees) {
-    out.push(flag("multiAssignWithinTeam", "Multiple assignments in team",
-      `Assigned to ${teamAssignees.length} team members: ${teamAssignees.join(", ")}`, "assignedTo"));
+    out.push(
+      flag(
+        "multiAssignWithinTeam",
+        "Multiple assignments in team",
+        `Assigned to ${teamAssignees.length} team members: ${teamAssignees.join(", ")}`,
+        "assignedTo"
+      )
+    );
   }
 
   // 2. Multiple queue changes within the team.
@@ -176,8 +200,13 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
     return isMember(groups, ev.o) || isMember(groups, ev.n);
   }).length;
   if (groupChanges > t.maxGroupChanges) {
-    out.push(flag("multiGroupWithinTeam", "Moved between queues",
-      `Queue changed ${groupChanges} times within the selected queues`));
+    out.push(
+      flag(
+        "multiGroupWithinTeam",
+        "Moved between queues",
+        `Queue changed ${groupChanges} times within the selected queues`
+      )
+    );
   }
 
   // 3. Reopened — a terminal state was followed by a non-terminal state.
@@ -188,13 +217,23 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
     const to = stateLabelOf(table, ev.n);
     if (isTerminalState(from) && !isTerminalState(to)) reopened = true;
   }
-  if (reopened) out.push(flag("reopened", "Reopened", "A closed/resolved ticket went back to an active state", "state"));
+  if (reopened)
+    out.push(
+      flag("reopened", "Reopened", "A closed/resolved ticket went back to an active state", "state")
+    );
 
   // 4. SLA breach — compute the report if not already provided by the caller.
   // buildReport caches its result on row.__report so repeated calls are free.
-  const report: Report = (opts.report as Report | undefined) ?? buildReport(row as Parameters<typeof buildReport>[0]);
+  const report: Report =
+    (opts.report as Report | undefined) ?? buildReport(row as Parameters<typeof buildReport>[0]);
   const breach = report.slaBreach;
-  if (breach) out.push(flag("slaBreach", "SLA breached", `Breach code: ${String(breach)}`, ["rep:responseSLA", "rep:resolutionSLA"]));
+  if (breach)
+    out.push(
+      flag("slaBreach", "SLA breached", `Breach code: ${String(breach)}`, [
+        "rep:responseSLA",
+        "rep:resolutionSLA"
+      ])
+    );
 
   // 5. Long single On Hold span.
   const suspend = Date.parse(String(row.suspendTimeUtcIso ?? "").replace(" ", "T"));
@@ -203,42 +242,63 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
     const span = resume - suspend;
     if (span > t.maxOnHoldSpanMs) {
       const hours = Math.round(span / HOUR_MS);
-      out.push(flag("longOnHold", "Long On Hold", `Stayed On Hold ~${hours} hours`, ["suspendTimeUtcIso", "resumeTimeUtcIso"]));
+      out.push(
+        flag("longOnHold", "Long On Hold", `Stayed On Hold ~${hours} hours`, [
+          "suspendTimeUtcIso",
+          "resumeTimeUtcIso"
+        ])
+      );
     }
   }
 
   // 6. Repeated On Hold.
   const holdCount = Number(row.onHoldCount) || 0;
-    if (holdCount > t.maxOnHoldCount) {
-    out.push(flag("repeatedOnHold", "Held On Hold repeatedly", `Went On Hold ${holdCount} times`, ["suspendTimeUtcIso", "resumeTimeUtcIso"]));
+  if (holdCount > t.maxOnHoldCount) {
+    out.push(
+      flag("repeatedOnHold", "Held On Hold repeatedly", `Went On Hold ${holdCount} times`, [
+        "suspendTimeUtcIso",
+        "resumeTimeUtcIso"
+      ])
+    );
   }
 
   // 7. Slow pickup — long assign→acknowledge gap (but NOT missing ack; that is rule 8).
   const assignIso = String(row.assignTimeUtcIso ?? "");
-  const acknIso   = String(row.acknTimeUtcIso ?? "");
+  const acknIso = String(row.acknTimeUtcIso ?? "");
   if (assignIso && acknIso) {
     const a = Date.parse(assignIso.replace(" ", "T"));
     const b = Date.parse(acknIso.replace(" ", "T"));
     if (Number.isFinite(a) && Number.isFinite(b) && b >= a && b - a > t.maxPickupMs) {
       const hours = Math.round((b - a) / HOUR_MS);
-      out.push(flag("slowPickup", "Slow pickup", `Took ~${hours} hours to acknowledge`, ["assignTimeUtcIso", "acknTimeUtcIso"]));
+      out.push(
+        flag("slowPickup", "Slow pickup", `Took ~${hours} hours to acknowledge`, [
+          "assignTimeUtcIso",
+          "acknTimeUtcIso"
+        ])
+      );
     }
   }
 
   // 8. Missing acknowledgement — ticket has an assign time but ack time is absent.
   // Distinct from slowPickup so each can be toggled and filtered independently.
   if (assignIso && !acknIso) {
-    out.push(flag("missingAckn", "Ack time missing",
-      "Assigned but no team member acknowledgement recorded", ["assignTimeUtcIso", "acknTimeUtcIso"]));
+    out.push(
+      flag(
+        "missingAckn",
+        "Ack time missing",
+        "Assigned but no team member acknowledgement recorded",
+        ["assignTimeUtcIso", "acknTimeUtcIso"]
+      )
+    );
   }
 
   // 9. Timeline order errors — any key timestamp in an impossible chronological order.
   // Expected ordering: openedAt ≤ assignTime ≤ acknTime ≤ resolvedAt
   //                    assignTime ≤ suspendTime ≤ resumeTime ≤ resolvedAt
-  const openedIso  = String(row.openedAtRaw ?? row.openedAt ?? "");
+  const openedIso = String(row.openedAtRaw ?? row.openedAt ?? "");
   const resolvedIso = String(row.resolvedAtRaw ?? row.resolvedAt ?? "");
   const suspendIso = String(row.suspendTimeUtcIso ?? "");
-  const resumeIso  = String(row.resumeTimeUtcIso ?? "");
+  const resumeIso = String(row.resumeTimeUtcIso ?? "");
 
   function ep(iso: string): number {
     if (!iso) return NaN;
@@ -246,36 +306,60 @@ export function computeAttention(row: Record<string, any>, opts: AttentionOpts =
     return Date.parse(/(Z|[+-]\d\d:?\d\d)$/.test(s) ? s : s + "Z");
   }
 
-  const tOpened   = ep(openedIso);
-  const tAssign   = ep(assignIso);
-  const tAckn     = ep(acknIso);
-  const tSuspend  = ep(suspendIso);
-  const tResume   = ep(resumeIso);
+  const tOpened = ep(openedIso);
+  const tAssign = ep(assignIso);
+  const tAckn = ep(acknIso);
+  const tSuspend = ep(suspendIso);
+  const tResume = ep(resumeIso);
   const tResolved = ep(resolvedIso);
 
   const orderViolations: string[] = [];
-  if (Number.isFinite(tOpened) && Number.isFinite(tAssign)   && tAssign   < tOpened)  orderViolations.push("assign before opened");
-  if (Number.isFinite(tAssign) && Number.isFinite(tAckn)     && tAckn     < tAssign)  orderViolations.push("ack before assign");
-  if (Number.isFinite(tAssign) && Number.isFinite(tSuspend)  && tSuspend  < tAssign)  orderViolations.push("suspend before assign");
-  if (Number.isFinite(tSuspend) && Number.isFinite(tResume)  && tResume   < tSuspend) orderViolations.push("resume before suspend");
-  if (Number.isFinite(tAckn)   && Number.isFinite(tResolved) && tResolved < tAckn)    orderViolations.push("resolved before ack");
-  if (Number.isFinite(tSuspend) && Number.isFinite(tResolved) && tResolved < tSuspend) orderViolations.push("resolved before suspend");
-  if (Number.isFinite(tOpened) && Number.isFinite(tResolved) && tResolved < tOpened)  orderViolations.push("resolved before opened");
+  if (Number.isFinite(tOpened) && Number.isFinite(tAssign) && tAssign < tOpened)
+    orderViolations.push("assign before opened");
+  if (Number.isFinite(tAssign) && Number.isFinite(tAckn) && tAckn < tAssign)
+    orderViolations.push("ack before assign");
+  if (Number.isFinite(tAssign) && Number.isFinite(tSuspend) && tSuspend < tAssign)
+    orderViolations.push("suspend before assign");
+  if (Number.isFinite(tSuspend) && Number.isFinite(tResume) && tResume < tSuspend)
+    orderViolations.push("resume before suspend");
+  if (Number.isFinite(tAckn) && Number.isFinite(tResolved) && tResolved < tAckn)
+    orderViolations.push("resolved before ack");
+  if (Number.isFinite(tSuspend) && Number.isFinite(tResolved) && tResolved < tSuspend)
+    orderViolations.push("resolved before suspend");
+  if (Number.isFinite(tOpened) && Number.isFinite(tResolved) && tResolved < tOpened)
+    orderViolations.push("resolved before opened");
 
   if (orderViolations.length) {
-    out.push(flag("timelineOrder", "Timeline order error",
-      `Impossible timestamp order: ${orderViolations.join("; ")}`,
-      ["assignTimeUtcIso", "acknTimeUtcIso", "suspendTimeUtcIso", "resumeTimeUtcIso"]));
+    out.push(
+      flag(
+        "timelineOrder",
+        "Timeline order error",
+        `Impossible timestamp order: ${orderViolations.join("; ")}`,
+        ["assignTimeUtcIso", "acknTimeUtcIso", "suspendTimeUtcIso", "resumeTimeUtcIso"]
+      )
+    );
   }
 
   // 10. Empty plan data.
   const missingPlan: string[] = [];
   if (!String(row.rootCause ?? "").trim()) missingPlan.push("root cause");
   if (!String(row.solutionType ?? "").trim()) missingPlan.push("solution type");
-  if (missingPlan.length) out.push(flag("emptyPlan", "Missing plan data", `No ${missingPlan.join(" or ")}`, ["rootCause", "solutionType"]));
+  if (missingPlan.length)
+    out.push(
+      flag("emptyPlan", "Missing plan data", `No ${missingPlan.join(" or ")}`, [
+        "rootCause",
+        "solutionType"
+      ])
+    );
 
   // 11. Low-confidence parse.
-  if (row.parseReview) out.push(flag("lowConfidenceParse", "Low-confidence parse", "AI classification was low confidence", ["solutionType", "rootCause"]));
+  if (row.parseReview)
+    out.push(
+      flag("lowConfidenceParse", "Low-confidence parse", "AI classification was low confidence", [
+        "solutionType",
+        "rootCause"
+      ])
+    );
 
   return out;
 }

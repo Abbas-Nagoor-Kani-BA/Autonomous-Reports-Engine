@@ -45,9 +45,7 @@ test("multiple assignments within the team are flagged", () => {
 
 test("a single team assignment is NOT flagged", () => {
   const row = baseRow({
-    activity: [
-      { f: "assigned_to", o: "", n: "John Doe", atEpoch: 100 }
-    ]
+    activity: [{ f: "assigned_to", o: "", n: "John Doe", atEpoch: 100 }]
   });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(!ids(flags).includes("multiAssignWithinTeam"));
@@ -77,9 +75,7 @@ test("multiple queue changes within the selected queues are flagged", () => {
 
 test("single queue change is not flagged", () => {
   const row = baseRow({
-    activity: [
-      { f: "assignment_group", o: "OTHER", n: "APPSUP_TEST", atEpoch: 100 }
-    ]
+    activity: [{ f: "assignment_group", o: "OTHER", n: "APPSUP_TEST", atEpoch: 100 }]
   });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(!ids(flags).includes("multiGroupWithinTeam"));
@@ -87,41 +83,47 @@ test("single queue change is not flagged", () => {
 
 test("reopen (terminal -> active) is flagged regardless of label/raw form", () => {
   const rawRow = baseRow({
-    activity: [
-      { f: "state", o: "Closed", n: "In Progress", atEpoch: 100 }
-    ]
+    activity: [{ f: "state", o: "Closed", n: "In Progress", atEpoch: 100 }]
   });
-  assert.ok(ids(computeAttention(rawRow, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened"));
+  assert.ok(
+    ids(computeAttention(rawRow, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened")
+  );
 
   const rawValueRow = baseRow({
-    activity: [
-      { f: "state", o: "7", n: "2", atEpoch: 100 }
-    ]
+    activity: [{ f: "state", o: "7", n: "2", atEpoch: 100 }]
   });
-  assert.ok(ids(computeAttention(rawValueRow, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened"));
+  assert.ok(
+    ids(computeAttention(rawValueRow, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "reopened"
+    )
+  );
 });
 
 test("resolved label (Resolved) also counts as a reopen source", () => {
   const row = baseRow({
-    activity: [
-      { f: "state", o: "Resolved", n: "New", atEpoch: 100 }
-    ]
+    activity: [{ f: "state", o: "Resolved", n: "New", atEpoch: 100 }]
   });
-  assert.ok(ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened"));
+  assert.ok(
+    ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened")
+  );
 });
 
 test("normal close (active -> terminal) is NOT a reopen", () => {
   const row = baseRow({
-    activity: [
-      { f: "state", o: "New", n: "Closed", atEpoch: 100 }
-    ]
+    activity: [{ f: "state", o: "New", n: "Closed", atEpoch: 100 }]
   });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("reopened")
+  );
 });
 
 test("SLA breach from the report is flagged", () => {
   const row = baseRow();
-  const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS, report: { slaBreach: "RM" } });
+  const flags = computeAttention(row, {
+    teamMembers: MEMBERS,
+    groupScope: GROUPS,
+    report: { slaBreach: "RM" }
+  });
   assert.ok(ids(flags).includes("slaBreach"));
 });
 
@@ -140,8 +142,10 @@ test("SLA breach detected from row data without passing opts.report", () => {
     openedAtRaw: "2026-01-01 08:00:00"
   });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
-  assert.ok(ids(flags).includes("slaBreach"),
-    "slaBreach should fire when breach is derivable from row data alone");
+  assert.ok(
+    ids(flags).includes("slaBreach"),
+    "slaBreach should fire when breach is derivable from row data alone"
+  );
 });
 
 test("long single On Hold span is flagged", () => {
@@ -162,7 +166,9 @@ test("short On Hold span is not flagged", () => {
     suspendTimeUtcIso: new Date(start).toISOString(),
     resumeTimeUtcIso: new Date(start + 2 * 3600 * 1000).toISOString()
   });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("longOnHold"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("longOnHold")
+  );
 });
 
 test("repeated On Hold (count over threshold) is flagged", () => {
@@ -173,7 +179,11 @@ test("repeated On Hold (count over threshold) is flagged", () => {
 
 test("On Hold count within threshold is not flagged", () => {
   const row = baseRow({ onHoldCount: 2 });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("repeatedOnHold"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "repeatedOnHold"
+    )
+  );
 });
 
 test("slow pickup: assigned but never acknowledged", () => {
@@ -198,7 +208,9 @@ test("quick pickup is not flagged", () => {
     assignTimeUtcIso: "2026-01-01T00:00:00Z",
     acknTimeUtcIso: "2026-01-01T04:00:00Z"
   });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("slowPickup"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("slowPickup")
+  );
 });
 
 test("missingAckn: assigned with no ack time fires missingAckn not slowPickup", () => {
@@ -210,21 +222,29 @@ test("missingAckn: assigned with no ack time fires missingAckn not slowPickup", 
 
 test("missingAckn: no assign time does not fire", () => {
   const row = baseRow({ assignTimeUtcIso: "", acknTimeUtcIso: "" });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("missingAckn"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "missingAckn"
+    )
+  );
 });
 
 test("missingAckn: present ack time does not fire", () => {
   const row = baseRow({
     assignTimeUtcIso: "2026-01-01T00:00:00Z",
-    acknTimeUtcIso:   "2026-01-01T04:00:00Z"
+    acknTimeUtcIso: "2026-01-01T04:00:00Z"
   });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("missingAckn"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "missingAckn"
+    )
+  );
 });
 
 test("timelineOrder: ack before assign is flagged", () => {
   const row = baseRow({
     assignTimeUtcIso: "2026-01-02T10:00:00Z",
-    acknTimeUtcIso:   "2026-01-01T10:00:00Z"   // ack before assign
+    acknTimeUtcIso: "2026-01-01T10:00:00Z" // ack before assign
   });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(ids(flags).includes("timelineOrder"));
@@ -235,7 +255,7 @@ test("timelineOrder: ack before assign is flagged", () => {
 test("timelineOrder: resume before suspend is flagged", () => {
   const row = baseRow({
     suspendTimeUtcIso: "2026-01-05T12:00:00Z",
-    resumeTimeUtcIso:  "2026-01-04T12:00:00Z"   // resume before suspend
+    resumeTimeUtcIso: "2026-01-04T12:00:00Z" // resume before suspend
   });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(ids(flags).includes("timelineOrder"));
@@ -245,8 +265,8 @@ test("timelineOrder: resume before suspend is flagged", () => {
 
 test("timelineOrder: resolved before opened is flagged", () => {
   const row = baseRow({
-    openedAt:   "2026-01-10T08:00:00Z",
-    resolvedAt: "2026-01-09T08:00:00Z"   // resolved before opened
+    openedAt: "2026-01-10T08:00:00Z",
+    resolvedAt: "2026-01-09T08:00:00Z" // resolved before opened
   });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(ids(flags).includes("timelineOrder"));
@@ -256,26 +276,35 @@ test("timelineOrder: resolved before opened is flagged", () => {
 
 test("timelineOrder: correct order produces no flag", () => {
   const row = baseRow({
-    openedAt:          "2026-01-01T08:00:00Z",
-    assignTimeUtcIso:  "2026-01-01T09:00:00Z",
-    acknTimeUtcIso:    "2026-01-01T10:00:00Z",
+    openedAt: "2026-01-01T08:00:00Z",
+    assignTimeUtcIso: "2026-01-01T09:00:00Z",
+    acknTimeUtcIso: "2026-01-01T10:00:00Z",
     suspendTimeUtcIso: "2026-01-02T09:00:00Z",
-    resumeTimeUtcIso:  "2026-01-03T09:00:00Z",
-    resolvedAt:        "2026-01-05T09:00:00Z"
+    resumeTimeUtcIso: "2026-01-03T09:00:00Z",
+    resolvedAt: "2026-01-05T09:00:00Z"
   });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("timelineOrder"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "timelineOrder"
+    )
+  );
 });
 
 test("timelineOrder: missing timestamps are skipped (no false positives)", () => {
   // Only openedAt and resolvedAt present — valid order, no other timestamps to check.
   const row = baseRow({
-    openedAt:   "2026-01-01T08:00:00Z",
+    openedAt: "2026-01-01T08:00:00Z",
     resolvedAt: "2026-01-05T08:00:00Z"
   });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("timelineOrder"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "timelineOrder"
+    )
+  );
 });
 
-test("empty plan data flags missing root cause + solution type", () => {  const row = baseRow({ rootCause: "", solutionType: "" });
+test("empty plan data flags missing root cause + solution type", () => {
+  const row = baseRow({ rootCause: "", solutionType: "" });
   const flags = computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS });
   assert.ok(ids(flags).includes("emptyPlan"));
   const hit = flags.find((f) => f.id === "emptyPlan");
@@ -284,12 +313,18 @@ test("empty plan data flags missing root cause + solution type", () => {  const 
 
 test("populated plan data is not flagged", () => {
   const row = baseRow({ rootCause: "Application bug", solutionType: "Permanent solution" });
-  assert.ok(!ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("emptyPlan"));
+  assert.ok(
+    !ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("emptyPlan")
+  );
 });
 
 test("low-confidence parse is flagged", () => {
   const row = baseRow({ parseReview: true });
-  assert.ok(ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes("lowConfidenceParse"));
+  assert.ok(
+    ids(computeAttention(row, { teamMembers: MEMBERS, groupScope: GROUPS })).includes(
+      "lowConfidenceParse"
+    )
+  );
 });
 
 test("empty / non-object row returns no flags", () => {
@@ -320,9 +355,17 @@ test("ATTENTION_RULES lists all eleven rules with unique ids", () => {
 
 test("ATTENTION_RULES covers every rule id the engine can produce", () => {
   const engineIds = [
-    "multiAssignWithinTeam", "multiGroupWithinTeam", "reopened", "slaBreach",
-    "longOnHold", "repeatedOnHold", "slowPickup", "missingAckn", "timelineOrder",
-    "emptyPlan", "lowConfidenceParse"
+    "multiAssignWithinTeam",
+    "multiGroupWithinTeam",
+    "reopened",
+    "slaBreach",
+    "longOnHold",
+    "repeatedOnHold",
+    "slowPickup",
+    "missingAckn",
+    "timelineOrder",
+    "emptyPlan",
+    "lowConfidenceParse"
   ].sort();
   const listIds = ATTENTION_RULES.map((r) => r.id).sort();
   assert.deepEqual(listIds, engineIds);

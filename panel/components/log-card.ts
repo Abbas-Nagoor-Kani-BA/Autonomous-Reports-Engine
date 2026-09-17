@@ -44,7 +44,7 @@ const LEVEL_COLOUR: Record<LogLevel, string> = {
  * opening the popup can rebuild from state instead of copying nodes.
  */
 export class LogCard extends Component<LogCardState, ComponentProps, LogCardDeps> {
-  protected declare refs: LogCardRefs;
+  declare protected refs: LogCardRefs;
 
   #onKeyDown: (e: KeyboardEvent) => void;
 

@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { createMemoryClassificationCacheRepository, hashKey } from "../data/classification-cache-repository.ts";
+import {
+  createMemoryClassificationCacheRepository,
+  hashKey
+} from "../data/classification-cache-repository.ts";
 
 function input(over = {}) {
   return {
@@ -64,10 +67,15 @@ test("clear empties the store and resets the counter", async () => {
 test("same notes but different root-cause label list is a separate entry", async () => {
   const repo = createMemoryClassificationCacheRepository();
   await repo.put(input(), entry());
-  await repo.put(input({ rootCauseLabels: ["User error - data"] }), entry({ outcome: {
-    solutionType: { value: null, confidence: 0 },
-    rootCause: { value: "User error - data", confidence: 0.6 }
-  } }));
+  await repo.put(
+    input({ rootCauseLabels: ["User error - data"] }),
+    entry({
+      outcome: {
+        solutionType: { value: null, confidence: 0 },
+        rootCause: { value: "User error - data", confidence: 0.6 }
+      }
+    })
+  );
   assert.equal((await repo.stats()).entries, 2);
   const incident = await repo.get(input());
   const ptask = await repo.get(input({ rootCauseLabels: ["User error - data"] }));
@@ -78,10 +86,18 @@ test("same notes but different root-cause label list is a separate entry", async
 test("distinct models get distinct entries", async () => {
   const repo = createMemoryClassificationCacheRepository();
   await repo.put(input(), entry());
-  await repo.put(input({ modelId: "distilbert" }), entry({ outcome: {
-    solutionType: { value: "Permanent solution", confidence: 0.7 },
-    rootCause: { value: "Hardware", confidence: 0.6 }
-  } }));
+  await repo.put(
+    input({ modelId: "distilbert" }),
+    entry({
+      outcome: {
+        solutionType: { value: "Permanent solution", confidence: 0.7 },
+        rootCause: { value: "Hardware", confidence: 0.6 }
+      }
+    })
+  );
   assert.equal((await repo.stats()).entries, 2);
-  assert.equal((await repo.get(input({ modelId: "distilbert" }))).outcome.rootCause.value, "Hardware");
+  assert.equal(
+    (await repo.get(input({ modelId: "distilbert" }))).outcome.rootCause.value,
+    "Hardware"
+  );
 });

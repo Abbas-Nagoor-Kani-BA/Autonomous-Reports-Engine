@@ -35,7 +35,7 @@ category it wins. Otherwise the whole note is categorized
 decides — they are not blended.
 
 1. **Regex** — curated exact word-boundary patterns per label; the most
-   *specific* (longest / most words) non-negated match wins, and a genuine tie
+   _specific_ (longest / most words) non-negated match wins, and a genuine tie
    falls through rather than guessing.
 2. **Keyword** — fuzzy hint-phrase hit count (bounded edit distance absorbs
    misspellings like "permanant"); needs at least **2** hits and a strict lead
@@ -44,7 +44,7 @@ decides — they are not blended.
    and a ≥ 0.05 margin.
 
 **Negation** is honoured: a cue preceded (within 3 tokens) by no/not/without/
-etc. does not score, so "no workaround needed" does not score *Workaround*.
+etc. does not score, so "no workaround needed" does not score _Workaround_.
 
 **Confidence gating:** the winner's confidence comes from the score margin
 between the best and second-best label; below the minimum (`minConfidence`,
@@ -71,11 +71,11 @@ Set the mode under **Classification** in [Configuration](Configuration). The mod
 decides how the deterministic scorer and the ML model combine — in particular
 whether the scorer or the model is **authoritative**.
 
-| Mode | Behaviour |
-|---|---|
-| **Heuristic only** (`heuristic`) | Deterministic scorer only, inline; no worker. Fills all eligible rows (existing valid values kept). |
-| **Hybrid** (`hybrid`, default) | The **scorer is authoritative**: a deterministic pass fills blanks first, then the ML worker fills any cell still blank. ML never overrides or erases an established value. |
-| **ML only** (`ml`) | The **ML model is authoritative**: the worker evaluates every eligible note row, **replaces** existing values with the model's verdict, and **clears** a cell when the model produces no label. Switching the model changes the results. |
+| Mode                             | Behaviour                                                                                                                                                                                                                                |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Heuristic only** (`heuristic`) | Deterministic scorer only, inline; no worker. Fills all eligible rows (existing valid values kept).                                                                                                                                      |
+| **Hybrid** (`hybrid`, default)   | The **scorer is authoritative**: a deterministic pass fills blanks first, then the ML worker fills any cell still blank. ML never overrides or erases an established value.                                                              |
+| **ML only** (`ml`)               | The **ML model is authoritative**: the worker evaluates every eligible note row, **replaces** existing values with the model's verdict, and **clears** a cell when the model produces no label. Switching the model changes the results. |
 
 The default mode is **Hybrid** and the default model id is **`mobilebert`**.
 Switching the mode re-classifies the loaded data automatically.
@@ -90,11 +90,11 @@ The optional model is a zero-shot NLI classifier that runs under Transformers.js
 (WebAssembly), entirely offline after a one-time download. Choose and download
 it from Settings:
 
-| Model | Size | Notes |
-|---|---|---|
-| MobileBERT (English) | 25.7 MB | Fast, tiny, first-use friendly. Best default. |
-| DistilBERT (English) | 64.5 MB | Better accuracy, still quick to download. |
-| NLI DeBERTa v3 (English) | 233 MB | Highest accuracy; a much larger one-time download. |
+| Model                    | Size    | Notes                                              |
+| ------------------------ | ------- | -------------------------------------------------- |
+| MobileBERT (English)     | 25.7 MB | Fast, tiny, first-use friendly. Best default.      |
+| DistilBERT (English)     | 64.5 MB | Better accuracy, still quick to download.          |
+| NLI DeBERTa v3 (English) | 233 MB  | Highest accuracy; a much larger one-time download. |
 
 Downloaded models are cached locally and kept independently, so switching models
 does not re-download a previously fetched one. See [Caching](Caching) for the
@@ -125,6 +125,7 @@ Classified values populate MSR dropdown columns constrained to your
 keywords** in [Configuration](Configuration).
 
 ---
+
 Related: [Classification Algorithm](Classification-Algorithm) ·
 [Configuration](Configuration) · [Caching](Caching) ·
 [Data Viewer](Data-Viewer) · [Export](Export)

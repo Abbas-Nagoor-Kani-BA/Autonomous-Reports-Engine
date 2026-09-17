@@ -32,7 +32,7 @@ export type MemberPickerRefs = {
  * the checked names.
  */
 export class MemberPicker extends Modal {
-  protected declare refs: MemberPickerRefs;
+  declare protected refs: MemberPickerRefs;
   #onConfirm: ((names: string[]) => void) | null = null;
 
   protected override initialState(): MemberPickerState {
@@ -41,9 +41,13 @@ export class MemberPicker extends Modal {
 
   protected override build(): void {
     super.build();
-    this.root.className = "hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4";
+    this.root.className =
+      "hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4";
 
-    const box = el("div", "bg-card border border-line rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[80vh]");
+    const box = el(
+      "div",
+      "bg-card border border-line rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[80vh]"
+    );
 
     const head = el("div", "px-4 py-3 border-b border-line");
     this.refs.titleEl = el("h2", "text-sm font-semibold text-text", "Resolve members");
@@ -103,7 +107,8 @@ export class MemberPicker extends Modal {
     const { titleEl, notice, list, countEl } = this.refs;
     if (!titleEl || !notice || !list || !countEl) return;
 
-    titleEl.textContent = next.heading || (next.title ? `Members of "${next.title}"` : "Resolve members");
+    titleEl.textContent =
+      next.heading || (next.title ? `Members of "${next.title}"` : "Resolve members");
 
     notice.hidden = !next.truncated;
     if (next.truncated) {
@@ -118,7 +123,10 @@ export class MemberPicker extends Modal {
     list.innerHTML = "";
     next.members.forEach((name, i) => {
       const rowId = `mp-${i}`;
-      const row = el("label", "memberRow flex items-center gap-2 text-[12.5px] text-text cursor-pointer");
+      const row = el(
+        "label",
+        "memberRow flex items-center gap-2 text-[12.5px] text-text cursor-pointer"
+      );
       const cb = el("input", "memberCheckbox") as HTMLInputElement;
       cb.type = "checkbox";
       cb.checked = !!next.checked[i];
@@ -132,7 +140,13 @@ export class MemberPicker extends Modal {
 
   /** Seeds the dialog for a group and opens it. An explicit `title` overrides
    *  the default `Members of "group"` heading (e.g. for configuration items). */
-  openFor(opts: { group: string; members: string[]; truncated?: boolean; title?: string; onConfirm: (names: string[]) => void }): void {
+  openFor(opts: {
+    group: string;
+    members: string[];
+    truncated?: boolean;
+    title?: string;
+    onConfirm: (names: string[]) => void;
+  }): void {
     this.#onConfirm = opts.onConfirm;
     this.setState({
       title: opts.group,

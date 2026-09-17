@@ -1,6 +1,7 @@
 # Plan — Editable Weekly Summary change-request filter
 
 ## Problem Statement
+
 The Weekly Summary change-request pull is invisible. When "Pull change requests
 for Weekly Summary" is checked, the app fires two hardcoded `change_request`
 queries inside `#pullChangeSummary` (`services/pull-service.ts`): last week by
@@ -15,6 +16,7 @@ that mode. The pull then consumes the (possibly edited) stored windows instead
 of hardcoded values.
 
 ## Requirements (confirmed with user)
+
 - Target the hidden Weekly Summary change-request pull only.
 - Editable as full condition rows in the shared condition builder, but the date
   windows are always provided/defaulted.
@@ -32,6 +34,7 @@ of hardcoded values.
   filter can never lose its dates.
 
 ## Guardrails
+
 - The two-window structure and the `end_date` (last week) / `start_date` (next
   week) `between` anchors are load-bearing: the Weekly Summary sheet math in
   `core/summary/summarydetails.ts` depends on them. Editing conditions/dates is
@@ -94,6 +97,7 @@ of hardcoded values.
     add `node --check` targets for new files.
 
 ## Notes / risks
+
 - Two-window + end_date/start_date anchoring is a hard guardrail for Summary
   sheet correctness. Free-form removal of the date anchors is out of scope.
 - Preview counting of change requests is optional (Task 7).

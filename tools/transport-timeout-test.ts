@@ -29,31 +29,45 @@ test("relay timeout constant is 15000ms", () => {
   assert.equal(RELAY_TIMEOUT_MS, 15000);
 });
 
-test("transport falls through to direct fetch when relay never replies", { timeout: 5000 }, async () => {
-  installFakeChrome({
-    sendMessage: () => new Promise(() => {})
-  });
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => {
-    throw new Error("direct fetch reached");
-  };
-  try {
+test(
+  "transport falls through to direct fetch when relay never replies",
+  { timeout: 5000 },
+  async () => {
+    installFakeChrome({
+      sendMessage: () => new Promise(() => {})
+    });
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => {
+      throw new Error("direct fetch reached");
+    };
+    try {
+      const transport = createSmartTransport(50);
+      const result = await transport(URL_UNDER_TEST);
+      assert.equal(result.ok, false);
+      assert.equal(result.via, "direct");
+      assert.match(result.error, /direct fetch reached/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+);
+
+test(
+  "transport uses relay result when sendMessage replies before timeout",
+  { timeout: 5000 },
+  async () => {
+    installFakeChrome({
+      sendMessage: async () => ({
+        ok: true,
+        status: 200,
+        text: "{}",
+        headers: {},
+        tokenFound: true
+      })
+    });
     const transport = createSmartTransport(50);
     const result = await transport(URL_UNDER_TEST);
-    assert.equal(result.ok, false);
-    assert.equal(result.via, "direct");
-    assert.match(result.error, /direct fetch reached/);
-  } finally {
-    globalThis.fetch = originalFetch;
+    assert.equal(result.ok, true);
+    assert.equal(result.via, "relay");
   }
-});
-
-test("transport uses relay result when sendMessage replies before timeout", { timeout: 5000 }, async () => {
-  installFakeChrome({
-    sendMessage: async () => ({ ok: true, status: 200, text: "{}", headers: {}, tokenFound: true })
-  });
-  const transport = createSmartTransport(50);
-  const result = await transport(URL_UNDER_TEST);
-  assert.equal(result.ok, true);
-  assert.equal(result.via, "relay");
-});
+);

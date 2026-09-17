@@ -1,4 +1,12 @@
-import { buildReport, deriveType, isSlaEligible, slaPriority, hmsToHours, type WalkedRow, type MessageFormatter } from "./report.ts";
+import {
+  buildReport,
+  deriveType,
+  isSlaEligible,
+  slaPriority,
+  hmsToHours,
+  type WalkedRow,
+  type MessageFormatter
+} from "./report.ts";
 
 type TierDef = { sla: string; target: number; kind: "flagMin" | "flagMax" | "dur"; hours?: number };
 
@@ -68,18 +76,26 @@ const PROBLEM_ROWS: ProblemRowDef[] = [
   }
 ];
 
-const SEVERITY_LABELS: Record<number, string> = { 1: "Severity 1 Incidents", 2: "Severity 2 Incidents", 3: "Severity 3 Incidents", 4: "Severity 4 Incidents" };
+const SEVERITY_LABELS: Record<number, string> = {
+  1: "Severity 1 Incidents",
+  2: "Severity 2 Incidents",
+  3: "Severity 3 Incidents",
+  4: "Severity 4 Incidents"
+};
 
 function statusFor(target: number, total: number, actual: number, redOnBreach: boolean): string {
   if (redOnBreach) return total > 0 && actual >= 1 ? "GREEN" : "RED";
-  return total === 0 ? "GREEN" : (actual >= target ? "GREEN" : "AMBER");
+  return total === 0 ? "GREEN" : actual >= target ? "GREEN" : "AMBER";
 }
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-function countResolve(tier: TierDef, reps: Array<{ metMinResolutionSLA: string; metMaxResolutionSLA: string; incidentHours: string }>): number {
+function countResolve(
+  tier: TierDef,
+  reps: Array<{ metMinResolutionSLA: string; metMaxResolutionSLA: string; incidentHours: string }>
+): number {
   let n = 0;
   for (const rep of reps) {
     if (tier.kind === "flagMin") {
@@ -98,7 +114,10 @@ function countResolve(tier: TierDef, reps: Array<{ metMinResolutionSLA: string; 
   return n;
 }
 
-function countRespond(tier: RespondTier, reps: Array<{ metResponseSLA: string; responseSLA: string }>): number {
+function countRespond(
+  tier: RespondTier,
+  reps: Array<{ metResponseSLA: string; responseSLA: string }>
+): number {
   let n = 0;
   for (const rep of reps) {
     if (tier.kind === "flagResp") {
@@ -128,7 +147,10 @@ export type SlaSummaryItem = {
 
 type RepLike = ReturnType<typeof buildReport>;
 
-function buildSlaSummary(rows: WalkedRow[] | null | undefined, fmt?: MessageFormatter | null): {
+function buildSlaSummary(
+  rows: WalkedRow[] | null | undefined,
+  fmt?: MessageFormatter | null
+): {
   computedAt: string;
   incidentTotals: Record<number, number>;
   items: SlaSummaryItem[];
@@ -195,9 +217,9 @@ function buildSlaSummary(rows: WalkedRow[] | null | undefined, fmt?: MessageForm
     });
   }
   for (const def of PROBLEM_ROWS) {
-    const reps = def.tiers.flatMap(t => problemReps[t]);
+    const reps = def.tiers.flatMap((t) => problemReps[t]);
     const total = reps.length;
-    const count = reps.filter(rep => rep.metMaxResolutionSLA === "YES").length;
+    const count = reps.filter((rep) => rep.metMaxResolutionSLA === "YES").length;
     const actual = total ? round2(count / total) : 0;
     items.push({
       metric: def.metric,
@@ -219,7 +241,10 @@ function buildSlaSummary(rows: WalkedRow[] | null | undefined, fmt?: MessageForm
   };
 }
 
-function buildSlaSummaryRows(rows: WalkedRow[] | null | undefined, fmt?: MessageFormatter | null): SlaSummaryItem[] {
+function buildSlaSummaryRows(
+  rows: WalkedRow[] | null | undefined,
+  fmt?: MessageFormatter | null
+): SlaSummaryItem[] {
   return buildSlaSummary(rows, fmt).items;
 }
 

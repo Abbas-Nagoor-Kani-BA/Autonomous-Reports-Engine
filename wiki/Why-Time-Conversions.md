@@ -35,16 +35,16 @@ At each hop a conversion happens for a concrete reason, described next.
 
 Each format earns its place; skipping it would break something:
 
-- **Raw UTC** (for example `2026-08-01 10:00:00`) — *because* it is unambiguous
+- **Raw UTC** (for example `2026-08-01 10:00:00`) — _because_ it is unambiguous
   and safe to compare and subtract. Without a single common baseline, two times
   from different seasons or sources could not be compared reliably.
-- **Instance display value** (for example `2026-08-01 11:00:00`) — *because* it
+- **Instance display value** (for example `2026-08-01 11:00:00`) — _because_ it
   is the time a user actually recognizes. Without it, the tool would have no
   trustworthy reference for what the instance clock is.
-- **Epoch milliseconds** (a plain number) — *because* durations and SLA math are
+- **Epoch milliseconds** (a plain number) — _because_ durations and SLA math are
   subtraction, and numbers subtract cleanly while formatted strings do not.
   Without it, "assigned to acknowledged" could not be measured accurately.
-- **ISO with a `Z` suffix** (for example `2026-08-01T10:00:00Z`) — *because* the
+- **ISO with a `Z` suffix** (for example `2026-08-01T10:00:00Z`) — _because_ the
   `Z` says "this is UTC" out loud, so parsing can never accidentally read a time
   in the wrong zone.
 
@@ -85,5 +85,6 @@ fixed number to everything.
   examples.
 
 ---
+
 Related: [Data Viewer](Data-Viewer) · [Calclens](Calclens) ·
 [Timezone Contract](Timezone-Contract) · [Troubleshooting and FAQ](Troubleshooting-and-FAQ)

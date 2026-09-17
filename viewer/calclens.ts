@@ -6,7 +6,16 @@
  * grid body is always read-only; the drawer also edits the derivation columns.
  */
 import { $, columnOptionList, visibleCols } from "./core.ts";
-import { findRowBySysId, fmtInstant, parseLocalInput, render, reportCellFocus, scheduleSave, setOnCellFocus, attentionCtx } from "./grid.ts";
+import {
+  findRowBySysId,
+  fmtInstant,
+  parseLocalInput,
+  render,
+  reportCellFocus,
+  scheduleSave,
+  setOnCellFocus,
+  attentionCtx
+} from "./grid.ts";
 import { currentRows } from "./grid-data.ts";
 import { setSelPoint, getSelFocus } from "./selection.ts";
 import { getMsrLists } from "./store.ts";
@@ -45,28 +54,35 @@ export function initCalclens(): void {
   filterBtn.textContent = "Flagged only";
   iconize(filterBtn, "filter");
 
-  panel = new CalclensPanel(host, {}, {
-    optionsFor: (key, row) => columnOptionList(key, row),
-    displayFor: (key, row, cls) => (cls === "inst" ? fmtInstant(String(row[key] ?? ""), row) : String(row[key] ?? "")),
-    parseValue: (v) => parseLocalInput(v),
-    activityFor: (row) => activityPaneEl(row),
-    onCommit: (key, value, row) => {
-      row[key] = value;
-      scheduleSave();
-      render();
-      showToast("Saved");
-      // Re-show so the freshly-edited derivation re-marks the picked timeline
-      // step as `selected` and the Timeline strip reflects the new value.
-      try {
-        const ex = explainCell(row, key, { fmtInstant, msrLists: getMsrLists() });
-        panel.show(ex, { row, key, cls: colClass(key) });
-      } catch { /* keep the drawer as-is */ }
-    },
-    onJumpToCell: (sysId, key) => {
-      setSelPoint(sysId, key, false);
-      reportCellFocus({ sysId, key });
+  panel = new CalclensPanel(
+    host,
+    {},
+    {
+      optionsFor: (key, row) => columnOptionList(key, row),
+      displayFor: (key, row, cls) =>
+        cls === "inst" ? fmtInstant(String(row[key] ?? ""), row) : String(row[key] ?? ""),
+      parseValue: (v) => parseLocalInput(v),
+      activityFor: (row) => activityPaneEl(row),
+      onCommit: (key, value, row) => {
+        row[key] = value;
+        scheduleSave();
+        render();
+        showToast("Saved");
+        // Re-show so the freshly-edited derivation re-marks the picked timeline
+        // step as `selected` and the Timeline strip reflects the new value.
+        try {
+          const ex = explainCell(row, key, { fmtInstant, msrLists: getMsrLists() });
+          panel.show(ex, { row, key, cls: colClass(key) });
+        } catch {
+          /* keep the drawer as-is */
+        }
+      },
+      onJumpToCell: (sysId, key) => {
+        setSelPoint(sysId, key, false);
+        reportCellFocus({ sysId, key });
+      }
     }
-  });
+  );
 
   btn.addEventListener("click", () => {
     const next = !getCalclensMode();
@@ -86,7 +102,10 @@ export function initCalclens(): void {
 
   setOnCellFocus((info) => {
     if (!getCalclensMode()) return;
-    if (getEditMode()) { panel.close(); return; }
+    if (getEditMode()) {
+      panel.close();
+      return;
+    }
     const row = info ? findRowBySysId(info.sysId) : undefined;
     if (!info || !row) {
       panel.show(null);
@@ -129,9 +148,12 @@ function updateCalclensBtn(): void {
   const hidden = disabledCount();
   btn.classList.toggle("has-badge", hidden > 0);
   btn.setAttribute("data-badge", hidden > 0 ? String(hidden) : "");
-  btn.setAttribute("data-tip", hidden > 0
-    ? `Calclens — inspect how each value was derived (${hidden} highlight${hidden === 1 ? "" : "s"} hidden)`
-    : "Calclens — inspect how each value was derived and edit the derivation columns");
+  btn.setAttribute(
+    "data-tip",
+    hidden > 0
+      ? `Calclens — inspect how each value was derived (${hidden} highlight${hidden === 1 ? "" : "s"} hidden)`
+      : "Calclens — inspect how each value was derived and edit the derivation columns"
+  );
 }
 
 /**
@@ -158,11 +180,15 @@ function updateFilterBtn(): void {
   filterBtn.classList.toggle("calclens-filter-on", active);
   if (active) {
     const shown = currentRows().length;
-    filterBtn.setAttribute("data-tip",
-      `Showing ${shown} flagged ticket${shown === 1 ? "" : "s"} — click to clear filter`);
+    filterBtn.setAttribute(
+      "data-tip",
+      `Showing ${shown} flagged ticket${shown === 1 ? "" : "s"} — click to clear filter`
+    );
   } else {
-    filterBtn.setAttribute("data-tip",
-      "Show only tickets with attention flags (Calclens must be on)");
+    filterBtn.setAttribute(
+      "data-tip",
+      "Show only tickets with attention flags (Calclens must be on)"
+    );
   }
 
   // Tab-bar chip mirrors the filter state.
@@ -241,7 +267,9 @@ function initCalclensHighlights(): void {
   updateCalclensBtn();
   // The persisted prefs load asynchronously (see grid.ts initGrid); refresh the
   // button's hidden-count once they settle so the indicator matches storage.
-  loadHighlightPrefs().then(() => updateCalclensBtn()).catch(() => undefined);
+  loadHighlightPrefs()
+    .then(() => updateCalclensBtn())
+    .catch(() => undefined);
 
   menuBtn.addEventListener("click", (e: Event) => {
     e.stopPropagation();
@@ -268,7 +296,11 @@ function initCalclensHighlights(): void {
   });
 
   document.addEventListener("click", (e: Event) => {
-    if (!menu.classList.contains("hidden") && !menu.contains(e.target as Node) && e.target !== menuBtn) {
+    if (
+      !menu.classList.contains("hidden") &&
+      !menu.contains(e.target as Node) &&
+      e.target !== menuBtn
+    ) {
       menu.classList.add("hidden");
     }
   });

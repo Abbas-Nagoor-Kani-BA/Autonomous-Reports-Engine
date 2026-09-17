@@ -66,7 +66,9 @@ function show(el: HTMLElement): void {
   el.addEventListener("mousemove", move);
   el.addEventListener("mouseleave", hide, { once: true });
   el.addEventListener("blur", hide, { once: true });
-  const kd = (ev: KeyboardEvent) => { if (ev.key === "Escape") hide(); };
+  const kd = (ev: KeyboardEvent) => {
+    if (ev.key === "Escape") hide();
+  };
   document.addEventListener("keydown", kd, { once: true });
 }
 

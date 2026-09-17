@@ -1,201 +1,301 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Autonomous Reports Engine — Settings</title>
-  <link href="../styles/output.css" rel="stylesheet">
-</head>
-<body class="m-0 mx-auto font-sans text-[13px] bg-bg text-text p-6 max-w-[1280px]">
-  <h1 class="text-lg text-accent m-0 mb-1">Plugin Settings</h1>
-  <div class="text-dim text-xs mb-4">Stored locally in the extension (chrome.storage.local)</div>
+  <head>
+    <meta charset="utf-8" />
+    <title>Autonomous Reports Engine — Settings</title>
+    <link href="../styles/output.css" rel="stylesheet" />
+  </head>
+  <body class="m-0 mx-auto font-sans text-[13px] bg-bg text-text p-6 max-w-[1280px]">
+    <h1 class="text-lg text-accent m-0 mb-1">Plugin Settings</h1>
+    <div class="text-dim text-xs mb-4">Stored locally in the extension (chrome.storage.local)</div>
 
-  <div class="cards">
+    <div class="cards">
+      <div class="card-settings msrCard" style="grid-column: 1/-1">
+        <h2 class="cardTitle">General</h2>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Instance URL</label
+        >
+        <input
+          id="instanceUrl"
+          type="url"
+          placeholder="https://devXXXXX.service-now.com"
+          class="input"
+        />
 
-  <div class="card-settings msrCard" style="grid-column:1/-1">
-    <h2 class="cardTitle">General</h2>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Instance URL</label>
-    <input id="instanceUrl" type="url" placeholder="https://devXXXXX.service-now.com" class="input">
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Default ticket type</label
+        >
+        <select id="ticketType" class="select">
+          <option value="incident">Incident</option>
+          <option value="change_request">Change Request</option>
+          <option value="problem">Problem</option>
+          <option value="sc_req_item">Requested Item (RITM)</option>
+          <option value="sc_task">Catalog Task (SCTASK)</option>
+        </select>
 
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Default ticket type</label>
-    <select id="ticketType" class="select">
-      <option value="incident">Incident</option>
-      <option value="change_request">Change Request</option>
-      <option value="problem">Problem</option>
-      <option value="sc_req_item">Requested Item (RITM)</option>
-      <option value="sc_task">Catalog Task (SCTASK)</option>
-    </select>
+        <h3 class="secTitle">Queues</h3>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Queues (one assignment group name per chip)</label
+        >
+        <div id="queuesChips"></div>
+        <div class="hint mt-1">
+          Every pull is scoped to these assignment groups by name. Names must match the group's
+          display name in ServiceNow. Type a name and press Enter — paste several separated by
+          commas or new lines.
+        </div>
 
-    <h3 class="secTitle">Queues</h3>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Queues (one assignment group name per chip)</label>
-    <div id="queuesChips"></div>
-    <div class="hint mt-1">Every pull is scoped to these assignment groups by name. Names must match the group's display name in ServiceNow. Type a name and press Enter — paste several separated by commas or new lines.</div>
+        <h3 class="secTitle">Team members</h3>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Team members (one full name per chip)</label
+        >
+        <div id="teamMembersChips"></div>
+        <div class="hint mt-1">
+          Used ONLY to detect acknowledgement dates (when a ticket gets assigned to one of these
+          people). Names must match how ServiceNow displays the user. Type a name and press Enter —
+          paste several separated by commas or new lines. Leave empty to skip acknowledgement
+          detection.
+        </div>
 
-    <h3 class="secTitle">Team members</h3>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Team members (one full name per chip)</label>
-    <div id="teamMembersChips"></div>
-    <div class="hint mt-1">Used ONLY to detect acknowledgement dates (when a ticket gets assigned to one of these people). Names must match how ServiceNow displays the user. Type a name and press Enter — paste several separated by commas or new lines. Leave empty to skip acknowledgement detection.</div>
+        <h3 class="secTitle">Configuration items</h3>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Configuration items (one CI name per chip)</label
+        >
+        <div id="configItemsChips"></div>
+        <div class="hint mt-1">
+          Optional list of Configuration Items used for CI grouping and export. Use each queue's
+          <em>resolve CIs</em> button to pull the CIs supported by that group (their ServiceNow
+          <code>support_group</code>), or type names manually.
+        </div>
 
-    <h3 class="secTitle">Configuration items</h3>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Configuration items (one CI name per chip)</label>
-    <div id="configItemsChips"></div>
-    <div class="hint mt-1">Optional list of Configuration Items used for CI grouping and export. Use each queue's <em>resolve CIs</em> button to pull the CIs supported by that group (their ServiceNow <code>support_group</code>), or type names manually.</div>
+        <div class="flex items-center gap-2 mt-3">
+          <button id="resolveScopeBtn" type="button" class="btn py-1.5 px-3 text-xs">
+            Resolve queues
+          </button>
+          <span id="resolveScopeStatus" class="text-dim text-[11px]"></span>
+        </div>
+        <div class="hint mt-1">
+          Optional: fill the Queues list from your ServiceNow assignment-group memberships (your
+          logged-in session). Then use each queue's <em>resolve members</em> button to pick that
+          group's members into Team members. Requires an open, logged-in ServiceNow tab. If your
+          account cannot read the group tables, add names manually.
+        </div>
+      </div>
 
-    <div class="flex items-center gap-2 mt-3">
-      <button id="resolveScopeBtn" type="button" class="btn py-1.5 px-3 text-xs">Resolve queues</button>
-      <span id="resolveScopeStatus" class="text-dim text-[11px]"></span>
+      <div id="memberPicker"></div>
+
+      <div class="card-settings paramsCard">
+        <h2 class="cardTitle">Pull parameters</h2>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Table page size</label
+        >
+        <input id="tablePageSize" type="number" min="100" max="5000" class="input" />
+        <div class="hint mt-1">Rows per Table API page during pulls (100–5000, default 1000).</div>
+
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
+          >Query cache TTL (minutes)</label
+        >
+        <input id="cacheTtlMinutes" type="number" min="0" max="10080" class="input" />
+        <div class="hint mt-1">
+          How long a pulled ticket list is reused without re-fetching (0–10080, default 15). A pull
+          re-uses cached results only if the same query ran within this window; 0 disables caching
+          so every pull hits the API. Timeline cache is unaffected.
+        </div>
+
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
+          >Max tickets per filter set</label
+        >
+        <input id="maxTicketsPerPull" type="number" min="0" max="100000" class="input" />
+        <div class="hint mt-1">
+          Safety cap: if a filter matches MORE tickets than this, the set is skipped and you are
+          warned instead of pulling (0–100000, default 500; 0 = unlimited). Preview shows the same
+          warning before you run.
+        </div>
+
+        <label class="flex items-center gap-1.5 mt-2">
+          <input id="debugResponses" type="checkbox" class="w-auto" />
+          Log response data in panel log (debug)
+        </label>
+        <div class="hint mt-1">
+          Adds a truncated body preview and row count for every API call to the log. Verbose —
+          enable only while troubleshooting.
+        </div>
+
+        <div class="flex gap-2 flex-wrap mt-2.5 items-center">
+          <button id="clearCacheBtn" class="btn">Clear pull cache</button>
+          <span class="hint"
+            >Query results are reused for 15 min; timelines until the ticket changes (max 7
+            days).</span
+          >
+        </div>
+      </div>
+
+      <div class="card-settings">
+        <h2 class="cardTitle">Classification</h2>
+        <div class="hint mt-1">
+          How the MSR Root cause and Solution type columns are filled from the resolution notes. The
+          built-in offline scorer always runs; the machine-learning model (downloaded once and
+          cached locally, used offline in the Data View) is only used when the mode asks for it.
+        </div>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
+          >Classification mode</label
+        >
+        <select id="mlMode" class="select">
+          <option value="hybrid">
+            Hybrid — offline scorer first, then ML when it finds a better answer
+          </option>
+          <option value="ml">ML only — machine learning for every ticket</option>
+          <option value="heuristic">Heuristic only — built-in offline scorer (no ML)</option>
+        </select>
+        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+          >Model</label
+        >
+        <select id="mlModel" class="select"></select>
+        <div class="hint mt-1">
+          Choose which classifier to download. Larger models are more accurate but take longer to
+          download.
+        </div>
+        <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+          <button id="mlDownloadBtn" class="btn">Download model</button>
+          <span id="mlStatus" class="text-dim text-xs">Not downloaded yet</span>
+        </div>
+        <label class="flex items-center gap-1.5 mt-3">
+          <input id="mlCacheEnabled" type="checkbox" class="w-auto" />
+          Cache classification results
+        </label>
+        <div class="hint mt-1">
+          Stores each classified note's outcome in a local cache, so an unchanged note is never
+          re-inferred on reload or across datasets. Turn off to always re-classify. This only
+          affects future runs; existing rows are already classified.
+        </div>
+        <div class="flex gap-2 flex-wrap mt-2 items-center">
+          <button id="mlCacheClearBtn" class="btn">Clear classification cache</button>
+        </div>
+      </div>
+
+      <div class="card-settings msrCard" style="grid-column: 1/-1">
+        <h2 class="cardTitle">MSR option lists</h2>
+        <div class="hint mt-1">
+          Allowed values for the MSR report dropdown columns (BA AO sheet). The data view restricts
+          these columns to the lists below, and exports/copy-for-MSR use exactly these labels. One
+          value per chip — type and press Enter, or paste several separated by commas/new lines.
+          Emptying a list falls back to nothing — use "Restore defaults" for the original msr.xlsx
+          values.
+        </div>
+        <div class="hscroll">
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Op Co</label
+            >
+            <div id="msrOpCo"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Domain</label
+            >
+            <div id="msrDomain"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Type</label
+            >
+            <div id="msrType"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Status</label
+            >
+            <div id="msrStatus"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Resolution type</label
+            >
+            <div id="msrResolution"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Duplicate incident</label
+            >
+            <div id="msrDuplicate"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Queue names</label
+            >
+            <div id="msrQueue"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Sub category</label
+            >
+            <div id="msrSubCategory"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Root cause category — Incident</label
+            >
+            <div id="msrRcIncident"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Root cause category — RFS</label
+            >
+            <div id="msrRcRfs"></div>
+          </div>
+          <div class="msrTile">
+            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+              >Root cause category — P Ticket</label
+            >
+            <div id="msrRcPTicket"></div>
+          </div>
+        </div>
+        <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+          <button id="msrResetBtn" class="btn">Restore MSR defaults</button>
+          <span class="hint"
+            >The RFS root-cause list is empty in the source msr.xlsx — add values here if you raise
+            RFS tickets.</span
+          >
+        </div>
+      </div>
+
+      <div class="card-settings" style="grid-column: 1/-1">
+        <h2 class="cardTitle">Classifier keywords</h2>
+        <div class="hint mt-1">
+          Word and phrase hints the built-in offline scorer uses to match MSR labels while
+          classifying the resolution notes (regex phrase, keyword hints, then vocabulary
+          similarity). Each label shows its built-in default keywords; add chips to extend them, or
+          clear them to remove a match. Matching is case-insensitive and tolerates small
+          misspellings. Editing a label's keywords re-runs classification in the data view and bumps
+          the keyword fingerprint.
+        </div>
+        <div class="hscroll" id="kwStack"></div>
+        <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+          <button id="kwResetBtn" class="btn">Restore default keywords</button>
+          <span class="hint">Keywords are shown for the labels in the MSR option lists above.</span>
+        </div>
+      </div>
+
+      <div class="card-settings backupCard">
+        <h2 class="cardTitle">Backup / transfer</h2>
+        <div class="hint mt-1">
+          Exports one JSON file with instance URL, queues, team members, pull params, saved filters,
+          column mapping, CI split groups, hidden view columns, MSR option lists and the cached
+          Excel template. Import replaces all of those with the file's values.
+        </div>
+        <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+          <button id="exportCfgBtn" class="btn">Export settings (.json)</button>
+          <button id="importCfgBtn" class="btn">Import settings</button>
+          <input type="file" id="cfgFile" accept=".json,application/json" style="display: none" />
+        </div>
+      </div>
     </div>
-    <div class="hint mt-1">Optional: fill the Queues list from your ServiceNow assignment-group memberships (your logged-in session). Then use each queue's <em>resolve members</em> button to pick that group's members into Team members. Requires an open, logged-in ServiceNow tab. If your account cannot read the group tables, add names manually.</div>
-  </div>
+    <!-- /cards -->
 
-  <div id="memberPicker"></div>
-
-  <div class="card-settings paramsCard">
-    <h2 class="cardTitle">Pull parameters</h2>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Table page size</label>
-    <input id="tablePageSize" type="number" min="100" max="5000" class="input">
-    <div class="hint mt-1">Rows per Table API page during pulls (100–5000, default 1000).</div>
-
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25">Query cache TTL (minutes)</label>
-    <input id="cacheTtlMinutes" type="number" min="0" max="10080" class="input">
-    <div class="hint mt-1">How long a pulled ticket list is reused without re-fetching (0–10080, default 15). A pull re-uses cached results only if the same query ran within this window; 0 disables caching so every pull hits the API. Timeline cache is unaffected.</div>
-
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25">Max tickets per filter set</label>
-    <input id="maxTicketsPerPull" type="number" min="0" max="100000" class="input">
-    <div class="hint mt-1">Safety cap: if a filter matches MORE tickets than this, the set is skipped and you are warned instead of pulling (0–100000, default 500; 0 = unlimited). Preview shows the same warning before you run.</div>
-
-    <label class="flex items-center gap-1.5 mt-2">
-      <input id="debugResponses" type="checkbox" class="w-auto">
-      Log response data in panel log (debug)
-    </label>
-    <div class="hint mt-1">Adds a truncated body preview and row count for every API call to the log. Verbose — enable only while troubleshooting.</div>
-
-    <div class="flex gap-2 flex-wrap mt-2.5 items-center">
-      <button id="clearCacheBtn" class="btn">Clear pull cache</button>
-      <span class="hint">Query results are reused for 15 min; timelines until the ticket changes (max 7 days).</span>
+    <div class="flex gap-2 flex-wrap mt-4.5 items-center justify-end">
+      <span id="saveStatus" class="text-xs mr-auto" aria-live="polite"></span>
+      <button id="resetBtn" class="btn-danger">Reset all to defaults</button>
     </div>
-  </div>
 
-  <div class="card-settings">
-    <h2 class="cardTitle">Classification</h2>
-    <div class="hint mt-1">How the MSR Root cause and Solution type columns are filled from the resolution notes.
-      The built-in offline scorer always runs; the machine-learning model (downloaded once and cached locally,
-      used offline in the Data View) is only used when the mode asks for it.</div>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25">Classification mode</label>
-    <select id="mlMode" class="select">
-      <option value="hybrid">Hybrid — offline scorer first, then ML when it finds a better answer</option>
-      <option value="ml">ML only — machine learning for every ticket</option>
-      <option value="heuristic">Heuristic only — built-in offline scorer (no ML)</option>
-    </select>
-    <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Model</label>
-    <select id="mlModel" class="select"></select>
-    <div class="hint mt-1">Choose which classifier to download. Larger models are more accurate but take longer to download.</div>
-    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-      <button id="mlDownloadBtn" class="btn">Download model</button>
-      <span id="mlStatus" class="text-dim text-xs">Not downloaded yet</span>
-    </div>
-    <label class="flex items-center gap-1.5 mt-3">
-      <input id="mlCacheEnabled" type="checkbox" class="w-auto">
-      Cache classification results
-    </label>
-    <div class="hint mt-1">Stores each classified note's outcome in a local cache, so an unchanged
-      note is never re-inferred on reload or across datasets. Turn off to always re-classify. This only affects
-      future runs; existing rows are already classified.</div>
-    <div class="flex gap-2 flex-wrap mt-2 items-center">
-      <button id="mlCacheClearBtn" class="btn">Clear classification cache</button>
-    </div>
-  </div>
-
-  <div class="card-settings msrCard" style="grid-column:1/-1">
-    <h2 class="cardTitle">MSR option lists</h2>
-    <div class="hint mt-1">Allowed values for the MSR report dropdown columns (BA AO sheet). The data view
-      restricts these columns to the lists below, and exports/copy-for-MSR use exactly these labels.
-      One value per chip — type and press Enter, or paste several separated by commas/new lines.
-      Emptying a list falls back to nothing — use "Restore defaults" for the original msr.xlsx values.</div>
-    <div class="hscroll">
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Op Co</label>
-        <div id="msrOpCo"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Domain</label>
-        <div id="msrDomain"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Type</label>
-        <div id="msrType"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Status</label>
-        <div id="msrStatus"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Resolution type</label>
-        <div id="msrResolution"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Duplicate incident</label>
-        <div id="msrDuplicate"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Queue names</label>
-        <div id="msrQueue"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Sub category</label>
-        <div id="msrSubCategory"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Root cause category — Incident</label>
-        <div id="msrRcIncident"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Root cause category — RFS</label>
-        <div id="msrRcRfs"></div>
-      </div>
-      <div class="msrTile">
-        <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25">Root cause category — P Ticket</label>
-        <div id="msrRcPTicket"></div>
-      </div>
-    </div>
-    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-      <button id="msrResetBtn" class="btn">Restore MSR defaults</button>
-      <span class="hint">The RFS root-cause list is empty in the source msr.xlsx — add values here if you raise RFS tickets.</span>
-    </div>
-  </div>
-
-  <div class="card-settings" style="grid-column:1/-1">
-    <h2 class="cardTitle">Classifier keywords</h2>
-    <div class="hint mt-1">Word and phrase hints the built-in offline scorer uses to match MSR labels while
-      classifying the resolution notes (regex phrase, keyword hints, then vocabulary similarity). Each label
-      shows its built-in default keywords; add chips to extend them, or clear them to remove a match. Matching
-      is case-insensitive and tolerates small misspellings. Editing a label's keywords re-runs classification
-      in the data view and bumps the keyword fingerprint.</div>
-    <div class="hscroll" id="kwStack"></div>
-    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-      <button id="kwResetBtn" class="btn">Restore default keywords</button>
-      <span class="hint">Keywords are shown for the labels in the MSR option lists above.</span>
-    </div>
-  </div>
-
-  <div class="card-settings backupCard">
-    <h2 class="cardTitle">Backup / transfer</h2>
-    <div class="hint mt-1">Exports one JSON file with instance URL, queues, team members, pull params, saved
-      filters, column mapping, CI split groups, hidden view columns, MSR option lists and the cached
-      Excel template. Import replaces all of those with the file's values.</div>
-    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-      <button id="exportCfgBtn" class="btn">Export settings (.json)</button>
-      <button id="importCfgBtn" class="btn">Import settings</button>
-      <input type="file" id="cfgFile" accept=".json,application/json" style="display:none;">
-    </div>
-  </div>
-
-  </div><!-- /cards -->
-
-  <div class="flex gap-2 flex-wrap mt-4.5 items-center justify-end">
-    <span id="saveStatus" class="text-xs mr-auto" aria-live="polite"></span>
-    <button id="resetBtn" class="btn-danger">Reset all to defaults</button>
-  </div>
-
-  <script type="module" src="settings.js"></script>
-</body>
+    <script type="module" src="settings.js"></script>
+  </body>
 </html>

@@ -16,7 +16,8 @@ const files = {};
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p);
-    else files[path.relative(DIST, p).split(path.sep).join("/")] = new Uint8Array(fs.readFileSync(p));
+    else
+      files[path.relative(DIST, p).split(path.sep).join("/")] = new Uint8Array(fs.readFileSync(p));
   }
 })(DIST);
 
@@ -24,4 +25,6 @@ const zipped = fflate.zipSync(files, { level: 9 });
 const outName = `${pkg.name}-${pkg.version}.zip`;
 const outPath = path.join(ROOT, "..", outName);
 fs.writeFileSync(outPath, Buffer.from(zipped));
-console.log(`${outName}: ${(zipped.length / 1024).toFixed(1)} KB, ${Object.keys(files).length} files`);
+console.log(
+  `${outName}: ${(zipped.length / 1024).toFixed(1)} KB, ${Object.keys(files).length} files`
+);

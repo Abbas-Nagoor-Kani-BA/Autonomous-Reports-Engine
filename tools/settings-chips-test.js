@@ -35,7 +35,9 @@ test("chip list renders seeded values and commits typed terms", () => {
 
   const input = root.querySelector(".chipInput");
   input.value = "Gamma";
-  input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  input.dispatchEvent(
+    new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })
+  );
   assert.deepEqual(chip.getValues(), ["Alpha", "Beta", "Gamma"]);
   assert.equal(input.value, "", "input cleared after commit");
 });
@@ -46,7 +48,9 @@ test("chip list dedups duplicates and collapses case variants", () => {
   assert.deepEqual(chip.getValues(), ["Alpha"]);
   const input = root.querySelector(".chipInput");
   input.value = "BETA; beta, BETA";
-  input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  input.dispatchEvent(
+    new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })
+  );
   assert.deepEqual(chip.getValues(), ["Alpha", "BETA"]);
 });
 
@@ -62,7 +66,11 @@ test("backspace on empty input removes the last chip", () => {
   const { root, chip } = makeChip({});
   chip.setValues(["One", "Two"]);
   const input = root.querySelector(".chipInput");
-  const ev = new window.KeyboardEvent("keydown", { key: "Backspace", bubbles: true, cancelable: true });
+  const ev = new window.KeyboardEvent("keydown", {
+    key: "Backspace",
+    bubbles: true,
+    cancelable: true
+  });
   for (let i = 0; i < 2; i++) input.dispatchEvent(ev);
   assert.deepEqual(chip.getValues(), []);
 });
@@ -91,7 +99,7 @@ test("collapsible list shows a scrollable card of stacked rows with an Edit butt
   assert.ok(root.querySelector(".chipCard"));
   assert.equal(root.querySelector(".chipEditBtn").textContent, "Edit");
   assert.equal(root.querySelector(".chipCount").textContent, "2 values");
-  const rows = [...root.querySelectorAll(".chipRow")].map(r => r.textContent);
+  const rows = [...root.querySelectorAll(".chipRow")].map((r) => r.textContent);
   assert.deepEqual(rows, ["Alpha", "Beta"]);
   assert.equal(root.querySelector(".chipStack").hidden, false);
   assert.equal(root.querySelector(".chipEditor").hidden, true);
@@ -110,8 +118,10 @@ test("collapsible card switches to a text editor pre-filled with every value and
   ta.value = "Alpha\nGamma;Delta\nOmega";
   root.querySelector(".chipActions .primary").click();
   assert.deepEqual(chip.getValues(), ["Alpha", "Gamma", "Delta", "Omega"]);
-  assert.deepEqual([...root.querySelectorAll(".chipRow")].map(r => r.textContent),
-    ["Alpha", "Gamma", "Delta", "Omega"]);
+  assert.deepEqual(
+    [...root.querySelectorAll(".chipRow")].map((r) => r.textContent),
+    ["Alpha", "Gamma", "Delta", "Omega"]
+  );
   assert.equal(root.querySelector(".chipCount").textContent, "4 values");
   assert.equal(root.querySelector(".chipEditBtn").textContent, "Edit");
 });
@@ -130,7 +140,10 @@ test("Cancel discards textarea changes and collapses to the saved list", () => {
   root.querySelector(".chipTextarea").value = "Beta";
   root.querySelector(".chipActions button:not(.primary)").click();
   assert.deepEqual(chip.getValues(), ["Alpha"]);
-  assert.deepEqual([...root.querySelectorAll(".chipRow")].map(r => r.textContent), ["Alpha"]);
+  assert.deepEqual(
+    [...root.querySelectorAll(".chipRow")].map((r) => r.textContent),
+    ["Alpha"]
+  );
   assert.equal(root.querySelector(".chipEditor").hidden, true);
 });
 
@@ -140,7 +153,9 @@ test("Escape in the textarea exits edit mode without saving", () => {
   root.querySelector(".chipEditBtn").click();
   const ta = root.querySelector(".chipTextarea");
   ta.value = "Beta";
-  ta.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+  ta.dispatchEvent(
+    new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })
+  );
   assert.equal(root.querySelector(".chipEditor").hidden, true);
   assert.deepEqual(chip.getValues(), ["Alpha"], "typed text discarded on Escape");
 });
@@ -160,7 +175,10 @@ test("collapsible rowActions render a button per action per row and call back wi
   assert.equal(rows.length, 2);
   // Two action buttons per row.
   assert.equal(rows[0].querySelectorAll(".chipRowAction").length, 2);
-  assert.deepEqual([...root.querySelectorAll(".chipRowLabel")].map((s) => s.textContent), ["Network Ops", "Service Desk"]);
+  assert.deepEqual(
+    [...root.querySelectorAll(".chipRowLabel")].map((s) => s.textContent),
+    ["Network Ops", "Service Desk"]
+  );
   // Click "resolve CIs" (second button) on the second row.
   rows[1].querySelectorAll(".chipRowAction")[1].click();
   assert.deepEqual(cis, ["Service Desk"]);
@@ -179,10 +197,22 @@ test("collapsible without rowActions renders plain text rows (unchanged)", () =>
 test("chip list fires the change hook on commit (drives settings auto-save)", () => {
   let fired = 0;
   const root = document.createElement("div");
-  const chip = new ChipList(root, { on: { change: () => { fired++; } } }, {});
+  const chip = new ChipList(
+    root,
+    {
+      on: {
+        change: () => {
+          fired++;
+        }
+      }
+    },
+    {}
+  );
   const input = root.querySelector(".chipInput");
   input.value = "Alpha";
-  input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+  input.dispatchEvent(
+    new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })
+  );
   assert.equal(chip.getValues().length, 1);
   assert.ok(fired >= 1, "change hook fired when a value was committed");
 });

@@ -1,136 +1,233 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <link href="../styles/output.css" rel="stylesheet">
-</head>
-<body class="panel m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]">
-  <header class="flex items-center justify-between mb-4">
-    <h1 class="text-[15px] m-0 text-accent font-semibold">Autonomous Reports Engine</h1>
-    <div class="flex items-center gap-2">
-      <span id="connState" class="badge">Not connected</span>
-      <button id="settingsBtn" type="button" class="iconBtn" data-tip="Open settings" aria-label="Settings">&#9881;</button>
-    </div>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <link href="../styles/output.css" rel="stylesheet" />
+  </head>
+  <body class="panel m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]">
+    <header class="flex items-center justify-between mb-4">
+      <h1 class="text-[15px] m-0 text-accent font-semibold">Autonomous Reports Engine</h1>
+      <div class="flex items-center gap-2">
+        <span id="connState" class="badge">Not connected</span>
+        <button
+          id="settingsBtn"
+          type="button"
+          class="iconBtn"
+          data-tip="Open settings"
+          aria-label="Settings"
+        >
+          &#9881;
+        </button>
+      </div>
+    </header>
 
-  <section class="pnSection">
-    <h2 class="secTitle">Instance</h2>
-    <label class="pnLabel" for="instance">Instance URL</label>
-    <div class="flex gap-2">
-      <input id="instance" type="url" placeholder="https://yourcompany.service-now.com" class="input flex-1 min-w-0">
-      <button id="connectBtn" class="btn">Connect</button>
-    </div>
-  </section>
+    <section class="pnSection">
+      <h2 class="secTitle">Instance</h2>
+      <label class="pnLabel" for="instance">Instance URL</label>
+      <div class="flex gap-2">
+        <input
+          id="instance"
+          type="url"
+          placeholder="https://yourcompany.service-now.com"
+          class="input flex-1 min-w-0"
+        />
+        <button id="connectBtn" class="btn">Connect</button>
+      </div>
+    </section>
 
-  <section class="pnSection">
-    <h2 class="secTitle">Filters</h2>
+    <section class="pnSection">
+      <h2 class="secTitle">Filters</h2>
 
-    <div id="filterListCard" class="hidden bg-card2 rounded-lg px-2.5 pt-2.5 pb-1.5 mb-3">
-      <div class="flex items-center justify-between mb-2">
-        <label class="pnLabel m-0">Saved filter sets · Run pulls all</label>
-        <div class="relative">
-          <button id="filterMenuBtn" type="button" class="linklike px-1" aria-haspopup="true" aria-expanded="false" data-tip="Preset options">&#8942;</button>
-          <div id="filterMenu" class="hidden absolute right-0 z-10 mt-1 min-w-[180px] bg-card border border-line rounded-lg p-1.5 shadow-[0_8px_24px_rgba(17,17,27,.55)]">
-            <button id="savePresetBtn" type="button" class="linklike block w-full text-left px-1 py-1">Save preset&hellip;</button>
-            <div id="presetMenuList" class="mt-1 border-t border-line pt-1"></div>
+      <div id="filterListCard" class="hidden bg-card2 rounded-lg px-2.5 pt-2.5 pb-1.5 mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <label class="pnLabel m-0">Saved filter sets · Run pulls all</label>
+          <div class="relative">
+            <button
+              id="filterMenuBtn"
+              type="button"
+              class="linklike px-1"
+              aria-haspopup="true"
+              aria-expanded="false"
+              data-tip="Preset options"
+            >
+              &#8942;
+            </button>
+            <div
+              id="filterMenu"
+              class="hidden absolute right-0 z-10 mt-1 min-w-[180px] bg-card border border-line rounded-lg p-1.5 shadow-[0_8px_24px_rgba(17,17,27,.55)]"
+            >
+              <button
+                id="savePresetBtn"
+                type="button"
+                class="linklike block w-full text-left px-1 py-1"
+              >
+                Save preset&hellip;
+              </button>
+              <div id="presetMenuList" class="mt-1 border-t border-line pt-1"></div>
+            </div>
           </div>
         </div>
+        <div id="filterListBox"></div>
+        <button id="clearFilterListBtn" type="button" class="linklike">
+          Clear all — run uses the live filters only
+        </button>
       </div>
-      <div id="filterListBox"></div>
-      <button id="clearFilterListBtn" type="button" class="linklike">Clear all — run uses the live filters only</button>
-    </div>
 
-    <label class="pnLabel" for="ticketType">Ticket type</label>
-    <select id="ticketType" class="select">
-      <option value="incident">Incident</option>
-      <option value="change_request">Change Request</option>
-      <option value="problem">Problem</option>
-      <option value="sc_req_item">Requested Item (RITM)</option>
-      <option value="sc_task">Catalog Task (SCTASK)</option>
-    </select>
+      <label class="pnLabel" for="ticketType">Ticket type</label>
+      <select id="ticketType" class="select">
+        <option value="incident">Incident</option>
+        <option value="change_request">Change Request</option>
+        <option value="problem">Problem</option>
+        <option value="sc_req_item">Requested Item (RITM)</option>
+        <option value="sc_task">Catalog Task (SCTASK)</option>
+      </select>
 
-    <label class="pnLabel">Conditions</label>
-    <div id="summaryWindowTabs" class="hidden flex gap-1 mb-2">
-      <button type="button" id="summaryTabLast" class="btn-ghost text-[11px] px-2 py-1">Last week (implemented)</button>
-      <button type="button" id="summaryTabNext" class="btn-ghost text-[11px] px-2 py-1">Next week (planned)</button>
-    </div>
-    <div id="condRows"></div>
-    <button id="addCondBtn" type="button" class="linklike">+ Add condition</button>
+      <label class="pnLabel">Conditions</label>
+      <div id="summaryWindowTabs" class="hidden flex gap-1 mb-2">
+        <button type="button" id="summaryTabLast" class="btn-ghost text-[11px] px-2 py-1">
+          Last week (implemented)
+        </button>
+        <button type="button" id="summaryTabNext" class="btn-ghost text-[11px] px-2 py-1">
+          Next week (planned)
+        </button>
+      </div>
+      <div id="condRows"></div>
+      <button id="addCondBtn" type="button" class="linklike">+ Add condition</button>
 
-    <button id="addFilterBtn" type="button" class="btn-ghost w-full mt-2.5">+ Add to filter list</button>
+      <button id="addFilterBtn" type="button" class="btn-ghost w-full mt-2.5">
+        + Add to filter list
+      </button>
 
-    <label class="pnLabel" for="presetSelect">Load preset</label>
-    <select id="presetSelect" class="select" data-tip="Load a filter preset — replaces the filter list. WSR is the built-in Weekly Status Report preset.">
-      <option value="">Load preset&hellip;</option>
-    </select>
+      <label class="pnLabel" for="presetSelect">Load preset</label>
+      <select
+        id="presetSelect"
+        class="select"
+        data-tip="Load a filter preset — replaces the filter list. WSR is the built-in Weekly Status Report preset."
+      >
+        <option value="">Load preset&hellip;</option>
+      </select>
 
-    <label class="flex items-center gap-2 mt-3 text-[12px] text-muted cursor-pointer select-none" data-tip="Also pull this week's change requests to fill the Weekly Summary sheet (last week implemented/failed, next week planned) plus P1/P2 incidents from last week">
-      <input id="includeSummary" type="checkbox" class="accent-accent">
-      <span>Pull change requests for Weekly Summary</span>
-    </label>
+      <label
+        class="flex items-center gap-2 mt-3 text-[12px] text-muted cursor-pointer select-none"
+        data-tip="Also pull this week's change requests to fill the Weekly Summary sheet (last week implemented/failed, next week planned) plus P1/P2 incidents from last week"
+      >
+        <input id="includeSummary" type="checkbox" class="accent-accent" />
+        <span>Pull change requests for Weekly Summary</span>
+      </label>
 
-    <div id="summaryFilterBox" class="hidden mt-1.5 ml-6 text-[11.5px] text-dim">
-      <div id="summaryFilterText" class="leading-relaxed"></div>
-      <div class="flex items-center gap-2 mt-1">
-        <button id="editSummaryBtn" type="button" class="linklike px-0">Edit</button>
-        <button id="resetSummaryBtn" type="button" class="linklike px-0 hidden">Reset to this week&rsquo;s dates</button>
+      <div id="summaryFilterBox" class="hidden mt-1.5 ml-6 text-[11.5px] text-dim">
+        <div id="summaryFilterText" class="leading-relaxed"></div>
+        <div class="flex items-center gap-2 mt-1">
+          <button id="editSummaryBtn" type="button" class="linklike px-0">Edit</button>
+          <button id="resetSummaryBtn" type="button" class="linklike px-0 hidden">
+            Reset to this week&rsquo;s dates
+          </button>
+        </div>
+      </div>
+
+      <details id="advancedBox" class="mt-2.5">
+        <summary class="text-[12px] text-dim cursor-pointer">
+          Advanced — raw query override / generated query
+        </summary>
+        <textarea
+          id="rawQuery"
+          placeholder="Optional: extra encoded query conditions, e.g. priority=1^category=network"
+          class="textarea mt-2"
+        ></textarea>
+        <label class="pnLabel">Generated query</label>
+        <pre id="generatedQuery" class="mono"></pre>
+      </details>
+    </section>
+
+    <div class="pnDivider"></div>
+
+    <section class="flex gap-2 mb-2.5">
+      <button id="previewBtn" class="btn-ghost flex-1 py-2.5">Preview</button>
+      <button id="runBtn" class="btn-primary flex-1 py-2.5">Run</button>
+    </section>
+    <section class="flex gap-2 mb-2.5">
+      <button id="viewBtn" class="btn-ghost w-full py-2.5">Open data view</button>
+    </section>
+
+    <section id="progressWrap" class="hidden">
+      <div class="h-[7px] bg-card2 rounded overflow-hidden">
+        <div id="fill" class="h-full w-0 bg-peach transition-[width] duration-300"></div>
+      </div>
+      <div id="stageLabel" class="text-[11.5px] text-dim mt-1.5 min-h-4"></div>
+      <div id="pullCounter" class="hidden text-[12.5px] text-accent mt-1 font-semibold"></div>
+    </section>
+
+    <section class="card log-card hidden" id="logCard">
+      <h2
+        id="logHead"
+        class="text-xs m-0 mb-1 text-muted uppercase tracking-wider cursor-pointer select-none hover:text-accent"
+        data-tip="Click to open full log"
+      >
+        Log
+        <span
+          id="logErrBadge"
+          class="hidden bg-bad/20 text-[#f5e0dc] rounded-lg px-1.5 text-[10px] ml-1"
+        ></span>
+      </h2>
+      <div
+        id="log"
+        class="max-h-40 overflow-y-auto text-[11px] leading-relaxed text-muted font-mono break-words"
+      ></div>
+    </section>
+
+    <div
+      id="logModal"
+      class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
+    >
+      <div
+        class="log-box w-[min(720px,94vw)] max-h-[78vh] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] flex flex-col overflow-hidden"
+      >
+        <div
+          class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-line font-semibold text-muted text-[12.5px]"
+        >
+          <span>Request &amp; activity log</span>
+          <button id="logCopy" type="button" class="linklike ml-auto">Copy all</button>
+          <button
+            id="logClose"
+            type="button"
+            class="ml-1 bg-transparent border-0 text-dim cursor-pointer text-sm px-1.5 py-0.5 hover:text-bad"
+            data-tip="Close"
+          >
+            &#10005;
+          </button>
+        </div>
+        <div
+          id="logMirror"
+          class="overflow-y-auto font-mono text-[11.5px] leading-relaxed text-muted px-3.5 py-2.5 break-words whitespace-pre-wrap"
+        ></div>
       </div>
     </div>
 
-    <details id="advancedBox" class="mt-2.5">
-      <summary class="text-[12px] text-dim cursor-pointer">Advanced — raw query override / generated query</summary>
-      <textarea id="rawQuery" placeholder="Optional: extra encoded query conditions, e.g. priority=1^category=network" class="textarea mt-2"></textarea>
-      <label class="pnLabel">Generated query</label>
-      <pre id="generatedQuery" class="mono"></pre>
-    </details>
-  </section>
-
-  <div class="pnDivider"></div>
-
-  <section class="flex gap-2 mb-2.5">
-    <button id="previewBtn" class="btn-ghost flex-1 py-2.5">Preview</button>
-    <button id="runBtn" class="btn-primary flex-1 py-2.5">Run</button>
-  </section>
-  <section class="flex gap-2 mb-2.5">
-    <button id="viewBtn" class="btn-ghost w-full py-2.5">Open data view</button>
-  </section>
-
-  <section id="progressWrap" class="hidden">
-    <div class="h-[7px] bg-card2 rounded overflow-hidden"><div id="fill" class="h-full w-0 bg-peach transition-[width] duration-300"></div></div>
-    <div id="stageLabel" class="text-[11.5px] text-dim mt-1.5 min-h-4"></div>
-    <div id="pullCounter" class="hidden text-[12.5px] text-accent mt-1 font-semibold"></div>
-  </section>
-
-  <section class="card log-card hidden" id="logCard">
-    <h2 id="logHead" class="text-xs m-0 mb-1 text-muted uppercase tracking-wider cursor-pointer select-none hover:text-accent" data-tip="Click to open full log">Log <span id="logErrBadge" class="hidden bg-bad/20 text-[#f5e0dc] rounded-lg px-1.5 text-[10px] ml-1"></span></h2>
-    <div id="log" class="max-h-40 overflow-y-auto text-[11px] leading-relaxed text-muted font-mono break-words"></div>
-  </section>
-
-  <div id="logModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70">
-    <div class="log-box w-[min(720px,94vw)] max-h-[78vh] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] flex flex-col overflow-hidden">
-      <div class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-line font-semibold text-muted text-[12.5px]">
-        <span>Request &amp; activity log</span>
-        <button id="logCopy" type="button" class="linklike ml-auto">Copy all</button>
-        <button id="logClose" type="button" class="ml-1 bg-transparent border-0 text-dim cursor-pointer text-sm px-1.5 py-0.5 hover:text-bad" data-tip="Close">&#10005;</button>
-      </div>
-      <div id="logMirror" class="overflow-y-auto font-mono text-[11.5px] leading-relaxed text-muted px-3.5 py-2.5 break-words whitespace-pre-wrap"></div>
-    </div>
-  </div>
-
-  <div id="presetNameModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70">
-    <div class="w-[min(360px,92vw)] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] p-4">
-      <div class="font-semibold text-muted text-[12.5px] mb-2">Save filter preset</div>
-      <input id="presetNameInput" type="text" placeholder="Preset name" class="input w-full" maxlength="60">
-      <div id="presetNameError" class="hidden text-[11px] text-bad mt-1.5"></div>
-      <div class="flex gap-2 justify-end mt-3">
-        <button id="presetNameCancel" type="button" class="linklike">Cancel</button>
-        <button id="presetNameSave" type="button" class="btn-primary">Save</button>
+    <div
+      id="presetNameModal"
+      class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
+    >
+      <div
+        class="w-[min(360px,92vw)] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] p-4"
+      >
+        <div class="font-semibold text-muted text-[12.5px] mb-2">Save filter preset</div>
+        <input
+          id="presetNameInput"
+          type="text"
+          placeholder="Preset name"
+          class="input w-full"
+          maxlength="60"
+        />
+        <div id="presetNameError" class="hidden text-[11px] text-bad mt-1.5"></div>
+        <div class="flex gap-2 justify-end mt-3">
+          <button id="presetNameCancel" type="button" class="linklike">Cancel</button>
+          <button id="presetNameSave" type="button" class="btn-primary">Save</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <footer id="lastRun" class="text-[10.5px] text-faint mt-2"></footer>
+    <footer id="lastRun" class="text-[10.5px] text-faint mt-2"></footer>
 
-  <script type="module" src="panel.js"></script>
-</body>
+    <script type="module" src="panel.js"></script>
+  </body>
 </html>

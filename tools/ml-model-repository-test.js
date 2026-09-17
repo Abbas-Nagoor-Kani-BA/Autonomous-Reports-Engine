@@ -1,7 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { createMemoryMlModelRepository, ML_MODEL_CATALOG, modelById, modelByRepoId, specForModelId, CLASSIFIER_MODEL } from "../data/ml-model-repository.ts";
+import {
+  createMemoryMlModelRepository,
+  ML_MODEL_CATALOG,
+  modelById,
+  modelByRepoId,
+  specForModelId,
+  CLASSIFIER_MODEL
+} from "../data/ml-model-repository.ts";
 
 function bytesOf(s) {
   return new TextEncoder().encode(s).buffer;
@@ -46,7 +53,10 @@ test("download caches files and reports progress", async () => {
     assert.equal(last.total, 2);
     assert.equal(await repo.isReady(), true);
 
-    const config = await repo.getFile({ repoId: "Xenova/x", files: ["config.json", "onnx/model.onnx"] }, "config.json");
+    const config = await repo.getFile(
+      { repoId: "Xenova/x", files: ["config.json", "onnx/model.onnx"] },
+      "config.json"
+    );
     assert.ok(config);
     assert.equal(new TextDecoder().decode(new Uint8Array(config)), "{}");
   } finally {
@@ -99,7 +109,10 @@ test("matches is false until the exact model spec is cached", async () => {
     // A different repoId must not match even with files present.
     assert.equal(await repo.matches({ repoId: "Other/y", files: spec.files }), false);
     // A request for a file this repo never had must not match.
-    assert.equal(await repo.matches({ repoId: "Xenova/x", files: ["config.json", "missing.onnx"] }), false);
+    assert.equal(
+      await repo.matches({ repoId: "Xenova/x", files: ["config.json", "missing.onnx"] }),
+      false
+    );
   } finally {
     restore();
   }
@@ -137,7 +150,10 @@ test("matches reflects each model's own cache independent of meta", async () => 
     // A different repoId must not match even though a model was cached.
     assert.equal(await repo.matches({ repoId: "Other/y", files: spec.files }), false);
     // A request for a file this repo never had must not match.
-    assert.equal(await repo.matches({ repoId: "Xenova/x", files: ["config.json", "missing.onnx"] }), false);
+    assert.equal(
+      await repo.matches({ repoId: "Xenova/x", files: ["config.json", "missing.onnx"] }),
+      false
+    );
   } finally {
     restore();
   }
@@ -158,7 +174,11 @@ test("the model catalog exposes selectable zero-shot models with specs", () => {
 test("two catalog models are distinct (must not share a cache spec)", () => {
   const a = ML_MODEL_CATALOG[0].spec;
   const b = ML_MODEL_CATALOG[1].spec;
-  assert.notEqual(a.repoId, b.repoId, "distinct repoIds so downloading one does not clobber the other");
+  assert.notEqual(
+    a.repoId,
+    b.repoId,
+    "distinct repoIds so downloading one does not clobber the other"
+  );
 });
 
 test("modelById / modelByRepoId resolve catalog entries", () => {

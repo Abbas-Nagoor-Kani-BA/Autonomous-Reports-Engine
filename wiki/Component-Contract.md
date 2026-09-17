@@ -44,5 +44,6 @@ bugs, and Escape silently not closing two of four overlays. Add a component-leve
 test for every component. See [Testing](Testing).
 
 ---
+
 Related: [Architecture](Architecture) · [Testing](Testing) ·
 [Contributing](Contributing)

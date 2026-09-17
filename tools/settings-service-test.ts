@@ -4,7 +4,11 @@ import assert from "node:assert/strict";
 import { Container } from "../di/container.ts";
 import { SETTINGS_REPO, KEY_VALUE_STORE, MSR_LISTS_REPO } from "../di/tokens.ts";
 import { createMemoryKeyValueStore } from "../data/key-value-store.ts";
-import { normaliseSettings, SettingsService, SETTINGS_DEFAULTS } from "../common/services/settings-service.ts";
+import {
+  normaliseSettings,
+  SettingsService,
+  SETTINGS_DEFAULTS
+} from "../common/services/settings-service.ts";
 import { SettingsStore } from "../data/repositories/settings-repository.ts";
 import { MsrListsStore } from "../data/repositories/msr-lists-repository.ts";
 
@@ -39,10 +43,14 @@ test("normaliseSettings defaults configItems to an empty array", () => {
 
 test("normaliseSettings preserves and coerces configItems", () => {
   assert.deepEqual(
-    normaliseSettings({ defaults: { configItems: ["RMS (prd)", "Billing API"] } }).defaults.configItems,
+    normaliseSettings({ defaults: { configItems: ["RMS (prd)", "Billing API"] } }).defaults
+      .configItems,
     ["RMS (prd)", "Billing API"]
   );
-  assert.deepEqual(normaliseSettings({ defaults: { configItems: "nope" } }).defaults.configItems, []);
+  assert.deepEqual(
+    normaliseSettings({ defaults: { configItems: "nope" } }).defaults.configItems,
+    []
+  );
 });
 
 test("normaliseSettings migrates the legacy single queueName", () => {
@@ -56,23 +64,32 @@ test("normaliseSettings ignores queueName when queues already exist", () => {
 });
 
 test("normaliseSettings rejects an unknown ticket type", () => {
-  assert.equal(normaliseSettings({ defaults: { ticketType: "not_a_table" } }).defaults.ticketType, "incident");
+  assert.equal(
+    normaliseSettings({ defaults: { ticketType: "not_a_table" } }).defaults.ticketType,
+    "incident"
+  );
 });
 
 test("normaliseSettings clamps every numeric param", () => {
-  const low = normaliseSettings({ params: { tablePageSize: 1, cacheTtlMinutes: -5, maxTicketsPerPull: -1 } });
+  const low = normaliseSettings({
+    params: { tablePageSize: 1, cacheTtlMinutes: -5, maxTicketsPerPull: -1 }
+  });
   assert.equal(low.params.tablePageSize, 100, "tablePageSize floor");
   assert.equal(low.params.cacheTtlMinutes, 0, "cacheTtlMinutes floor");
   assert.equal(low.params.maxTicketsPerPull, 0, "maxTicketsPerPull floor");
 
-  const high = normaliseSettings({ params: { tablePageSize: 999999, cacheTtlMinutes: 999999, maxTicketsPerPull: 999999 } });
+  const high = normaliseSettings({
+    params: { tablePageSize: 999999, cacheTtlMinutes: 999999, maxTicketsPerPull: 999999 }
+  });
   assert.equal(high.params.tablePageSize, 5000);
   assert.equal(high.params.cacheTtlMinutes, 10080);
   assert.equal(high.params.maxTicketsPerPull, 100000);
 });
 
 test("normaliseSettings coerces junk params back to defaults", () => {
-  const draft = normaliseSettings({ params: { tablePageSize: "abc", maxTicketsPerPull: undefined } });
+  const draft = normaliseSettings({
+    params: { tablePageSize: "abc", maxTicketsPerPull: undefined }
+  });
   assert.equal(draft.params.tablePageSize, SETTINGS_DEFAULTS.params.tablePageSize);
   assert.equal(draft.params.maxTicketsPerPull, SETTINGS_DEFAULTS.params.maxTicketsPerPull);
 });
@@ -86,7 +103,10 @@ test("an empty cache TTL field means 0, which disables caching", () => {
 });
 
 test("normaliseSettings coerces debugResponses to a boolean", () => {
-  assert.equal(normaliseSettings({ params: { debugResponses: "yes" } }).params.debugResponses, true);
+  assert.equal(
+    normaliseSettings({ params: { debugResponses: "yes" } }).params.debugResponses,
+    true
+  );
   assert.equal(normaliseSettings({ params: { debugResponses: 0 } }).params.debugResponses, false);
 });
 

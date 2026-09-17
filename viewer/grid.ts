@@ -6,16 +6,35 @@ import { pad2 } from "../lib/format.ts";
 import { showToast } from "../lib/toast.ts";
 import { normalizeNames } from "../core/summary/names.ts";
 import { computeAttention } from "../core/attention/attention.ts";
-import { $, columnOptionList, migrateLegacyResolutions, setColumnVisible, setStatus, visibleCols } from "./core.ts";
+import {
+  $,
+  columnOptionList,
+  migrateLegacyResolutions,
+  setColumnVisible,
+  setStatus,
+  visibleCols
+} from "./core.ts";
 import type { ViewerData, ViewerRow } from "./core.ts";
 import type { InstantFn } from "./core.ts";
 import { DataGrid } from "./components/data-grid.ts";
 import type { DataGridState } from "./components/data-grid.ts";
 import { currentRows, hasDataRows, parseLocalInput, setAttentionCtxResolver } from "./grid-data.ts";
-import { dataStore, getColWidths, getMsrLists, saveColWidths, setColWidths, setSelfPush } from "./store.ts";
+import {
+  dataStore,
+  getColWidths,
+  getMsrLists,
+  saveColWidths,
+  setColWidths,
+  setSelfPush
+} from "./store.ts";
 import { attachSummaryToData, renderSummary, setRowsProvider } from "./summary.ts";
 import { ExtractService } from "./services/extract-service.ts";
-import { classifyRows, classificationListsFp, hasValidRootCause, hasValidSolutionType } from "./classify.ts";
+import {
+  classifyRows,
+  classificationListsFp,
+  hasValidRootCause,
+  hasValidSolutionType
+} from "./classify.ts";
 import type { ClassifyStats } from "./classify.ts";
 import { MlModelStore, modelById, modelByRepoId } from "../data/ml-model-repository.ts";
 import { getCalclensMode } from "./calclens-state.ts";
@@ -26,7 +45,9 @@ const extract = new ExtractService();
 let classifying = false;
 let lastClassifiedFingerprint = "";
 
-function st() { return dataStore.getState(); }
+function st() {
+  return dataStore.getState();
+}
 
 type SelHooks = {
   highlight: () => void;
@@ -42,11 +63,17 @@ let selHooks: SelHooks = {
   ensureDefault: () => {}
 };
 
-function setSelectionHooks(h: Partial<SelHooks>) { selHooks = { ...selHooks, ...h }; }
+function setSelectionHooks(h: Partial<SelHooks>) {
+  selHooks = { ...selHooks, ...h };
+}
 
 const cellFocusListeners: Array<(info: { sysId: string; key: string } | null) => void> = [];
-function setOnCellFocus(fn: (info: { sysId: string; key: string } | null) => void) { cellFocusListeners.push(fn); }
-function addCellFocusListener(fn: (info: { sysId: string; key: string } | null) => void) { cellFocusListeners.push(fn); }
+function setOnCellFocus(fn: (info: { sysId: string; key: string } | null) => void) {
+  cellFocusListeners.push(fn);
+}
+function addCellFocusListener(fn: (info: { sysId: string; key: string } | null) => void) {
+  cellFocusListeners.push(fn);
+}
 function reportCellFocus(info: { sysId: string; key: string } | null) {
   for (const fn of cellFocusListeners) fn(info);
 }
@@ -54,7 +81,12 @@ function reportCellFocus(info: { sysId: string; key: string } | null) {
 function load(d: ViewerData | null | undefined) {
   selHooks.clearUndo();
   const data = d && Array.isArray(d.rows) ? d : null;
-  dataStore.setState({ data, sortKey: null, sortDir: 1, snOffsetMs: data ? detectSnOffsetMs(data.rows) : 0 });
+  dataStore.setState({
+    data,
+    sortKey: null,
+    sortDir: 1,
+    snOffsetMs: data ? detectSnOffsetMs(data.rows) : 0
+  });
   let migrated = 0;
   if (data) {
     autoParse();
@@ -87,8 +119,10 @@ function load(d: ViewerData | null | undefined) {
 }
 
 function formatWallClock(d: Date): string {
-  return `${pad2(d.getUTCDate())}-${pad2(d.getUTCMonth() + 1)}-${d.getUTCFullYear()} ` +
-    `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
+  return (
+    `${pad2(d.getUTCDate())}-${pad2(d.getUTCMonth() + 1)}-${d.getUTCFullYear()} ` +
+    `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`
+  );
 }
 
 const fmtInstant: InstantFn = (utcIso, row) => {
@@ -109,12 +143,17 @@ let attentionGroups: string[] = [];
 let attentionLoaded = false;
 
 function loadAttentionCtx(): void {
-  chrome.storage.local.get(STORAGE.pluginSettings).then((res: Record<string, unknown>) => {
-    const defaults = (res?.[STORAGE.pluginSettings] as any)?.defaults;
-    attentionTeam = normalizeNames(defaults?.teamMembers || []);
-    attentionGroups = normalizeNames(defaults?.queues || []);
-    attentionLoaded = true;
-  }).catch(() => { attentionLoaded = true; });
+  chrome.storage.local
+    .get(STORAGE.pluginSettings)
+    .then((res: Record<string, unknown>) => {
+      const defaults = (res?.[STORAGE.pluginSettings] as any)?.defaults;
+      attentionTeam = normalizeNames(defaults?.teamMembers || []);
+      attentionGroups = normalizeNames(defaults?.queues || []);
+      attentionLoaded = true;
+    })
+    .catch(() => {
+      attentionLoaded = true;
+    });
 }
 
 function attentionCtx(): { teamMembers: string[]; groupScope: string[] } {
@@ -129,42 +168,50 @@ export function initGrid() {
   setAttentionCtxResolver(() => attentionCtx());
   // Load persisted Calclens highlight toggles, then re-render so any disabled
   // rule stops painting its mark without waiting for the next state change.
-  loadHighlightPrefs().then(() => render()).catch(() => undefined);
-  grid = new DataGrid($("wrap"), {}, {
-    table: $("tbl"),
-    count: $("count"),
-    slaBar: $("slaBar"),
-    fmtInstant: fmtInstant as InstantFn,
-    legendEnabled: () => getCalclensMode(),
-    columnOptions: (key: string, row: ViewerRow) => columnOptionList(key, row),
-    onSort: (key) => {
-      const { sortKey, sortDir } = st();
-      if (sortKey === key) dataStore.setState({ sortDir: -sortDir });
-      else dataStore.setState({ sortKey: key, sortDir: 1 });
-      render();
-    },
-    onSortExplicit: (key, dir) => {
-      dataStore.setState({ sortKey: key, sortDir: dir });
-      render();
-    },
-    onHideColumn: (key) => {
-      if (!setColumnVisible(key, false)) {
-        setStatus("At least one column must stay visible", true);
-        return;
+  loadHighlightPrefs()
+    .then(() => render())
+    .catch(() => undefined);
+  grid = new DataGrid(
+    $("wrap"),
+    {},
+    {
+      table: $("tbl"),
+      count: $("count"),
+      slaBar: $("slaBar"),
+      fmtInstant: fmtInstant as InstantFn,
+      legendEnabled: () => getCalclensMode(),
+      columnOptions: (key: string, row: ViewerRow) => columnOptionList(key, row),
+      onSort: (key) => {
+        const { sortKey, sortDir } = st();
+        if (sortKey === key) dataStore.setState({ sortDir: -sortDir });
+        else dataStore.setState({ sortKey: key, sortDir: 1 });
+        render();
+      },
+      onSortExplicit: (key, dir) => {
+        dataStore.setState({ sortKey: key, sortDir: dir });
+        render();
+      },
+      onHideColumn: (key) => {
+        if (!setColumnVisible(key, false)) {
+          setStatus("At least one column must stay visible", true);
+          return;
+        }
+        render();
+      },
+      onCellFocus: (info) => reportCellFocus(info),
+      onWidthsChange: (widths) => {
+        setColWidths(widths);
+        saveColWidths();
+      },
+      afterRender: () => {
+        selHooks.highlight();
+        renderSummary();
+        currentModelLabel()
+          .then(writeModelLabel)
+          .catch(() => undefined);
       }
-      render();
-    },
-    onCellFocus: (info) => reportCellFocus(info),
-    onWidthsChange: (widths) => {
-      setColWidths(widths);
-      saveColWidths();
-    },
-    afterRender: () => {
-      selHooks.highlight();
-      renderSummary();
-      currentModelLabel().then(writeModelLabel).catch(() => undefined);
     }
-  });
+  );
 }
 
 function gridState(rows: ViewerRow[]): DataGridState {
@@ -217,7 +264,10 @@ function scheduleSave() {
 
 async function saveData() {
   const { data, saveTimer } = st();
-  if (saveTimer !== null) { clearTimeout(saveTimer); dataStore.setState({ saveTimer: null }); }
+  if (saveTimer !== null) {
+    clearTimeout(saveTimer);
+    dataStore.setState({ saveTimer: null });
+  }
   if (!data) return;
   attachSummaryToData(data);
   setSelfPush(true);
@@ -251,7 +301,7 @@ function getTotalRows(): number {
 
 function findRowBySysId(sysId: unknown): ViewerRow | undefined {
   const data = st().data;
-  return data ? data.rows.find(r => String(r.sysId ?? "") === String(sysId ?? "")) : undefined;
+  return data ? data.rows.find((r) => String(r.sysId ?? "") === String(sysId ?? "")) : undefined;
 }
 
 function displayedValue(row: ViewerRow, key: string, cls?: string): string {
@@ -267,7 +317,9 @@ function autoParse(): number {
   if (data.rows.length && !stats.withNotes) {
     setStatus("No close notes / work notes / comments found on these tickets", true);
   } else if (stats.filled) {
-    showToast(`Extracted resolution details from ${stats.filled} ticket${stats.filled === 1 ? "" : "s"}`);
+    showToast(
+      `Extracted resolution details from ${stats.filled} ticket${stats.filled === 1 ? "" : "s"}`
+    );
   }
   return stats.filled;
 }
@@ -283,9 +335,8 @@ function clsProgressShow(done: number, total: number, notClassified = 0): void {
   // status bar (legend + classification counts), so we stop writing it here.
   const remaining = Math.max(0, total - done);
   const skipped = notClassified > 0 ? ` · ${notClassified} not able to process` : "";
-  $("status").textContent = done < total
-    ? `Classifying ticket ${done}/${total} (${remaining} left)${skipped}`
-    : "";
+  $("status").textContent =
+    done < total ? `Classifying ticket ${done}/${total} (${remaining} left)${skipped}` : "";
 }
 
 function clsProgressHide(): void {
@@ -440,7 +491,10 @@ async function classifyGrid(): Promise<void> {
   if (classifying || lastClassifiedFingerprint === runKey) return;
   // A brand-new dataset, a model switch, or a list edit: reset the previous run's
   // bar before starting.
-  if (lastClassifiedFingerprint !== runKey) { clsProgressHide(); clsStatsHide(); }
+  if (lastClassifiedFingerprint !== runKey) {
+    clsProgressHide();
+    clsStatsHide();
+  }
   classifying = true;
   try {
     const modelLabel = await currentModelLabel();
@@ -456,7 +510,9 @@ async function classifyGrid(): Promise<void> {
     });
     await persistEdits();
     if (run.changed) {
-      showToast(`Classified ${run.changed} ticket${run.changed === 1 ? "" : "s"} (${run.withNotes} with notes)`);
+      showToast(
+        `Classified ${run.changed} ticket${run.changed === 1 ? "" : "s"} (${run.withNotes} with notes)`
+      );
     }
     if (run.notice) showToast(run.notice, "info");
     lastClassifiedFingerprint = runKey;

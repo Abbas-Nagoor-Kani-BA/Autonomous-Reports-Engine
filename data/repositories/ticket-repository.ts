@@ -61,7 +61,12 @@ export function isFreshQuery(
   now = Date.now(),
   ttlMs: number = DEFAULT_TTL_MS
 ): boolean {
-  return !!entry && typeof entry.at === "number" && Array.isArray(entry.records) && now - entry.at < ttlMs;
+  return (
+    !!entry &&
+    typeof entry.at === "number" &&
+    Array.isArray(entry.records) &&
+    now - entry.at < ttlMs
+  );
 }
 
 /**
@@ -104,7 +109,11 @@ export class CachedTicketRepository implements TicketRepository {
     const hit = await store.get<QueryCacheEntry>(key).catch(() => undefined);
 
     if (isFreshQuery(hit, Date.now(), this.ttlMs)) {
-      return { records: (hit as QueryCacheEntry).records, source: "cache", cachedAt: (hit as QueryCacheEntry).at };
+      return {
+        records: (hit as QueryCacheEntry).records,
+        source: "cache",
+        cachedAt: (hit as QueryCacheEntry).at
+      };
     }
 
     const records = await this.remote.fetchAllRecords(

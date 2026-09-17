@@ -42,5 +42,6 @@ Separately, the `Sync Wiki` workflow publishes `wiki/**` to the GitHub Wiki on
 push to `main`. It is independent of releases. See [Contributing](Contributing).
 
 ---
+
 Related: [Building and Running](Building-and-Running) · [Testing](Testing) ·
 [Roadmap](Roadmap)

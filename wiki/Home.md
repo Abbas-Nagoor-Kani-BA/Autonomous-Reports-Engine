@@ -80,10 +80,10 @@ Start here if you want to build, test, or extend the code.
 
 ## At a glance
 
-| | |
-|---|---|
-| Platform | Chrome / Chromium, Manifest V3, side panel |
-| Auth | Reuses your logged-in ServiceNow browser session (no API keys) |
-| Tables | incident, change_request, problem, sc_req_item, sc_task |
-| Output | Filled WSR (Weekly Status Report) `.xlsx` workbook, plus Copy for MSR (Monthly Status Report) |
-| Storage | Local only: `chrome.storage.local` holds settings, the pulled dataset, and viewer prefs; three IndexedDB caches — `snAnalyzerCache` (query + timeline), `snAnalyzerClassCache` (classification results), `snAnalyzerMlModel` (ML model). See [Caching](Caching). |
+|          |                                                                                                                                                                                                                                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Platform | Chrome / Chromium, Manifest V3, side panel                                                                                                                                                                                                                       |
+| Auth     | Reuses your logged-in ServiceNow browser session (no API keys)                                                                                                                                                                                                   |
+| Tables   | incident, change_request, problem, sc_req_item, sc_task                                                                                                                                                                                                          |
+| Output   | Filled WSR (Weekly Status Report) `.xlsx` workbook, plus Copy for MSR (Monthly Status Report)                                                                                                                                                                    |
+| Storage  | Local only: `chrome.storage.local` holds settings, the pulled dataset, and viewer prefs; three IndexedDB caches — `snAnalyzerCache` (query + timeline), `snAnalyzerClassCache` (classification results), `snAnalyzerMlModel` (ML model). See [Caching](Caching). |

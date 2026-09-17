@@ -88,12 +88,17 @@ test("columns get their default width, or the persisted one", () => {
   const { grid, state } = setup({ colWidths: { shortDescription: 321 } });
   grid.render(state);
 
-  const widths = [...win.document.querySelectorAll("#tbl colgroup col")].map((c) => (c as HTMLElement).style.width);
+  const widths = [...win.document.querySelectorAll("#tbl colgroup col")].map(
+    (c) => (c as HTMLElement).style.width
+  );
   assert.deepEqual(widths, ["120px", "321px", "155px", "105px"]);
 });
 
 test("refreshHead applies new widths without re-rendering rows", () => {
-  const { grid, state, rendered } = setup({ rows: [{ sysId: "a", number: "INC1", state: "Closed" }], total: 1 });
+  const { grid, state, rendered } = setup({
+    rows: [{ sysId: "a", number: "INC1", state: "Closed" }],
+    total: 1
+  });
   grid.render(state);
   assert.equal(rendered(), 1);
 
@@ -135,7 +140,11 @@ test("rows render one td per column with the row values", () => {
 
 test("instant columns are formatted through the injected formatter", () => {
   const { grid, state } = setup(
-    { rows: [{ sysId: "a", number: "INC1", assignTimeUtcIso: "2026-01-01T10:00:00Z", state: "Closed" }] },
+    {
+      rows: [
+        { sysId: "a", number: "INC1", assignTimeUtcIso: "2026-01-01T10:00:00Z", state: "Closed" }
+      ]
+    },
     { fmtInstant: (v: string) => (v ? `fmt:${v}` : "") }
   );
   grid.render(state);
@@ -178,9 +187,15 @@ test("a value inside the option list is not flagged", () => {
 
 test("footer shows the filtered and total counts, and the SLA breach legend (no type counts)", () => {
   const breached = {
-    sysId: "a", number: "INC0001", priority: "2 - High", state: "Resolved",
-    assignmentGroup: "Q", configItem: "App A", createdOn: "2026-08-10 09:00:00",
-    assignTimeUtcIso: "2026-08-10T01:00:00.000Z", acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
+    sysId: "a",
+    number: "INC0001",
+    priority: "2 - High",
+    state: "Resolved",
+    assignmentGroup: "Q",
+    configItem: "App A",
+    createdOn: "2026-08-10 09:00:00",
+    assignTimeUtcIso: "2026-08-10T01:00:00.000Z",
+    acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
     resolvedAt: "2026-08-10 15:00:00"
   };
   const { grid, state, $ } = setup({ rows: [breached], total: 7 });
@@ -195,24 +210,39 @@ test("footer shows the filtered and total counts, and the SLA breach legend (no 
 
 test("legend is suppressed when legendEnabled returns false", () => {
   const breached = {
-    sysId: "a", number: "INC0001", priority: "2 - High", state: "Resolved",
-    assignmentGroup: "Q", configItem: "App A", createdOn: "2026-08-10 09:00:00",
-    assignTimeUtcIso: "2026-08-10T01:00:00.000Z", acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
+    sysId: "a",
+    number: "INC0001",
+    priority: "2 - High",
+    state: "Resolved",
+    assignmentGroup: "Q",
+    configItem: "App A",
+    createdOn: "2026-08-10 09:00:00",
+    assignTimeUtcIso: "2026-08-10T01:00:00.000Z",
+    acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
     resolvedAt: "2026-08-10 15:00:00"
   };
   const { grid, state, $ } = setup({ rows: [breached], total: 7 }, { legendEnabled: () => false });
   grid.render(state);
 
   assert.equal($("count").textContent, "1 / 7 tickets");
-  assert.ok($("slaBar").classList.contains("hidden"), "bar hidden when legend gated off and no classification legend");
+  assert.ok(
+    $("slaBar").classList.contains("hidden"),
+    "bar hidden when legend gated off and no classification legend"
+  );
   assert.doesNotMatch($("slaBar").textContent, /SLA breached/, "no breach legend while gated off");
 });
 
 test("legend appears when legendEnabled returns true", () => {
   const breached = {
-    sysId: "a", number: "INC0001", priority: "2 - High", state: "Resolved",
-    assignmentGroup: "Q", configItem: "App A", createdOn: "2026-08-10 09:00:00",
-    assignTimeUtcIso: "2026-08-10T01:00:00.000Z", acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
+    sysId: "a",
+    number: "INC0001",
+    priority: "2 - High",
+    state: "Resolved",
+    assignmentGroup: "Q",
+    configItem: "App A",
+    createdOn: "2026-08-10 09:00:00",
+    assignTimeUtcIso: "2026-08-10T01:00:00.000Z",
+    acknTimeUtcIso: "2026-08-10T02:00:00.000Z",
     resolvedAt: "2026-08-10 15:00:00"
   };
   const { grid, state, $ } = setup({ rows: [breached], total: 7 }, { legendEnabled: () => true });
@@ -256,8 +286,19 @@ test("a closed INC with breached SLAs is marked", () => {
 
 test("a low-confidence parse is flagged on solutionType and rootCause", () => {
   const { grid, state } = setup({
-    cols: [["solutionType", "Solution type", "", 115], ["rootCause", "Root cause", "", 130]],
-    rows: [{ sysId: "a", number: "INC1", solutionType: "Reboot", rootCause: "Hardware", parseReview: true }]
+    cols: [
+      ["solutionType", "Solution type", "", 115],
+      ["rootCause", "Root cause", "", 130]
+    ],
+    rows: [
+      {
+        sysId: "a",
+        number: "INC1",
+        solutionType: "Reboot",
+        rootCause: "Hardware",
+        parseReview: true
+      }
+    ]
   });
   grid.render(state);
 
@@ -267,7 +308,10 @@ test("a low-confidence parse is flagged on solutionType and rootCause", () => {
 });
 
 test("an open cell editor blocks the re-render", () => {
-  const { grid, state, rendered } = setup({ rows: [{ sysId: "a", number: "INC1", state: "Closed" }], total: 1 });
+  const { grid, state, rendered } = setup({
+    rows: [{ sysId: "a", number: "INC1", state: "Closed" }],
+    total: 1
+  });
   grid.render(state);
   assert.equal(rendered(), 1);
 
@@ -281,18 +325,36 @@ test("an open cell editor blocks the re-render", () => {
 
 test("sc_task row shows the RITM number and RFS priority in the grid", () => {
   const { grid, state } = setup({
-    cols: [["number", "Number", "num", 120], ["priority", "Priority", "", 90]],
-    rows: [{ sysId: "a", number: "SCTASK0001", requestItem: "RITM0009", priority: "", state: "In progress" }]
+    cols: [
+      ["number", "Number", "num", 120],
+      ["priority", "Priority", "", 90]
+    ],
+    rows: [
+      {
+        sysId: "a",
+        number: "SCTASK0001",
+        requestItem: "RITM0009",
+        priority: "",
+        state: "In progress"
+      }
+    ]
   });
   grid.render(state);
   const tds = [...win.document.querySelectorAll("#tbl tbody tr td")] as HTMLElement[];
   assert.equal(tds[0].textContent, "RITM0009", "number cell shows the RITM number");
-  assert.equal(tds[1].textContent, "RFS", "priority cell shows RFS even though row.priority is empty");
+  assert.equal(
+    tds[1].textContent,
+    "RFS",
+    "priority cell shows RFS even though row.priority is empty"
+  );
 });
 
 test("non-sc_task row shows its own number and priority in the grid", () => {
   const { grid, state } = setup({
-    cols: [["number", "Number", "num", 120], ["priority", "Priority", "", 90]],
+    cols: [
+      ["number", "Number", "num", 120],
+      ["priority", "Priority", "", 90]
+    ],
     rows: [{ sysId: "a", number: "INC0001", priority: "2 - High", state: "Closed" }]
   });
   grid.render(state);
@@ -341,7 +403,10 @@ test("updateRows is a no-op with an empty change set", () => {
 });
 
 test("updateRows is blocked while a cell editor is open", () => {
-  const { grid, state, rendered } = setup({ rows: [{ sysId: "a", number: "INC1", state: "Closed" }], total: 1 });
+  const { grid, state, rendered } = setup({
+    rows: [{ sysId: "a", number: "INC1", state: "Closed" }],
+    total: 1
+  });
   grid.render(state);
 
   const td = win.document.querySelector("#tbl tbody tr td") as HTMLElement;
@@ -375,19 +440,36 @@ test("updateRows keeps the legend when the changed subset has no breaches", () =
 
   state.rows[1].solutionType = "Permanent solution";
   grid.updateRows(["c"]);
-  assert.equal($("slaBar").classList.contains("hidden"), false, "legend still visible after updating a non-breach row");
+  assert.equal(
+    $("slaBar").classList.contains("hidden"),
+    false,
+    "legend still visible after updating a non-breach row"
+  );
 });
 
 test("attention resolver adds per-cell markers on the hinted columns", () => {
   const { grid, state } = setup({
     rows: [
       { sysId: "a", number: "INC0001", state: "Closed", rootCause: "", solutionType: "" },
-      { sysId: "b", number: "INC0002", state: "Closed", rootCause: "Application bug", solutionType: "Permanent solution" }
+      {
+        sysId: "b",
+        number: "INC0002",
+        state: "Closed",
+        rootCause: "Application bug",
+        solutionType: "Permanent solution"
+      }
     ],
     total: 2,
     attention: (row) => {
       return String(row.sysId) === "a"
-        ? [{ id: "emptyPlan", label: "Missing plan data", detail: "No root cause or solution type", columnHint: "state" }]
+        ? [
+            {
+              id: "emptyPlan",
+              label: "Missing plan data",
+              detail: "No root cause or solution type",
+              columnHint: "state"
+            }
+          ]
         : [];
     }
   });
@@ -397,7 +479,10 @@ test("attention resolver adds per-cell markers on the hinted columns", () => {
   assert.equal(rows.length, 2);
   const flagged = rows.find((r) => r.dataset.sysId === "a") as HTMLElement;
   const clean = rows.find((r) => r.dataset.sysId === "b") as HTMLElement;
-  assert.ok(!flagged.classList.contains("attention"), "flagged row carries no row-level attention class");
+  assert.ok(
+    !flagged.classList.contains("attention"),
+    "flagged row carries no row-level attention class"
+  );
   assert.ok(!clean.classList.contains("attention"), "clean row carries no attention class");
 
   const markedKeys = [...flagged.querySelectorAll("td.attention-mark")];
@@ -412,12 +497,25 @@ test("attention resolver adds per-cell markers on the hinted columns", () => {
 test("updateRows honours the attention resolver", () => {
   const { grid, state } = setup({
     rows: [
-      { sysId: "a", number: "INC0001", state: "Closed", rootCause: "Application bug", solutionType: "Permanent solution" }
+      {
+        sysId: "a",
+        number: "INC0001",
+        state: "Closed",
+        rootCause: "Application bug",
+        solutionType: "Permanent solution"
+      }
     ],
     total: 1,
     attention: (row) => {
       return String(row.sysId) === "a" && !String(row.rootCause)
-        ? [{ id: "emptyPlan", label: "Missing plan data", detail: "No root cause", columnHint: "state" }]
+        ? [
+            {
+              id: "emptyPlan",
+              label: "Missing plan data",
+              detail: "No root cause",
+              columnHint: "state"
+            }
+          ]
         : [];
     }
   });
@@ -435,7 +533,14 @@ test("updateRows honours the attention resolver", () => {
 test("enabledAttention suppresses the highlight but keeps the tooltip", () => {
   const attention = (row: Record<string, any>) =>
     String(row.sysId) === "a"
-      ? [{ id: "emptyPlan" as const, label: "Missing plan data", detail: "No root cause or solution type", columnHint: "state" }]
+      ? [
+          {
+            id: "emptyPlan" as const,
+            label: "Missing plan data",
+            detail: "No root cause or solution type",
+            columnHint: "state"
+          }
+        ]
       : [];
 
   const { grid, state } = setup({
@@ -447,22 +552,38 @@ test("enabledAttention suppresses the highlight but keeps the tooltip", () => {
   grid.render(state);
 
   const flagged = win.document.querySelector('#tbl tbody tr[data-sys-id="a"]') as HTMLElement;
-  assert.equal(flagged.querySelector("td.attention-mark"), null, "disabled rule paints no highlight");
+  assert.equal(
+    flagged.querySelector("td.attention-mark"),
+    null,
+    "disabled rule paints no highlight"
+  );
   const stateTd = [...flagged.querySelectorAll("td")].find((td) =>
-    (td.getAttribute("data-tip") ?? "").includes("Missing plan data"));
+    (td.getAttribute("data-tip") ?? "").includes("Missing plan data")
+  );
   assert.ok(stateTd, "tooltip still lists the attention reason when the highlight is disabled");
 
   // Flip the predicate on: the mark returns.
   state.enabledAttention = () => true;
   grid.render(state);
   const reflagged = win.document.querySelector('#tbl tbody tr[data-sys-id="a"]') as HTMLElement;
-  assert.equal(reflagged.querySelectorAll("td.attention-mark").length, 1, "enabled rule paints the highlight");
+  assert.equal(
+    reflagged.querySelectorAll("td.attention-mark").length,
+    1,
+    "enabled rule paints the highlight"
+  );
 });
 
 test("enabledAttention is honoured through updateRows", () => {
   const attention = (row: Record<string, any>) =>
     String(row.sysId) === "a"
-      ? [{ id: "emptyPlan" as const, label: "Missing plan data", detail: "No root cause", columnHint: "state" }]
+      ? [
+          {
+            id: "emptyPlan" as const,
+            label: "Missing plan data",
+            detail: "No root cause",
+            columnHint: "state"
+          }
+        ]
       : [];
 
   const { grid, state } = setup({
@@ -472,10 +593,18 @@ test("enabledAttention is honoured through updateRows", () => {
     enabledAttention: (id) => id !== "emptyPlan"
   });
   grid.render(state);
-  assert.equal(win.document.querySelector("td.attention-mark"), null, "disabled rule not marked on first render");
+  assert.equal(
+    win.document.querySelector("td.attention-mark"),
+    null,
+    "disabled rule not marked on first render"
+  );
 
   grid.updateRows(["a"]);
-  assert.equal(win.document.querySelector("td.attention-mark"), null, "disabled rule stays unmarked after updateRows");
+  assert.equal(
+    win.document.querySelector("td.attention-mark"),
+    null,
+    "disabled rule stays unmarked after updateRows"
+  );
 });
 
 test("kebab menu hides a column and sorts explicitly", () => {
@@ -510,5 +639,3 @@ test("kebab menu hides a column and sorts explicitly", () => {
   sortAsc.dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
   assert.deepEqual(sorted, ["number:1"]);
 });
-
-

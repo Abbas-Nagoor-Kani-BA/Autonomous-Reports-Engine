@@ -1,5 +1,9 @@
 import { buildReport, type WalkedRow, type MessageFormatter } from "../../core/sla/report.ts";
-import { buildSlaSummary, buildSlaSummaryRows, type SlaSummaryItem } from "../../core/sla/slasummary.ts";
+import {
+  buildSlaSummary,
+  buildSlaSummaryRows,
+  type SlaSummaryItem
+} from "../../core/sla/slasummary.ts";
 
 /*
  * Report and SLA computation for the viewer (core/sla/report.ts + core/sla/slasummary.ts

@@ -52,17 +52,35 @@ export const uiStore = createStore<UiState>({
   msrLists: MsrChoices.mergeMsrLists(null)
 });
 
-export function getSelfPush() { return dataStore.getState().selfPush; }
-export function setSelfPush(v: boolean) { dataStore.setState({ selfPush: v }); }
+export function getSelfPush() {
+  return dataStore.getState().selfPush;
+}
+export function setSelfPush(v: boolean) {
+  dataStore.setState({ selfPush: v });
+}
 
-export function setHiddenCols(set: Set<string>) { uiStore.setState({ hiddenCols: set }); }
-export function getColWidths() { return uiStore.getState().colWidths; }
-export function setColWidths(widths: Record<string, number>) { uiStore.setState({ colWidths: widths || {} }); }
-export function getColOrder(): string[] { return uiStore.getState().colOrder; }
-export function setColOrder(order: string[]) { uiStore.setState({ colOrder: Array.isArray(order) ? order : [] }); }
-export function getMsrLists(): MsrLists { return uiStore.getState().msrLists; }
+export function setHiddenCols(set: Set<string>) {
+  uiStore.setState({ hiddenCols: set });
+}
+export function getColWidths() {
+  return uiStore.getState().colWidths;
+}
+export function setColWidths(widths: Record<string, number>) {
+  uiStore.setState({ colWidths: widths || {} });
+}
+export function getColOrder(): string[] {
+  return uiStore.getState().colOrder;
+}
+export function setColOrder(order: string[]) {
+  uiStore.setState({ colOrder: Array.isArray(order) ? order : [] });
+}
+export function getMsrLists(): MsrLists {
+  return uiStore.getState().msrLists;
+}
 export function setMsrLists(lists: unknown) {
-  uiStore.setState({ msrLists: MsrChoices.mergeMsrLists(lists as MsrChoices.MsrListOverrides | null | undefined) });
+  uiStore.setState({
+    msrLists: MsrChoices.mergeMsrLists(lists as MsrChoices.MsrListOverrides | null | undefined)
+  });
 }
 
 export async function hydrateStores() {
@@ -79,7 +97,7 @@ export async function hydrateStores() {
   selStore.setState({ pending: viewerSel && viewerSel.a && viewerSel.f ? viewerSel : null });
   uiStore.setState({
     hiddenCols: hc,
-    colWidths: (colWidths && typeof colWidths === "object") ? colWidths : {},
+    colWidths: colWidths && typeof colWidths === "object" ? colWidths : {},
     colOrder: Array.isArray(colOrder) ? colOrder : []
   });
   setMsrLists(storedLists && storedLists.lists ? storedLists.lists : null);
@@ -123,5 +141,9 @@ export function wireViewer(handlers: ViewerHandlers) {
   const unSettings = onStorageChange([STORAGE.pluginSettings], () => {
     handlers.onSettings?.();
   });
-  return () => { unData(); unLists(); unSettings(); };
+  return () => {
+    unData();
+    unLists();
+    unSettings();
+  };
 }

@@ -23,7 +23,10 @@ function dismiss(node: HTMLElement): void {
   }, 200);
 }
 
-export function showToast(message: string, type: "success" | "error" | "info" = "success"): HTMLElement {
+export function showToast(
+  message: string,
+  type: "success" | "error" | "info" = "success"
+): HTMLElement {
   const kind = ["success", "error", "info"].includes(type) ? type : "success";
   const el = document.createElement("div");
   el.className = `toast ${kind}`;

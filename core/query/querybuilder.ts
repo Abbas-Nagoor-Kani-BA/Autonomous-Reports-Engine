@@ -24,21 +24,31 @@ function sanitizeValue(v: unknown): string {
 function encodeCondition(c: QueryCondition): string {
   const f = c.field;
   switch (c.oper) {
-    case "isEmpty": return `${f}ISEMPTY`;
-    case "isNotEmpty": return `${f}ISNOTEMPTY`;
-    case "eq": return `${f}=${sanitizeValue(c.value)}`;
-    case "neq": return `${f}!=${sanitizeValue(c.value)}`;
-    case "contains": return `${f}LIKE${sanitizeValue(c.value)}`;
-    case "notContains": return `${f}NOT LIKE${sanitizeValue(c.value)}`;
-    case "startsWith": return `${f}STARTSWITH${sanitizeValue(c.value)}`;
+    case "isEmpty":
+      return `${f}ISEMPTY`;
+    case "isNotEmpty":
+      return `${f}ISNOTEMPTY`;
+    case "eq":
+      return `${f}=${sanitizeValue(c.value)}`;
+    case "neq":
+      return `${f}!=${sanitizeValue(c.value)}`;
+    case "contains":
+      return `${f}LIKE${sanitizeValue(c.value)}`;
+    case "notContains":
+      return `${f}NOT LIKE${sanitizeValue(c.value)}`;
+    case "startsWith":
+      return `${f}STARTSWITH${sanitizeValue(c.value)}`;
     case "before":
       return `${f}<=javascript:gs.dateGenerate('${sanitizeValue(c.value)}','00:00:00')`;
     case "after":
       return `${f}>=javascript:gs.dateGenerate('${sanitizeValue(c.value)}','23:59:59')`;
     case "between":
-      return `${f}BETWEENjavascript:gs.dateGenerate('${sanitizeValue(c.value)}','00:00:00')` +
-        `@javascript:gs.dateGenerate('${sanitizeValue(c.value2)}','23:59:59')`;
-    default: return "";
+      return (
+        `${f}BETWEENjavascript:gs.dateGenerate('${sanitizeValue(c.value)}','00:00:00')` +
+        `@javascript:gs.dateGenerate('${sanitizeValue(c.value2)}','23:59:59')`
+      );
+    default:
+      return "";
   }
 }
 
@@ -51,7 +61,7 @@ function encodeCondition(c: QueryCondition): string {
 function encodeConditions(list: QueryCondition[] | null | undefined): string {
   let out = "";
   let outputCount = 0;
-  (list || []).forEach(c => {
+  (list || []).forEach((c) => {
     const body = encodeCondition(c);
     if (!body) return;
     out += outputCount === 0 ? body : (c.join === "OR" ? "^OR" : "^") + body;
@@ -77,7 +87,7 @@ function buildEncodedQuery(cfg: QueryBuilderConfig): string {
   if (cfg.from && cfg.to) {
     parts.push(
       `${dateField}BETWEENjavascript:gs.dateGenerate('${cfg.from}','00:00:00')` +
-      `@javascript:gs.dateGenerate('${cfg.to}','23:59:59')`
+        `@javascript:gs.dateGenerate('${cfg.to}','23:59:59')`
     );
   } else if (cfg.from) {
     parts.push(`${dateField}>=javascript:gs.dateGenerate('${cfg.from}','00:00:00')`);
@@ -86,12 +96,12 @@ function buildEncodedQuery(cfg: QueryBuilderConfig): string {
   }
 
   if (cfg.states?.length) {
-    const vals = cfg.states.filter(v => v !== "" && v !== null).map(String);
+    const vals = cfg.states.filter((v) => v !== "" && v !== null).map(String);
     if (vals.length) parts.push(`stateIN${vals.join(",")}`);
   }
 
   if (cfg.priorities?.length) {
-    const vals = cfg.priorities.filter(v => v !== "" && v !== null).map(String);
+    const vals = cfg.priorities.filter((v) => v !== "" && v !== null).map(String);
     if (vals.length) parts.push(`priorityIN${vals.join(",")}`);
   }
 

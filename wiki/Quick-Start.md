@@ -57,5 +57,6 @@ See [Running a Pull](Running-a-Pull) and
    to paste into your Monthly Status Report sheet — see [Export](Export).
 
 ---
+
 Related: [Installation](Installation) · [Running a Pull](Running-a-Pull) ·
 [Configuration](Configuration)

@@ -1,6 +1,9 @@
 import { Component, el } from "../../common/components/component.ts";
 import type { ComponentProps } from "../../common/components/component.ts";
-import type { FilterListRepository, FilterSet } from "../../data/repositories/filter-list-repository.ts";
+import type {
+  FilterListRepository,
+  FilterSet
+} from "../../data/repositories/filter-list-repository.ts";
 import { iconButton } from "../../lib/icons.ts";
 
 export type FilterSetListState = {
@@ -25,8 +28,12 @@ export type FilterSetListDeps = {
  * items contain no text inputs, so there is no focus or caret to preserve, and
  * a handful of rows costs nothing. Simplicity beats a diff here.
  */
-export class FilterSetList extends Component<FilterSetListState, ComponentProps, FilterSetListDeps> {
-  protected declare refs: { list: HTMLElement };
+export class FilterSetList extends Component<
+  FilterSetListState,
+  ComponentProps,
+  FilterSetListDeps
+> {
+  declare protected refs: { list: HTMLElement };
 
   protected initialState(): FilterSetListState {
     return { sets: [] };
@@ -101,7 +108,10 @@ export class FilterSetList extends Component<FilterSetListState, ComponentProps,
   }
 
   protected renderItem(set: FilterSet, index: number): HTMLElement {
-    const row = el("div", "flitem flex items-center gap-2 px-1 py-1.5 border-b border-line text-[11.5px] text-muted");
+    const row = el(
+      "div",
+      "flitem flex items-center gap-2 px-1 py-1.5 border-b border-line text-[11.5px] text-muted"
+    );
     const label = el("span", "flex-1 min-w-0");
     label.textContent = this.deps.describe(set);
 

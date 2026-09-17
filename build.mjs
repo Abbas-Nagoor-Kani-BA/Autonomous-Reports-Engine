@@ -23,7 +23,7 @@ const ENTRIES = [
   "settings/settings.ts",
   "content/content.js",
   "worker/classifier-worker.ts"
-].map(p => path.join(ROOT, p));
+].map((p) => path.join(ROOT, p));
 
 const STATIC_COPY = [
   "manifest.json",
@@ -32,8 +32,14 @@ const STATIC_COPY = [
   "settings/settings.html",
   "styles/output.css",
   ["lib/vendor/fflate.min.js", "lib/vendor/fflate.min.js"],
-  ["node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm", "worker/ml-wasm/ort-wasm-simd-threaded.asyncify.wasm"],
-  ["node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.mjs", "worker/ml-wasm/ort-wasm-simd-threaded.asyncify.mjs"]
+  [
+    "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm",
+    "worker/ml-wasm/ort-wasm-simd-threaded.asyncify.wasm"
+  ],
+  [
+    "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.mjs",
+    "worker/ml-wasm/ort-wasm-simd-threaded.asyncify.mjs"
+  ]
 ];
 
 function copyStatic(outDir) {
@@ -106,7 +112,7 @@ if (WATCH) {
 } else {
   await esbuild.build(OPTIONS);
 
-  const walk = dir => {
+  const walk = (dir) => {
     const out = [];
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, e.name);
@@ -119,12 +125,12 @@ if (WATCH) {
   const manifest = JSON.parse(fs.readFileSync(path.join(OUT, "manifest.json"), "utf8"));
   const required = [
     manifest.background.service_worker,
-    ...manifest.content_scripts?.flatMap(cs => cs.js) || [],
+    ...(manifest.content_scripts?.flatMap((cs) => cs.js) || []),
     manifest.action?.default_popup,
     manifest.options_page
   ].filter(Boolean);
 
-  const missing = required.filter(rel => !fs.existsSync(path.join(OUT, rel)));
+  const missing = required.filter((rel) => !fs.existsSync(path.join(OUT, rel)));
   if (missing.length) {
     console.error("BUILD INCOMPLETE — missing:", missing.join(", "));
     process.exit(1);
@@ -132,7 +138,9 @@ if (WATCH) {
 
   const files = walk(OUT);
   const kb = (files.reduce((s, f) => s + f.size, 0) / 1024).toFixed(1);
-  console.log(`${path.relative(ROOT, OUT)} built: ${files.length} files, ${kb} KB${MINIFY ? " (minified)" : ""}`);
+  console.log(
+    `${path.relative(ROOT, OUT)} built: ${files.length} files, ${kb} KB${MINIFY ? " (minified)" : ""}`
+  );
   for (const f of files.sort((a, b) => a.file.localeCompare(b.file)))
     console.log("  ", f.file, `(${f.size} B)`);
 }

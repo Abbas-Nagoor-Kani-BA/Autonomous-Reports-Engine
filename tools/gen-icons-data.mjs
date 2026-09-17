@@ -1,14 +1,21 @@
 import fs from "fs";
 import path from "path";
 const DIR = "lib/vendor/lucide";
-const names = fs.readdirSync(DIR).filter(f => f.endsWith(".svg")).map(f => f.replace(/\.svg$/, "")).sort();
+const names = fs
+  .readdirSync(DIR)
+  .filter((f) => f.endsWith(".svg"))
+  .map((f) => f.replace(/\.svg$/, ""))
+  .sort();
 const out = {};
 for (const n of names) {
   let s = fs.readFileSync(path.join(DIR, n + ".svg"), "utf8");
   // strip the license comment
   s = s.replace(/<!--[\s\S]*?-->/g, "").trim();
   // extract inner children (everything between the svg open and close tags)
-  const inner = s.replace(/<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "").trim();
+  const inner = s
+    .replace(/<svg[^>]*>/, "")
+    .replace(/<\/svg>\s*$/, "")
+    .trim();
   out[n] = inner;
 }
 const lines = [

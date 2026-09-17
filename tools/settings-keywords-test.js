@@ -4,11 +4,7 @@ import "./helpers/dom-env.mjs";
 import { ChipList } from "../settings/components/chip-list.ts";
 import { mergeMsrLists } from "../core/classification/msrchoices.ts";
 import { classifyMsr, norm } from "../core/classification/msrcategorize.ts";
-import {
-  rebuildKeywordChips,
-  fillMsrLists,
-  collectMsrLists
-} from "../settings/index.ts";
+import { rebuildKeywordChips, fillMsrLists, collectMsrLists } from "../settings/index.ts";
 
 function makeWiring() {
   const stack = document.createElement("div");
@@ -16,10 +12,19 @@ function makeWiring() {
   const mk = (id) => new ChipList(document.createElement("div"), {}, { collapsible: true });
   const chips = {};
   for (const id of [
-    "msrOpCo", "msrDomain", "msrType", "msrStatus", "msrResolution",
-    "msrDuplicate", "msrQueue", "msrSubCategory",
-    "msrRcIncident", "msrRcRfs", "msrRcPTicket"
-  ]) chips[id] = mk(id);
+    "msrOpCo",
+    "msrDomain",
+    "msrType",
+    "msrStatus",
+    "msrResolution",
+    "msrDuplicate",
+    "msrQueue",
+    "msrSubCategory",
+    "msrRcIncident",
+    "msrRcRfs",
+    "msrRcPTicket"
+  ])
+    chips[id] = mk(id);
   return {
     chips,
     kwChips: {},
@@ -27,11 +32,20 @@ function makeWiring() {
     kwStack: stack,
     msrFieldIds: {
       lists: [
-        ["opCo", "msrOpCo"], ["domain", "msrDomain"], ["type", "msrType"],
-        ["status", "msrStatus"], ["resolution", "msrResolution"],
-        ["duplicate", "msrDuplicate"], ["queue", "msrQueue"], ["subCategory", "msrSubCategory"]
+        ["opCo", "msrOpCo"],
+        ["domain", "msrDomain"],
+        ["type", "msrType"],
+        ["status", "msrStatus"],
+        ["resolution", "msrResolution"],
+        ["duplicate", "msrDuplicate"],
+        ["queue", "msrQueue"],
+        ["subCategory", "msrSubCategory"]
       ],
-      rootCause: [["Incident", "msrRcIncident"], ["RFS", "msrRcRfs"], ["P_Ticket", "msrRcPTicket"]]
+      rootCause: [
+        ["Incident", "msrRcIncident"],
+        ["RFS", "msrRcRfs"],
+        ["P_Ticket", "msrRcPTicket"]
+      ]
     }
   };
 }
@@ -71,8 +85,16 @@ test("collectMsrLists stores edited keywords under the normalised key", () => {
   wiring.kwChips["Application bug"].setValues(["stack trace", "npe", "null pointer"]);
   const collected = collectMsrLists(wiring);
 
-  assert.deepEqual(collected.lists.hints[norm("Application bug")], ["stack trace", "npe", "null pointer"]);
-  assert.equal(collected.lists.hints["Application bug"], undefined, "not stored under the raw label");
+  assert.deepEqual(collected.lists.hints[norm("Application bug")], [
+    "stack trace",
+    "npe",
+    "null pointer"
+  ]);
+  assert.equal(
+    collected.lists.hints["Application bug"],
+    undefined,
+    "not stored under the raw label"
+  );
 });
 
 test("edited keywords round-trip through the classifier", () => {
@@ -84,10 +106,14 @@ test("edited keywords round-trip through the classifier", () => {
   const collected = collectMsrLists(wiring);
 
   const labels = ["Application bug", "Network issue"];
-  const res = classifyMsr("The frobnicator meltdown two happened after a frobnicator meltdown", labels, {
-    hints: collected.lists.hints,
-    useRegex: false
-  });
+  const res = classifyMsr(
+    "The frobnicator meltdown two happened after a frobnicator meltdown",
+    labels,
+    {
+      hints: collected.lists.hints,
+      useRegex: false
+    }
+  );
   assert.equal(res.label, "Application bug");
 });
 
@@ -113,5 +139,9 @@ test("rebuildKeywordChips drops tiles for labels no longer in the lists", () => 
 
   const trimmed = { ...lists, rootCause: { Incident: [], RFS: [], P_Ticket: [] }, resolution: [] };
   rebuildKeywordChips(wiring, trimmed);
-  assert.equal(wiring.kwChips["Application bug"], undefined, "tile removed when label leaves the lists");
+  assert.equal(
+    wiring.kwChips["Application bug"],
+    undefined,
+    "tile removed when label leaves the lists"
+  );
 });

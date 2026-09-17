@@ -76,8 +76,23 @@ function tokens(s: string): string[] {
 /** Words that negate a following cue. `norm`/`tokens` strip apostrophes, so the
  *  contracted forms appear as "isnt"/"wasnt"/"cant" etc. after tokenising. */
 const NEGATORS = new Set([
-  "no", "not", "never", "without", "none", "cannot", "cant", "dont", "doesnt",
-  "didnt", "wont", "isnt", "wasnt", "arent", "werent", "neither", "nor"
+  "no",
+  "not",
+  "never",
+  "without",
+  "none",
+  "cannot",
+  "cant",
+  "dont",
+  "doesnt",
+  "didnt",
+  "wont",
+  "isnt",
+  "wasnt",
+  "arent",
+  "werent",
+  "neither",
+  "nor"
 ]);
 
 const NEG_WINDOW = 3;
@@ -103,7 +118,8 @@ function within(a: string, b: string): boolean {
   if (a === b) return true;
   const short = Math.min(a.length, b.length);
   let max: number;
-  if (short < 5) max = 0;         // short words: exact only
+  if (short < 5)
+    max = 0; // short words: exact only
   else if (short < 8) max = 1;
   else max = 2;
   if (max === 0) return false;
@@ -166,9 +182,11 @@ function regexMatchInfo(re: RegExp, body: string): { count: number; spec: number
   while ((m = g.exec(body)) !== null) {
     if (m.index === g.lastIndex) g.lastIndex++;
     const before = tokens(body.slice(0, m.index));
-    if (NEGATORS.has(before[before.length - 1]) ||
-        NEGATORS.has(before[before.length - 2]) ||
-        NEGATORS.has(before[before.length - 3])) {
+    if (
+      NEGATORS.has(before[before.length - 1]) ||
+      NEGATORS.has(before[before.length - 2]) ||
+      NEGATORS.has(before[before.length - 3])
+    ) {
       continue;
     }
     count++;
@@ -287,7 +305,9 @@ export function classifyMsr(
 
   // Combined scores (kept for the confidence formula / diagnostics).
   const scores: Record<string, number> = {};
-  candidateLabels.forEach((label, i) => { scores[label] = hits[label] + o.cosineWeight * cos[i]; });
+  candidateLabels.forEach((label, i) => {
+    scores[label] = hits[label] + o.cosineWeight * cos[i];
+  });
 
   const winner = pickCascade(regexHits, regexSpec, hits, cos, candidateLabels);
 
@@ -307,7 +327,12 @@ export function classifyMsr(
     return { label: null, confidence: 0, scores, level: null };
   }
 
-  return { label: winner, confidence, scores, level: levelOf(winner, regexHits, hits, cos, candidateLabels) };
+  return {
+    label: winner,
+    confidence,
+    scores,
+    level: levelOf(winner, regexHits, hits, cos, candidateLabels)
+  };
 }
 
 /** Decides the winning label by stage priority. */
@@ -323,9 +348,14 @@ function pickCascade(
   // strict lead on (specificity, count) over the runner-up; a genuine tie falls
   // through to the keyword/cosine stages rather than guessing.
   const withHits = candidateLabels
-    .map((label, idx) => ({ label, idx, count: regexHits[label] || 0, spec: regexSpec[label] || 0 }))
+    .map((label, idx) => ({
+      label,
+      idx,
+      count: regexHits[label] || 0,
+      spec: regexSpec[label] || 0
+    }))
     .filter((e) => e.count >= 1)
-    .sort((a, b) => (b.spec - a.spec) || (b.count - a.count) || (a.idx - b.idx));
+    .sort((a, b) => b.spec - a.spec || b.count - a.count || a.idx - b.idx);
   if (withHits.length) {
     const top = withHits[0];
     const next = withHits[1];
@@ -336,13 +366,23 @@ function pickCascade(
   if (kh[0] && kh[0][1] >= KEYWORD_MIN_HITS && (!kh[1] || kh[0][1] > kh[1][1])) return kh[0][0];
 
   const cosArr = cos.map((v, i) => ({ label: candidateLabels[i], v })).sort((a, b) => b.v - a.v);
-  if (cosArr[0] && cosArr[0].v >= COS_MIN && (!cosArr[1] || cosArr[0].v - cosArr[1].v >= COS_MARGIN)) {
+  if (
+    cosArr[0] &&
+    cosArr[0].v >= COS_MIN &&
+    (!cosArr[1] || cosArr[0].v - cosArr[1].v >= COS_MARGIN)
+  ) {
     return cosArr[0].label;
   }
   return null;
 }
 
-function levelOf(label: string, regexHits: Record<string, number>, hits: Record<string, number>, cos: number[], candidateLabels: string[]): "regex" | "keyword" | "cosine" {
+function levelOf(
+  label: string,
+  regexHits: Record<string, number>,
+  hits: Record<string, number>,
+  cos: number[],
+  candidateLabels: string[]
+): "regex" | "keyword" | "cosine" {
   if (regexHits[label] >= 1) return "regex";
   if (hits[label] >= KEYWORD_MIN_HITS) return "keyword";
   return "cosine";
@@ -355,15 +395,24 @@ function levelOf(label: string, regexHits: Record<string, number>, hits: Record<
  */
 function hintPairs(label: string, overrides: Record<string, string[]> | undefined): string[] {
   const key = normalizedKey(label);
-  const has = !!overrides && (Object.prototype.hasOwnProperty.call(overrides, key) || Object.prototype.hasOwnProperty.call(overrides, label));
-  if (has) return (overrides![key] || overrides![label] || []).filter((h) => typeof h === "string" && h.trim());
+  const has =
+    !!overrides &&
+    (Object.prototype.hasOwnProperty.call(overrides, key) ||
+      Object.prototype.hasOwnProperty.call(overrides, label));
+  if (has)
+    return (overrides![key] || overrides![label] || []).filter(
+      (h) => typeof h === "string" && h.trim()
+    );
   return (DEFAULT_HINTS[key] || []).slice();
 }
 
 /** Returns the curated regex patterns for a label (an override is authoritative). */
 function regexPairs(label: string, overrides: Record<string, RegExp[]> | undefined): RegExp[] {
   const key = normalizedKey(label);
-  const has = !!overrides && (Object.prototype.hasOwnProperty.call(overrides, key) || Object.prototype.hasOwnProperty.call(overrides, label));
+  const has =
+    !!overrides &&
+    (Object.prototype.hasOwnProperty.call(overrides, key) ||
+      Object.prototype.hasOwnProperty.call(overrides, label));
   if (has) return (overrides![key] || overrides![label] || []).slice();
   return (BUILTIN_REGEX[key] || []).slice();
 }
@@ -379,32 +428,161 @@ function normalizedKey(label: string): string {
  */
 const BUILTIN_REGEX: Record<string, RegExp[]> = {
   "application bug": [/code defect/i, /code bug/i, /software defect/i, /application bug/i],
-  "application performance": [/slow application/i, /performance issue/i, /application performance/i],
-  "database performance": [/slow database/i, /sql performance/i, /query performance/i, /database performance/i, /db slowness/i],
-  "server performance": [/server slow/i, /high cpu/i, /memory leak/i, /out of memory/i, /server performance/i],
+  "application performance": [
+    /slow application/i,
+    /performance issue/i,
+    /application performance/i
+  ],
+  "database performance": [
+    /slow database/i,
+    /sql performance/i,
+    /query performance/i,
+    /database performance/i,
+    /db slowness/i
+  ],
+  "server performance": [
+    /server slow/i,
+    /high cpu/i,
+    /memory leak/i,
+    /out of memory/i,
+    /server performance/i
+  ],
   hardware: [/hard drive/i, /disk failure/i, /memory module/i, /power supply/i, /hardware/i],
-  environment: [/power issue/i, /data cent(?:er|re)/i, /air conditioning/i, /environmental/i, /environment/i],
-  "interface data error": [/interface data/i, /data error/i, /feed failure/i, /mapping error/i, /data mismatch/i, /stream issue/i],
-  "interfacing application error": [/interfacing application/i, /interface error/i, /upstream application/i, /downstream application/i, /connected application/i],
+  environment: [
+    /power issue/i,
+    /data cent(?:er|re)/i,
+    /air conditioning/i,
+    /environmental/i,
+    /environment/i
+  ],
+  "interface data error": [
+    /interface data/i,
+    /data error/i,
+    /feed failure/i,
+    /mapping error/i,
+    /data mismatch/i,
+    /stream issue/i
+  ],
+  "interfacing application error": [
+    /interfacing application/i,
+    /interface error/i,
+    /upstream application/i,
+    /downstream application/i,
+    /connected application/i
+  ],
   "network issue": [/network/i, /connectivity/i, /packet loss/i, /latency/i, /connection issue/i],
   firewall: [/firewall/i, /blocked port/i, /port blocked/i],
-  "certificate expiry": [/certificate expired/i, /certificate expiry/i, /expired certificate/i, /cert expiry/i],
-  "user error data": [/incorrect data/i, /wrong data/i, /bad data/i, /user typo/i, /mistyped/i, /misentered/i, /data entry error/i],
-  "user error procedure": [/user error/i, /wrong procedure/i, /incorrect process/i, /process gap/i, /step missed/i, /manual error/i, /human error/i, /business process/i, /wrong process/i],
+  "certificate expiry": [
+    /certificate expired/i,
+    /certificate expiry/i,
+    /expired certificate/i,
+    /cert expiry/i
+  ],
+  "user error data": [
+    /incorrect data/i,
+    /wrong data/i,
+    /bad data/i,
+    /user typo/i,
+    /mistyped/i,
+    /misentered/i,
+    /data entry error/i
+  ],
+  "user error procedure": [
+    /user error/i,
+    /wrong procedure/i,
+    /incorrect process/i,
+    /process gap/i,
+    /step missed/i,
+    /manual error/i,
+    /human error/i,
+    /business process/i,
+    /wrong process/i
+  ],
   "false alert": [/false alert/i, /false positive/i, /spurious alert/i, /false alarm/i],
   "user query": [/user query/i, /usage question/i, /how to/i, /how do/i],
-  "information request": [/information request/i, /info request/i, /request for information/i, /need details/i],
-  "user access issue": [/access denied/i, /permission denied/i, /cannot access/i, /no access/i, /access issue/i, /access problem/i],
+  "information request": [
+    /information request/i,
+    /info request/i,
+    /request for information/i,
+    /need details/i
+  ],
+  "user access issue": [
+    /access denied/i,
+    /permission denied/i,
+    /cannot access/i,
+    /no access/i,
+    /access issue/i,
+    /access problem/i
+  ],
   "password reset": [/password reset/i, /reset password/i, /forgot password/i],
-  "job schedule scheduler error": [/job failed/i, /scheduler/i, /scheduled job/i, /batch job/i, /job error/i, /cron/i, /job schedule/i],
+  "job schedule scheduler error": [
+    /job failed/i,
+    /scheduler/i,
+    /scheduled job/i,
+    /batch job/i,
+    /job error/i,
+    /cron/i,
+    /job schedule/i
+  ],
   "external 3rd party": [/third party/i, /3rd party/i, /external/i, /vendor/i, /supplier/i],
-  "duplicate incident": [/duplicate incident/i, /duplicate ticket/i, /already reported/i, /existing incident/i, /duplicate/i],
-  "not an issue": [/not an issue/i, /no issue/i, /not a problem/i, /working as designed/i, /works as expected/i, /no problem found/i, /everything works/i],
-  "invalid issue": [/invalid issue/i, /not ours/i, /wrongly assigned/i, /misassigned/i, /invalid ticket/i, /incorrectly assigned/i, /mistakenly assigned/i],
-  "dependent application failure": [/dependent application/i, /dependency failure/i, /dependent app/i],
-  "configuration issue": [/configuration issue/i, /misconfiguration/i, /config issue/i, /wrong parameter/i, /config change/i, /missing config/i, /incorrectly configured/i],
-  "workaround solution": [/workaround/i, /temporary fix/i, /temp fix/i, /until (?:the )?vendor/i, /until (?:the )?patch/i, /reboot/i, /restart/i, /monitoring/i, /temporary/i],
-  "permanent solution": [/permanent/i, /code change/i, /permanent fix/i, /reconfigured/i, /implemented/i, /patched/i],
+  "duplicate incident": [
+    /duplicate incident/i,
+    /duplicate ticket/i,
+    /already reported/i,
+    /existing incident/i,
+    /duplicate/i
+  ],
+  "not an issue": [
+    /not an issue/i,
+    /no issue/i,
+    /not a problem/i,
+    /working as designed/i,
+    /works as expected/i,
+    /no problem found/i,
+    /everything works/i
+  ],
+  "invalid issue": [
+    /invalid issue/i,
+    /not ours/i,
+    /wrongly assigned/i,
+    /misassigned/i,
+    /invalid ticket/i,
+    /incorrectly assigned/i,
+    /mistakenly assigned/i
+  ],
+  "dependent application failure": [
+    /dependent application/i,
+    /dependency failure/i,
+    /dependent app/i
+  ],
+  "configuration issue": [
+    /configuration issue/i,
+    /misconfiguration/i,
+    /config issue/i,
+    /wrong parameter/i,
+    /config change/i,
+    /missing config/i,
+    /incorrectly configured/i
+  ],
+  "workaround solution": [
+    /workaround/i,
+    /temporary fix/i,
+    /temp fix/i,
+    /until (?:the )?vendor/i,
+    /until (?:the )?patch/i,
+    /reboot/i,
+    /restart/i,
+    /monitoring/i,
+    /temporary/i
+  ],
+  "permanent solution": [
+    /permanent/i,
+    /code change/i,
+    /permanent fix/i,
+    /reconfigured/i,
+    /implemented/i,
+    /patched/i
+  ],
   "verification only": [/verification only/i, /confirmed working/i, /verify/i],
   "not applicable": [/not applicable/i, /not apply/i, /\bn\/?a\b/i]
 };

@@ -37,10 +37,13 @@ export class PresetStore implements PresetRepository {
   async load(): Promise<UserPreset[]> {
     const raw = await this.store.get<unknown>(STORAGE.snFilterPresets, []);
     if (!Array.isArray(raw)) return [];
-    return raw.filter((p): p is UserPreset =>
-      !!p && typeof p === "object" &&
-      typeof (p as { name?: unknown }).name === "string" &&
-      Array.isArray((p as { sets?: unknown }).sets));
+    return raw.filter(
+      (p): p is UserPreset =>
+        !!p &&
+        typeof p === "object" &&
+        typeof (p as { name?: unknown }).name === "string" &&
+        Array.isArray((p as { sets?: unknown }).sets)
+    );
   }
 
   save(presets: UserPreset[]): Promise<void> {

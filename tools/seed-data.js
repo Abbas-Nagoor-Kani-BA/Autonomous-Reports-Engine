@@ -4,17 +4,29 @@ import readline from "readline";
 const TYPES = ["incident", "change_request", "problem", "sc_req_item", "sc_task"];
 
 const args = process.argv.slice(2);
-const COUNT = Math.max(1, parseInt(args.find(a => /^--count=\d+$/.test(a))?.split("=")[1] || "2", 10));
+const COUNT = Math.max(
+  1,
+  parseInt(args.find((a) => /^--count=\d+$/.test(a))?.split("=")[1] || "2", 10)
+);
 const CLEAN = args.includes("--clean");
-const MEMBERS_FILE = args.find(a => /^--members-file=.+/.test(a))?.split("=").slice(1).join("=");
-const INSTANCE = (args.find(a => a.startsWith("http")) || process.env.SEED_INSTANCE || "").replace(/\/+$/, "");
+const MEMBERS_FILE = args
+  .find((a) => /^--members-file=.+/.test(a))
+  ?.split("=")
+  .slice(1)
+  .join("=");
+const INSTANCE = (
+  args.find((a) => a.startsWith("http")) ||
+  process.env.SEED_INSTANCE ||
+  ""
+).replace(/\/+$/, "");
 const STEP_DELAY_MS = 1600;
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 import fs from "fs";
 
 function parsePairLine(line) {
   const m = String(line).split(/\s*[|=]\s*/);
-  if (m.length >= 2 && m[0] && m[1]) return { name: m[0].trim(), sysId: m.slice(1).join(" ").trim() };
+  if (m.length >= 2 && m[0] && m[1])
+    return { name: m[0].trim(), sysId: m.slice(1).join(" ").trim() };
   return null;
 }
 
@@ -23,7 +35,9 @@ async function loadMembers() {
   if (MEMBERS_FILE) {
     text = fs.readFileSync(MEMBERS_FILE, "utf8");
   } else {
-    console.log("\nPaste configured team members (one per line, \"Name | sys_id\" — same text as the plugin settings page).");
+    console.log(
+      '\nPaste configured team members (one per line, "Name | sys_id" — same text as the plugin settings page).'
+    );
     console.log("Finish with an empty line:");
     const lines = [];
     while (true) {
@@ -35,20 +49,26 @@ async function loadMembers() {
   }
   const members = String(text).split("\n").map(parsePairLine).filter(Boolean);
   if (!members.length) return [];
-  console.log(`Using ${members.length} configured member(s): ${members.map(m => m.name).join(", ")}`);
+  console.log(
+    `Using ${members.length} configured member(s): ${members.map((m) => m.name).join(", ")}`
+  );
   return members;
 }
 
 function question(prompt) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.question(prompt, answer => { rl.close(); resolve(answer.trim()); });
+    rl.question(prompt, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
   });
 }
 
 async function main() {
   let instanceUrl = INSTANCE;
-  if (!instanceUrl) instanceUrl = await question("Instance URL (https://devXXXXX.service-now.com): ");
+  if (!instanceUrl)
+    instanceUrl = await question("Instance URL (https://devXXXXX.service-now.com): ");
   if (!/^https:\/\/.+/.test(instanceUrl)) {
     console.error("Invalid instance URL");
     process.exit(1);
@@ -67,15 +87,17 @@ async function main() {
     const res = await fetch(url.toString(), {
       method,
       headers: {
-        "Authorization": auth,
-        "Accept": "application/json",
+        Authorization: auth,
+        Accept: "application/json",
         "Content-Type": "application/json"
       },
       body: body ? JSON.stringify(body) : undefined
     });
     const text = await res.text();
     let json = {};
-    try { json = JSON.parse(text); } catch {}
+    try {
+      json = JSON.parse(text);
+    } catch {}
     if (!res.ok) {
       throw new Error(`${method} ${path} -> ${res.status}: ${text.slice(0, 300)}`);
     }
@@ -94,7 +116,7 @@ async function main() {
     console.log("\nAvailable groups:");
     groups.forEach((g, i) => console.log(`  ${i + 1}. ${g.name}`));
     const groupName = await question("\nTarget assignment group name (exact): ");
-    const group = groups.find(g => g.name === groupName);
+    const group = groups.find((g) => g.name === groupName);
     if (!group) throw new Error(`Group "${groupName}" not found in list above`);
     console.log(`Using group: ${group.name} (${group.sys_id})`);
 
@@ -107,7 +129,9 @@ async function main() {
 
     const members = await loadMembers();
     if (!members.length) {
-      console.log("No configured members given — falling back to the group's first sys_user_grmember roster entry (acknowledgement dates will NOT match your plugin team list).");
+      console.log(
+        "No configured members given — falling back to the group's first sys_user_grmember roster entry (acknowledgement dates will NOT match your plugin team list)."
+      );
     }
 
     const results = [];
@@ -137,11 +161,12 @@ async function main() {
 }
 
 async function fetchStateChoices(api, table) {
-  const q = async name => api("GET", "/api/now/table/sys_choice", {
-    sysparm_query: `name=${name}^element=state^inactive=false`,
-    sysparm_limit: 100,
-    sysparm_fields: "value,label"
-  });
+  const q = async (name) =>
+    api("GET", "/api/now/table/sys_choice", {
+      sysparm_query: `name=${name}^element=state^inactive=false`,
+      sysparm_limit: 100,
+      sysparm_fields: "value,label"
+    });
   let choices = await q(table);
   if (choices.length === 0 && table !== "task") {
     choices = await q("task");
@@ -153,14 +178,16 @@ const TABLE_PLAN_CAPS = { change_request: ["-4"] };
 
 async function seedType(api, table, groupSysId, count, marker, members) {
   const choices = await fetchStateChoices(api, table);
-  const findLabel = pred => choices.find(c => pred(c.label.toLowerCase()));
+  const findLabel = (pred) => choices.find((c) => pred(c.label.toLowerCase()));
 
-  const holdC = findLabel(l => l.includes("on hold") || l === "pending") ||
-                findLabel(l => l.includes("hold") || l.includes("pending") || l.includes("waiting"));
-  const progC = findLabel(l => l.includes("in progress")) ||
-                findLabel(l => l === "open" || l === "accepted" || l === "implement");
-  const resC = findLabel(l => l.startsWith("resolved"));
-  const closedC = findLabel(l => l.startsWith("closed"));
+  const holdC =
+    findLabel((l) => l.includes("on hold") || l === "pending") ||
+    findLabel((l) => l.includes("hold") || l.includes("pending") || l.includes("waiting"));
+  const progC =
+    findLabel((l) => l.includes("in progress")) ||
+    findLabel((l) => l === "open" || l === "accepted" || l === "implement");
+  const resC = findLabel((l) => l.startsWith("resolved"));
+  const closedC = findLabel((l) => l.startsWith("closed"));
 
   let plan = [
     holdC && { label: holdC.label, value: holdC.value },
@@ -171,17 +198,19 @@ async function seedType(api, table, groupSysId, count, marker, members) {
 
   const cap = TABLE_PLAN_CAPS[table];
   if (cap) {
-    plan = plan.filter(p => cap.includes(p.value));
+    plan = plan.filter((p) => cap.includes(p.value));
     for (const v of cap) {
-      const c = choices.find(x => x.value === v);
-      if (c && !plan.some(p => p.value === v)) plan.push({ label: c.label, value: c.value });
+      const c = choices.find((x) => x.value === v);
+      if (c && !plan.some((p) => p.value === v)) plan.push({ label: c.label, value: c.value });
     }
     plan.sort((a, b) => cap.indexOf(a.value) - cap.indexOf(b.value));
   }
 
   const needsCloseFields = table === "incident";
 
-  console.log(`\n${table}: creating ${count}, transitions planned: ${plan.map(p => p.label).join(" -> ") || "(none)"}`);
+  console.log(
+    `\n${table}: creating ${count}, transitions planned: ${plan.map((p) => p.label).join(" -> ") || "(none)"}`
+  );
 
   const created = [];
   for (let i = 0; i < count; i++) {
@@ -205,12 +234,19 @@ async function seedType(api, table, groupSysId, count, marker, members) {
     const sysId = rec.sys_id;
     const number = rec.number?.display_value || rec.number;
     created.push(number);
-    console.log(`  created ${number}${bornInQueue ? " (group at creation)" : " (group via change event)"}`);
+    console.log(
+      `  created ${number}${bornInQueue ? " (group at creation)" : " (group via change event)"}`
+    );
 
     await sleep(STEP_DELAY_MS);
     try {
       if (!bornInQueue) {
-        await api("PATCH", `/api/now/table/${table}/${sysId}`, {}, { assignment_group: groupSysId });
+        await api(
+          "PATCH",
+          `/api/now/table/${table}/${sysId}`,
+          {},
+          { assignment_group: groupSysId }
+        );
         console.log(`    -> assignment_group set`);
         await sleep(STEP_DELAY_MS);
       }

@@ -101,7 +101,7 @@ function closeThMenu(): void {
  * depend on the visible columns. All body cells are read-only.
  */
 export class DataGrid extends Component<DataGridState, ComponentProps, DataGridDeps> {
-  protected declare refs: DataGridRefs;
+  declare protected refs: DataGridRefs;
 
   protected initialState(): DataGridState {
     return { cols: [], rows: [], total: 0, sortKey: null, sortDir: 1, colWidths: {} };
@@ -139,14 +139,14 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
   }
 
   /**
- * Re-renders only the rows whose sysIds are in `changed`, rebuilding their
- * `<tr>` in place. Unlike `render()` this never wipes the tbody, so it is the
- * cheap path for a background classifier that updates a handful of rows per
- * frame without disrupting scroll or the selection.
- *
- * The caller owns the row values (it mutates the row objects first); this only
- * reflects them into the DOM.
- */
+   * Re-renders only the rows whose sysIds are in `changed`, rebuilding their
+   * `<tr>` in place. Unlike `render()` this never wipes the tbody, so it is the
+   * cheap path for a background classifier that updates a handful of rows per
+   * frame without disrupting scroll or the selection.
+   *
+   * The caller owns the row values (it mutates the row objects first); this only
+   * reflects them into the DOM.
+   */
   updateRows(changed: Array<string | number>): void {
     if (!changed.length) return;
     if (document.querySelector("td.edit-input")) return;
@@ -161,7 +161,10 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
     // or the SLA footer flickers as the classifier walks the grid.
     const breachCounts: BreachCounts = { r: 0, m: 0, rm: 0 };
     for (const row of state.rows) {
-      const rowRep = buildReport(row as Parameters<typeof buildReport>[0], this.deps.fmtInstant as unknown as Parameters<typeof buildReport>[1]) as Record<string, any>;
+      const rowRep = buildReport(
+        row as Parameters<typeof buildReport>[0],
+        this.deps.fmtInstant as unknown as Parameters<typeof buildReport>[1]
+      ) as Record<string, any>;
       this.countBreach(rowRep, row, breachCounts);
     }
 
@@ -173,7 +176,10 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
       if (!wanted.has(sysId)) continue;
       const trEl = document.createElement("tr");
       trEl.dataset.sysId = sysId;
-      const rowRep = buildReport(row as Parameters<typeof buildReport>[0], this.deps.fmtInstant as unknown as Parameters<typeof buildReport>[1]) as Record<string, any>;
+      const rowRep = buildReport(
+        row as Parameters<typeof buildReport>[0],
+        this.deps.fmtInstant as unknown as Parameters<typeof buildReport>[1]
+      ) as Record<string, any>;
       const durations = computeDurations(row);
       const flags = state.attention ? state.attention(row) : [];
       const scratch: BreachCounts = { r: 0, m: 0, rm: 0 };
@@ -196,11 +202,7 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
   }
 
   /** Counts SLA breach markers for one row without touching the DOM. */
-  private countBreach(
-    rep: Record<string, any>,
-    row: GridRow,
-    counts: BreachCounts
-  ): void {
+  private countBreach(rep: Record<string, any>, row: GridRow, counts: BreachCounts): void {
     if (String(row.number ?? "").startsWith("INC")) {
       const stateLabel = String(row.state ?? "").toLowerCase();
       if (stateLabel.startsWith("close") || stateLabel.startsWith("resolv")) {
@@ -237,7 +239,10 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
 
   /** Opens (or toggles) the per-column kebab menu: sort and hide actions. */
   protected toggleThMenu(key: string, anchor: HTMLElement): void {
-    if (thMenuEl && thMenuKey === key) { closeThMenu(); return; }
+    if (thMenuEl && thMenuKey === key) {
+      closeThMenu();
+      return;
+    }
     closeThMenu();
 
     const state = this.getState();
@@ -245,13 +250,27 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
     const pop = document.createElement("div");
     pop.className = "thMenuPop";
     const items: Array<[string, string, boolean, () => void]> = [
-      ["thMenuSortAsc", "Sort A → Z", state.sortKey === key && state.sortDir === 1, () => this.deps.onSortExplicit(key, 1)],
-      ["thMenuSortDesc", "Sort Z → A", state.sortKey === key && state.sortDir === -1, () => this.deps.onSortExplicit(key, -1)]
+      [
+        "thMenuSortAsc",
+        "Sort A → Z",
+        state.sortKey === key && state.sortDir === 1,
+        () => this.deps.onSortExplicit(key, 1)
+      ],
+      [
+        "thMenuSortDesc",
+        "Sort Z → A",
+        state.sortKey === key && state.sortDir === -1,
+        () => this.deps.onSortExplicit(key, -1)
+      ]
     ];
     for (const [cls, label, active, run] of items) {
       const b = el("button", cls + (active ? " active" : ""));
       b.textContent = label;
-      b.addEventListener("click", (e) => { e.stopPropagation(); closeThMenu(); run(); });
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeThMenu();
+        run();
+      });
       pop.appendChild(b);
     }
     const sep = document.createElement("div");
@@ -259,13 +278,26 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
     pop.appendChild(sep);
     const hide = el("button", "thMenuHide");
     hide.textContent = "Hide column";
-    hide.addEventListener("click", (e) => { e.stopPropagation(); closeThMenu(); this.deps.onHideColumn(key); });
+    hide.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeThMenu();
+      this.deps.onHideColumn(key);
+    });
     pop.appendChild(hide);
 
     document.body.appendChild(pop);
     thMenuEl = pop;
     thMenuKey = key;
-    placePopupNear(pop, anchor.getBoundingClientRect() as unknown as { left: number; top: number; bottom: number; width: number }, 150);
+    placePopupNear(
+      pop,
+      anchor.getBoundingClientRect() as unknown as {
+        left: number;
+        top: number;
+        bottom: number;
+        width: number;
+      },
+      150
+    );
   }
 
   protected buildHead(state: DataGridState): void {
@@ -297,7 +329,9 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
 
       const menuBtn = el("button", "thMenu");
       menuBtn.type = "button";
-      menuBtn.addEventListener("pointerdown", (e) => { e.stopPropagation(); });
+      menuBtn.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+      });
       menuBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.toggleThMenu(key, menuBtn);
@@ -342,7 +376,8 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
       handle.addEventListener("click", (e) => e.stopPropagation());
       th.appendChild(handle);
 
-      if (key === state.sortKey) th.classList.add("sorted", ...(state.sortDir === -1 ? ["desc"] : []));
+      if (key === state.sortKey)
+        th.classList.add("sorted", ...(state.sortDir === -1 ? ["desc"] : []));
       th.addEventListener("click", () => this.deps.onSort(key));
 
       tr.appendChild(th);
@@ -358,7 +393,10 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
     for (const row of state.rows) {
       const tr = document.createElement("tr");
       tr.dataset.sysId = String(row.sysId ?? "");
-      const rep = buildReport(row as Parameters<typeof buildReport>[0], this.deps.fmtInstant as unknown as Parameters<typeof buildReport>[1]) as Record<string, any>;
+      const rep = buildReport(
+        row as Parameters<typeof buildReport>[0],
+        this.deps.fmtInstant as unknown as Parameters<typeof buildReport>[1]
+      ) as Record<string, any>;
       const durations = computeDurations(row);
 
       const flags = state.attention ? state.attention(row) : [];
@@ -410,7 +448,10 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
 
     const text = v === null || v === undefined ? "" : String(v);
     td.textContent = cls ? text : cellShort(text);
-    setTip(td, text ? `${text}\n— calclens: how this was derived` : "— calclens: how this was derived");
+    setTip(
+      td,
+      text ? `${text}\n— calclens: how this was derived` : "— calclens: how this was derived"
+    );
 
     if (key === "number" && text.startsWith("INC")) {
       const stateLabel = String(row.state ?? "").toLowerCase();
@@ -425,20 +466,36 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
           const labels = [];
           if (String(breach).includes("R")) labels.push("Response SLA");
           if (String(breach).includes("M")) labels.push("Resolution SLA");
-          setTip(td, `⚠ SLA breached — ${labels.join(" & ")}\n\n${td.getAttribute("data-tip") ?? ""}`, "tip-warn");
+          setTip(
+            td,
+            `⚠ SLA breached — ${labels.join(" & ")}\n\n${td.getAttribute("data-tip") ?? ""}`,
+            "tip-warn"
+          );
         }
       }
     }
 
     if (row.parseReview && (key === "solutionType" || key === "rootCause") && text) {
       td.classList.add("review");
-      setTip(td, `⚠ Low-confidence parse — please verify\n\n${td.getAttribute("data-tip") ?? ""}`, "tip-warn");
+      setTip(
+        td,
+        `⚠ Low-confidence parse — please verify\n\n${td.getAttribute("data-tip") ?? ""}`,
+        "tip-warn"
+      );
     }
 
     const options = text ? this.deps.columnOptions(key, row) : null;
-    if (options && options.length && !options.some((o) => String(o).toLowerCase() === text.toLowerCase())) {
+    if (
+      options &&
+      options.length &&
+      !options.some((o) => String(o).toLowerCase() === text.toLowerCase())
+    ) {
       td.classList.add("offlist");
-      setTip(td, `Value not in the MSR option list\n\n${td.getAttribute("data-tip") ?? ""}`, "tip-warn");
+      setTip(
+        td,
+        `Value not in the MSR option list\n\n${td.getAttribute("data-tip") ?? ""}`,
+        "tip-warn"
+      );
     }
 
     const cisys = String(row.sysId ?? row.number ?? "");
@@ -458,10 +515,7 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
     return `\u26a0 Needs attention\n\n${lines}`;
   }
 
-  protected updateFooter(
-    state: DataGridState,
-    breachCounts: BreachCounts
-  ): void {
+  protected updateFooter(state: DataGridState, breachCounts: BreachCounts): void {
     this.refs.count.textContent = `${state.rows.length} / ${state.total} tickets`;
 
     const legendOn = this.deps.legendEnabled?.() ?? true;
@@ -469,9 +523,12 @@ export class DataGrid extends Component<DataGridState, ComponentProps, DataGridD
     const parts: string[] = [];
     if (legendOn) {
       const breachParts: string[] = [];
-      if (breachCounts.rm) breachParts.push(`<span class="slaDot rm"></span>${breachCounts.rm} both SLAs`);
-      if (breachCounts.r) breachParts.push(`<span class="slaDot r"></span>${breachCounts.r} response SLA`);
-      if (breachCounts.m) breachParts.push(`<span class="slaDot m"></span>${breachCounts.m} resolution SLA`);
+      if (breachCounts.rm)
+        breachParts.push(`<span class="slaDot rm"></span>${breachCounts.rm} both SLAs`);
+      if (breachCounts.r)
+        breachParts.push(`<span class="slaDot r"></span>${breachCounts.r} response SLA`);
+      if (breachCounts.m)
+        breachParts.push(`<span class="slaDot m"></span>${breachCounts.m} resolution SLA`);
       if (breachParts.length) parts.push("SLA breached: " + breachParts.join(" · "));
     }
 

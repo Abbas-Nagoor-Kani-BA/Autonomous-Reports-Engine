@@ -15,7 +15,11 @@ const report = new ReportService();
 export type ViewerRow = Record<string, any>;
 /** [key, label, cell class, width] — the grid-column descriptor. */
 export type ViewerCol = readonly [string, string, string, number];
-export type ViewerData = { rows: ViewerRow[]; debug?: { ticketsWithAudit?: number }; [k: string]: any };
+export type ViewerData = {
+  rows: ViewerRow[];
+  debug?: { ticketsWithAudit?: number };
+  [k: string]: any;
+};
 export type MsrLists = ReturnType<typeof MsrChoices.mergeMsrLists>;
 
 /** Instance-clock formatter used across the viewer and threaded into core reports. */
@@ -59,7 +63,9 @@ const COLUMNS: ViewerCol[] = [
   ["rep:analysedDate", "Analysed date", "rep", 105]
 ];
 
-function hideStore(): Set<string> { return uiStore.getState().hiddenCols; }
+function hideStore(): Set<string> {
+  return uiStore.getState().hiddenCols;
+}
 
 function visibleCols(): ViewerCol[] {
   const ordered = orderColumns(COLUMNS, getColOrder());
@@ -88,12 +94,18 @@ function columnOptionList(key: string, row: ViewerRow): string[] | null {
   if (!row) return null;
   const lists = getMsrLists();
   switch (key) {
-    case "solutionType": return lists.resolution;
-    case "rootCause": return MsrChoices.rootCauseFor(lists.rootCause, MsrChoices.msrType(row.number));
-    case "subCategory": return lists.subCategory;
-    case "duplicateIncident": return lists.duplicate;
-    case "assignmentGroup": return lists.queue;
-    default: return null;
+    case "solutionType":
+      return lists.resolution;
+    case "rootCause":
+      return MsrChoices.rootCauseFor(lists.rootCause, MsrChoices.msrType(row.number));
+    case "subCategory":
+      return lists.subCategory;
+    case "duplicateIncident":
+      return lists.duplicate;
+    case "assignmentGroup":
+      return lists.queue;
+    default:
+      return null;
   }
 }
 
@@ -113,7 +125,9 @@ function setStatus(text: string, isError = false): void {
   const el = $("status");
   el.textContent = text;
   el.style.color = isError ? "#f38ba8" : "#a6e3a1";
-  setTimeout(() => { el.textContent = ""; }, 4000);
+  setTimeout(() => {
+    el.textContent = "";
+  }, 4000);
 }
 
 function el(tag: string, cls?: string): HTMLElement {
@@ -152,8 +166,8 @@ function buildSummaryDetailsFor(
   data: ViewerData | null | undefined,
   narrative?: Record<string, string>
 ): SummaryDetailsData {
-  const rows = (data && Array.isArray(data.rows)) ? data.rows : [];
-  const changeRows = (data && Array.isArray(data.changeSummaryRows)) ? data.changeSummaryRows : [];
+  const rows = data && Array.isArray(data.rows) ? data.rows : [];
+  const changeRows = data && Array.isArray(data.changeSummaryRows) ? data.changeSummaryRows : [];
   const d = buildSummaryDetails(rows, changeRows);
   return {
     keyIncidents: d.keyIncidents,

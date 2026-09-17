@@ -27,7 +27,11 @@ const fakeChrome = {
     }
   }
 };
-Object.defineProperty(globalThis, "chrome", { value: fakeChrome, configurable: true, writable: true });
+Object.defineProperty(globalThis, "chrome", {
+  value: fakeChrome,
+  configurable: true,
+  writable: true
+});
 
 const {
   loadHighlightPrefs,

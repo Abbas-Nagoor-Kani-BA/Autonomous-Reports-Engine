@@ -1,217 +1,385 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Autonomous Reports Engine — Data</title>
-  <link href="../styles/output.css" rel="stylesheet">
-</head>
-<body class="viewer-body">
-  <div id="slaBar" class="hidden"></div>
-  <div id="clsProgress" class="hidden">
-    <div id="clsFill"></div>
-  </div>
-  <div class="toolbar">
-    <div class="tbLeft">
-      <select id="searchColumn" class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none" data-tip="Choose which column to search"></select>
-      <input id="search" class="w-[240px] max-w-[30vw] bg-card2 text-text border border-line rounded-md px-2.5 py-1.5 text-[13px] focus:border-accent focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-accent" placeholder="Search…">
-      <select id="searchMode" class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none" data-tip="How to match the search text">
-        <option value="contains">Contains</option>
-        <option value="equals">Equals</option>
-        <option value="notContains">Does not contain</option>
-        <option value="notEquals">Does not equal</option>
-      </select>
-      <span id="searchCase" class="searchCase">
-        <button id="searchCaseInsensitive" class="btn active" data-tip="Case-insensitive">aa</button>
-        <button id="searchCaseSensitive" class="btn" data-tip="Case-sensitive">Aa</button>
-      </span>
-      <span id="count"></span>
+  <head>
+    <meta charset="utf-8" />
+    <title>Autonomous Reports Engine — Data</title>
+    <link href="../styles/output.css" rel="stylesheet" />
+  </head>
+  <body class="viewer-body">
+    <div id="slaBar" class="hidden"></div>
+    <div id="clsProgress" class="hidden">
+      <div id="clsFill"></div>
     </div>
-    <div class="tbRight">
-      <span id="status"></span>
-    </div>
-    <input type="file" id="tplFile" accept=".xlsx" class="hidden">
-  </div>
-  <div id="actionRail">
-    <div id="railHead">
-      <button id="railGrip" class="icon-btn" data-tip="Drag to move" aria-label="Drag to move"></button>
-      <button id="railFold" class="icon-btn" data-tip="Collapse" aria-label="Collapse"></button>
-    </div>
-    <div id="railBody">
-      <button id="calclensBtn" class="btn" data-tip="Calclens — inspect how each value was derived and edit the derivation columns" aria-label="Calclens"></button>
-      <button id="editModeBtn" class="btn" data-tip="Edit mode — click a cell to bulk-edit that column across the current view" aria-label="Edit column">Edit column</button>
-      <button id="copyMsrBtn" class="btn" data-tip="Copy the current view as MSR 'BA AO' input columns (A–U) — paste onto rows whose formulas in V–AJ stay intact" aria-label="Copy for MSR"></button>
-      <button id="colsBtn" class="btn" data-tip="Choose which columns are shown" aria-label="Columns"></button>
-      <div id="colMenu" class="hidden">
-        <div class="menuHead"><span>Visible columns</span><button id="showAllCols" class="btn">Show all</button></div>
-        <div class="menuHead sub"><button id="resetColWidthsBtn" class="btn">Reset widths</button><button id="resetColOrderBtn" class="btn">Reset order</button></div>
-        <input id="colSearch" placeholder="Search columns…">
-        <div id="colList"></div>
+    <div class="toolbar">
+      <div class="tbLeft">
+        <select
+          id="searchColumn"
+          class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none"
+          data-tip="Choose which column to search"
+        ></select>
+        <input
+          id="search"
+          class="w-[240px] max-w-[30vw] bg-card2 text-text border border-line rounded-md px-2.5 py-1.5 text-[13px] focus:border-accent focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-accent"
+          placeholder="Search…"
+        />
+        <select
+          id="searchMode"
+          class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none"
+          data-tip="How to match the search text"
+        >
+          <option value="contains">Contains</option>
+          <option value="equals">Equals</option>
+          <option value="notContains">Does not contain</option>
+          <option value="notEquals">Does not equal</option>
+        </select>
+        <span id="searchCase" class="searchCase">
+          <button id="searchCaseInsensitive" class="btn active" data-tip="Case-insensitive">
+            aa
+          </button>
+          <button id="searchCaseSensitive" class="btn" data-tip="Case-sensitive">Aa</button>
+        </span>
+        <span id="count"></span>
       </div>
-      <button id="clearBtn" class="btn" data-tip="Clear pulled data" aria-label="Clear"></button>
-      <button id="splitPreviewBtn" class="btn" data-tip="Preview how the current view splits by CI group" aria-label="Preview export split">Split preview</button>
-      <div id="exportCluster">
-        <button id="exportBtn" class="btn-primary exportBtn" data-tip="Configure export settings and export the current view" aria-label="Export"></button>
+      <div class="tbRight">
+        <span id="status"></span>
+      </div>
+      <input type="file" id="tplFile" accept=".xlsx" class="hidden" />
+    </div>
+    <div id="actionRail">
+      <div id="railHead">
+        <button
+          id="railGrip"
+          class="icon-btn"
+          data-tip="Drag to move"
+          aria-label="Drag to move"
+        ></button>
+        <button id="railFold" class="icon-btn" data-tip="Collapse" aria-label="Collapse"></button>
+      </div>
+      <div id="railBody">
+        <button
+          id="calclensBtn"
+          class="btn"
+          data-tip="Calclens — inspect how each value was derived and edit the derivation columns"
+          aria-label="Calclens"
+        ></button>
+        <button
+          id="editModeBtn"
+          class="btn"
+          data-tip="Edit mode — click a cell to bulk-edit that column across the current view"
+          aria-label="Edit column"
+        >
+          Edit column
+        </button>
+        <button
+          id="copyMsrBtn"
+          class="btn"
+          data-tip="Copy the current view as MSR 'BA AO' input columns (A–U) — paste onto rows whose formulas in V–AJ stay intact"
+          aria-label="Copy for MSR"
+        ></button>
+        <button
+          id="colsBtn"
+          class="btn"
+          data-tip="Choose which columns are shown"
+          aria-label="Columns"
+        ></button>
+        <div id="colMenu" class="hidden">
+          <div class="menuHead">
+            <span>Visible columns</span><button id="showAllCols" class="btn">Show all</button>
+          </div>
+          <div class="menuHead sub">
+            <button id="resetColWidthsBtn" class="btn">Reset widths</button
+            ><button id="resetColOrderBtn" class="btn">Reset order</button>
+          </div>
+          <input id="colSearch" placeholder="Search columns…" />
+          <div id="colList"></div>
+        </div>
+        <button id="clearBtn" class="btn" data-tip="Clear pulled data" aria-label="Clear"></button>
+        <button
+          id="splitPreviewBtn"
+          class="btn"
+          data-tip="Preview how the current view splits by CI group"
+          aria-label="Preview export split"
+        >
+          Split preview
+        </button>
+        <div id="exportCluster">
+          <button
+            id="exportBtn"
+            class="btn-primary exportBtn"
+            data-tip="Configure export settings and export the current view"
+            aria-label="Export"
+          ></button>
+        </div>
       </div>
     </div>
-  </div>
-  <div id="tabs" role="tablist">
-    <button id="tabTickets" class="tab on" role="tab" aria-selected="true"><span class="g">☰</span> Tickets</button>
-    <button id="tabSummary" class="tab" role="tab" aria-selected="false"><span class="g">Σ</span> Summary SLA</button>
-    <button id="tabSummaryDetails" class="tab" role="tab" aria-selected="false"><span class="g">◫</span> Weekly Summary</button>
-    <div id="calclensMenuWrap" class="hidden" style="position:relative">
-      <button id="calclensMenuBtn" class="btn" data-tip="Choose which Calclens highlights are shown" aria-label="Calclens highlights"></button>
-      <div id="calclensMenu" class="hidden">
-        <div class="menuHead"><span>Highlights</span><button id="calclensShowAll" class="btn">Show all</button></div>
-        <div class="menuHead sub"><button id="calclensHideAll" class="btn">Hide all</button></div>
-        <div id="calclensHlList"></div>
+    <div id="tabs" role="tablist">
+      <button id="tabTickets" class="tab on" role="tab" aria-selected="true">
+        <span class="g">☰</span> Tickets
+      </button>
+      <button id="tabSummary" class="tab" role="tab" aria-selected="false">
+        <span class="g">Σ</span> Summary SLA
+      </button>
+      <button id="tabSummaryDetails" class="tab" role="tab" aria-selected="false">
+        <span class="g">◫</span> Weekly Summary
+      </button>
+      <div id="calclensMenuWrap" class="hidden" style="position: relative">
+        <button
+          id="calclensMenuBtn"
+          class="btn"
+          data-tip="Choose which Calclens highlights are shown"
+          aria-label="Calclens highlights"
+        ></button>
+        <div id="calclensMenu" class="hidden">
+          <div class="menuHead">
+            <span>Highlights</span><button id="calclensShowAll" class="btn">Show all</button>
+          </div>
+          <div class="menuHead sub"><button id="calclensHideAll" class="btn">Hide all</button></div>
+          <div id="calclensHlList"></div>
+        </div>
       </div>
+      <button
+        id="calclensFilterBtn"
+        class="btn hidden"
+        data-tip="Show only tickets with attention flags"
+        aria-label="Show flagged tickets only"
+      ></button>
+      <span id="splitChip" class="splitChip hidden ml-auto"
+        ><span class="splitChipLabel"></span
+        ><button
+          id="splitChipClear"
+          class="splitChipClear"
+          data-tip="Clear split filter"
+          aria-label="Clear split filter"
+        >
+          ✕
+        </button></span
+      >
+      <span id="attentionChip" class="splitChip hidden"
+        ><span id="attentionChipLabel" class="splitChipLabel"></span
+        ><button
+          id="attentionChipClear"
+          class="splitChipClear"
+          data-tip="Clear attention filter"
+          aria-label="Clear attention filter"
+        >
+          ✕
+        </button></span
+      >
+      <button
+        id="ticketStatsBtn"
+        class="btn icon-btn ml-auto"
+        data-tip="Ticket stats — state breakdown and SLA met/breached for the current view"
+        aria-label="Ticket stats"
+      ></button>
     </div>
-    <button id="calclensFilterBtn" class="btn hidden" data-tip="Show only tickets with attention flags" aria-label="Show flagged tickets only"></button>
-    <span id="splitChip" class="splitChip hidden ml-auto"><span class="splitChipLabel"></span><button id="splitChipClear" class="splitChipClear" data-tip="Clear split filter" aria-label="Clear split filter">✕</button></span>
-    <span id="attentionChip" class="splitChip hidden"><span id="attentionChipLabel" class="splitChipLabel"></span><button id="attentionChipClear" class="splitChipClear" data-tip="Clear attention filter" aria-label="Clear attention filter">✕</button></span>
-    <button id="ticketStatsBtn" class="btn icon-btn ml-auto" data-tip="Ticket stats — state breakdown and SLA met/breached for the current view" aria-label="Ticket stats"></button>
-  </div>
-  <div id="wrap">
-    <table id="tbl">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-  <div id="summaryWrap" class="hidden">
-    <div id="sumMeta"></div>
-    <div class="table-wrapper">
-      <table id="sumIncTbl" class="sum-table incident-table">
-        <colgroup>
-          <col><col><col><col><col><col><col><col><col>
-        </colgroup>
+    <div id="wrap">
+      <table id="tbl">
         <thead></thead>
         <tbody></tbody>
       </table>
     </div>
-    <div class="table-wrapper">
-      <table id="sumProbTbl" class="sum-table problem-table">
-        <colgroup>
-          <col><col><col><col><col><col><col><col><col>
-        </colgroup>
-        <thead></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-  <div id="summaryDetailsWrap" class="hidden">
-    <div id="sdMeta" class="text-[12px] text-dim my-2"></div>
-    <div id="sdNarrative" class="my-3"></div>
-    <h3 class="text-[13px] text-accent mt-4 mb-1">Key Incidents (P1/P2, last week)</h3>
-    <div class="table-wrapper"><table id="sdKeyIncTbl" class="sum-table"><thead></thead><tbody></tbody></table></div>
-    <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Implemented (last week)</h3>
-    <div class="table-wrapper"><table id="sdImplTbl" class="sum-table"><thead></thead><tbody></tbody></table></div>
-    <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Planned (next week)</h3>
-    <div class="table-wrapper"><table id="sdPlannedTbl" class="sum-table"><thead></thead><tbody></tbody></table></div>
-    <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Failed (last week)</h3>
-    <div class="table-wrapper"><table id="sdFailedTbl" class="sum-table"><thead></thead><tbody></tbody></table></div>
-  </div>
-  <div id="ticketStatsModal" class="hidden">
-    <div id="ticketStatsCard">
-      <div class="mapHead"><span>Ticket stats</span><button id="ticketStatsClose" class="btn" data-tip="Close">✕</button></div>
-      <div id="ticketStatsBody"></div>
-    </div>
-  </div>
-  <div id="splitPreviewModal" class="hidden">
-    <div id="splitPreviewCard">
-      <div class="mapHead"><span>Export split preview</span><button id="splitPreviewClose" class="btn" data-tip="Close">✕</button></div>
-      <p class="mapHint">How the current view splits by CI group. Choose a group to view just its tickets in the grid (session only).</p>
-      <div id="splitPreviewBody"></div>
-    </div>
-  </div>
-  <div id="columnEditorModal" class="hidden"></div>
-  <div id="empty" class="hidden">No pulled data yet — run a pull from the side panel first.</div>
-  <div id="calclensPanel"></div>
-  <div id="mapModal" class="hidden">
-    <div id="letterPop" class="hidden">
-      <input id="letterSearch" placeholder="Search A–AN…">
-      <div id="letterList"></div>
-    </div>
-    <div id="mapCard">
-      <div class="mapHead"><span>Export column mapping</span><button id="mapClose" class="btn" data-tip="Close">✕</button></div>
-      <p class="mapHint">Pick the Excel column (A–AN) each field is written to. A field exports to one
-        column; unmapped fields are skipped and unmapped columns stay as the template has them.</p>
-      <input id="mapSearch" placeholder="Search fields…">
-      <div id="mapList"></div>
-      <div class="mapFoot">
-        <button id="mapReset" class="btn">Reset to template default</button>
-        <span class="spacer"></span>
-        <button id="mapSave" class="btn-primary mapSave">Save mapping</button>
+    <div id="summaryWrap" class="hidden">
+      <div id="sumMeta"></div>
+      <div class="table-wrapper">
+        <table id="sumIncTbl" class="sum-table incident-table">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-wrapper">
+        <table id="sumProbTbl" class="sum-table problem-table">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+            <col />
+          </colgroup>
+          <thead></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
-  </div>
-  <div id="ciModal" class="hidden">
-    <div id="ciCard">
-      <div class="mapHead"><span>Split export by configuration item</span><button id="ciClose" class="btn" data-tip="Close">✕</button></div>
-      <label class="ciToggle"><input type="checkbox" id="ciEnabled"> Split each export into separate files</label>
-      <p class="mapHint">Groups become the file names. Drag configuration items between groups.
-        An item matches every configuration item that contains it (anywhere in the name) — e.g. "Payment Gateway" also
-        matches "Payment Gateway PRD / PreLive / DEV / TEST" and "Web Payment Gateway". Longest match wins; the rest go to Others.
-        Add one item per box, or paste/type several separated by commas or new lines.</p>
-      <div id="groupBoard"></div>
-      <button id="addGroupBtn" class="btn">Add group</button>
-      <div class="mapFoot">
-        <span class="spacer"></span>
-        <button id="ciSave" class="btn-primary ciSave">Save</button>
+    <div id="summaryDetailsWrap" class="hidden">
+      <div id="sdMeta" class="text-[12px] text-dim my-2"></div>
+      <div id="sdNarrative" class="my-3"></div>
+      <h3 class="text-[13px] text-accent mt-4 mb-1">Key Incidents (P1/P2, last week)</h3>
+      <div class="table-wrapper">
+        <table id="sdKeyIncTbl" class="sum-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Implemented (last week)</h3>
+      <div class="table-wrapper">
+        <table id="sdImplTbl" class="sum-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Planned (next week)</h3>
+      <div class="table-wrapper">
+        <table id="sdPlannedTbl" class="sum-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Failed (last week)</h3>
+      <div class="table-wrapper">
+        <table id="sdFailedTbl" class="sum-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
-  </div>
-  <div id="configModal" class="hidden">
-    <div id="configCard">
-      <div class="mapHead"><span>Export configuration</span><button id="configClose" class="btn" data-tip="Close">✕</button></div>
-      <p class="mapHint">Exports use exactly what the data view shows — same rows, same order (search filter + sort), including your edits.</p>
-      <div class="cfgRows">
-        <div class="cfgRow">
-          <span class="cfgLabel">Op co</span>
-          <span class="cfgActions">
-            <select id="cfgOpCo" class="btn cfgEdit cfgSelect"></select>
-          </span>
+    <div id="ticketStatsModal" class="hidden">
+      <div id="ticketStatsCard">
+        <div class="mapHead">
+          <span>Ticket stats</span
+          ><button id="ticketStatsClose" class="btn" data-tip="Close">✕</button>
         </div>
-        <div class="cfgRow">
-          <span class="cfgLabel">Domain</span>
-          <span class="cfgActions">
-            <select id="cfgDomain" class="btn cfgEdit cfgSelect"></select>
-          </span>
-        </div>
-        <div class="cfgRow">
-          <span class="cfgLabel">Template</span>
-          <span class="cfgValue" id="cfgTplLabel">No template</span>
-          <span class="cfgActions">
-            <button id="cfgTplBtn" class="btn cfgEdit cfgTplBtn">Choose template…</button>
-            <button id="cfgTplClear" class="btn cfgEdit cfgTplClear">Clear</button>
-          </span>
-        </div>
-        <div class="cfgRow">
-          <span class="cfgLabel">Files</span>
-          <span class="cfgValue" id="cfgSplitLabel">Single file</span>
-          <span class="cfgActions">
-            <button id="cfgCiBtn" class="btn cfgEdit cfgCiBtn">Edit groups…</button>
-          </span>
-        </div>
-        <div class="cfgRow">
-          <span class="cfgLabel">Column mapping</span>
-          <span class="cfgValue" id="cfgMapLabel">Defaults</span>
-          <span class="cfgActions">
-            <button id="cfgMapBtn" class="btn cfgEdit cfgMapBtn">Edit mapping…</button>
-          </span>
-        </div>
-      </div>
-      <div class="radioRow" id="splitRadios">
-        <label><input type="radio" name="splitMode" id="radSingle" checked> Single file</label>
-        <label><input type="radio" name="splitMode" id="radSplit"> Separate files per CI group</label>
-      </div>
-      <div id="cfgSplitPreview" class="hidden"></div>
-      <div class="mapFoot">
-        <span class="spacer"></span>
-        <button id="configExport" class="btn-primary configExport">Export</button>
+        <div id="ticketStatsBody"></div>
       </div>
     </div>
-  </div>
-  <script src="../lib/vendor/fflate.min.js"></script>
-  <script type="module" src="./index.js"></script>
-</body>
+    <div id="splitPreviewModal" class="hidden">
+      <div id="splitPreviewCard">
+        <div class="mapHead">
+          <span>Export split preview</span
+          ><button id="splitPreviewClose" class="btn" data-tip="Close">✕</button>
+        </div>
+        <p class="mapHint">
+          How the current view splits by CI group. Choose a group to view just its tickets in the
+          grid (session only).
+        </p>
+        <div id="splitPreviewBody"></div>
+      </div>
+    </div>
+    <div id="columnEditorModal" class="hidden"></div>
+    <div id="empty" class="hidden">No pulled data yet — run a pull from the side panel first.</div>
+    <div id="calclensPanel"></div>
+    <div id="mapModal" class="hidden">
+      <div id="letterPop" class="hidden">
+        <input id="letterSearch" placeholder="Search A–AN…" />
+        <div id="letterList"></div>
+      </div>
+      <div id="mapCard">
+        <div class="mapHead">
+          <span>Export column mapping</span
+          ><button id="mapClose" class="btn" data-tip="Close">✕</button>
+        </div>
+        <p class="mapHint">
+          Pick the Excel column (A–AN) each field is written to. A field exports to one column;
+          unmapped fields are skipped and unmapped columns stay as the template has them.
+        </p>
+        <input id="mapSearch" placeholder="Search fields…" />
+        <div id="mapList"></div>
+        <div class="mapFoot">
+          <button id="mapReset" class="btn">Reset to template default</button>
+          <span class="spacer"></span>
+          <button id="mapSave" class="btn-primary mapSave">Save mapping</button>
+        </div>
+      </div>
+    </div>
+    <div id="ciModal" class="hidden">
+      <div id="ciCard">
+        <div class="mapHead">
+          <span>Split export by configuration item</span
+          ><button id="ciClose" class="btn" data-tip="Close">✕</button>
+        </div>
+        <label class="ciToggle"
+          ><input type="checkbox" id="ciEnabled" /> Split each export into separate files</label
+        >
+        <p class="mapHint">
+          Groups become the file names. Drag configuration items between groups. An item matches
+          every configuration item that contains it (anywhere in the name) — e.g. "Payment Gateway"
+          also matches "Payment Gateway PRD / PreLive / DEV / TEST" and "Web Payment Gateway".
+          Longest match wins; the rest go to Others. Add one item per box, or paste/type several
+          separated by commas or new lines.
+        </p>
+        <div id="groupBoard"></div>
+        <button id="addGroupBtn" class="btn">Add group</button>
+        <div class="mapFoot">
+          <span class="spacer"></span>
+          <button id="ciSave" class="btn-primary ciSave">Save</button>
+        </div>
+      </div>
+    </div>
+    <div id="configModal" class="hidden">
+      <div id="configCard">
+        <div class="mapHead">
+          <span>Export configuration</span
+          ><button id="configClose" class="btn" data-tip="Close">✕</button>
+        </div>
+        <p class="mapHint">
+          Exports use exactly what the data view shows — same rows, same order (search filter +
+          sort), including your edits.
+        </p>
+        <div class="cfgRows">
+          <div class="cfgRow">
+            <span class="cfgLabel">Op co</span>
+            <span class="cfgActions">
+              <select id="cfgOpCo" class="btn cfgEdit cfgSelect"></select>
+            </span>
+          </div>
+          <div class="cfgRow">
+            <span class="cfgLabel">Domain</span>
+            <span class="cfgActions">
+              <select id="cfgDomain" class="btn cfgEdit cfgSelect"></select>
+            </span>
+          </div>
+          <div class="cfgRow">
+            <span class="cfgLabel">Template</span>
+            <span class="cfgValue" id="cfgTplLabel">No template</span>
+            <span class="cfgActions">
+              <button id="cfgTplBtn" class="btn cfgEdit cfgTplBtn">Choose template…</button>
+              <button id="cfgTplClear" class="btn cfgEdit cfgTplClear">Clear</button>
+            </span>
+          </div>
+          <div class="cfgRow">
+            <span class="cfgLabel">Files</span>
+            <span class="cfgValue" id="cfgSplitLabel">Single file</span>
+            <span class="cfgActions">
+              <button id="cfgCiBtn" class="btn cfgEdit cfgCiBtn">Edit groups…</button>
+            </span>
+          </div>
+          <div class="cfgRow">
+            <span class="cfgLabel">Column mapping</span>
+            <span class="cfgValue" id="cfgMapLabel">Defaults</span>
+            <span class="cfgActions">
+              <button id="cfgMapBtn" class="btn cfgEdit cfgMapBtn">Edit mapping…</button>
+            </span>
+          </div>
+        </div>
+        <div class="radioRow" id="splitRadios">
+          <label><input type="radio" name="splitMode" id="radSingle" checked /> Single file</label>
+          <label
+            ><input type="radio" name="splitMode" id="radSplit" /> Separate files per CI
+            group</label
+          >
+        </div>
+        <div id="cfgSplitPreview" class="hidden"></div>
+        <div class="mapFoot">
+          <span class="spacer"></span>
+          <button id="configExport" class="btn-primary configExport">Export</button>
+        </div>
+      </div>
+    </div>
+    <script src="../lib/vendor/fflate.min.js"></script>
+    <script type="module" src="./index.js"></script>
+  </body>
 </html>

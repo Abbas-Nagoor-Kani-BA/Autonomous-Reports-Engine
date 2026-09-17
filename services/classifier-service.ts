@@ -1,8 +1,12 @@
 import { categorizeField } from "../core/classification/msrcategorize.ts";
-import type { MsrScore } from "../core/classification/msrcategorize.ts";import { msrType, rootCauseFor } from "../core/classification/msrchoices.ts";
+import type { MsrScore } from "../core/classification/msrcategorize.ts";
+import { msrType, rootCauseFor } from "../core/classification/msrchoices.ts";
 import type { MsrListSet } from "../core/classification/msrchoices.ts";
 import { ClassificationCacheStore } from "../data/classification-cache-repository.ts";
-import type { ClassificationCacheRepository, CacheKeyInput } from "../data/classification-cache-repository.ts";
+import type {
+  ClassificationCacheRepository,
+  CacheKeyInput
+} from "../data/classification-cache-repository.ts";
 
 /*
  * Viewer-facing orchestrator for MSR-aware classification.
@@ -74,8 +78,18 @@ export type ClassifyServiceDeps = {
 
 /** Deterministic compute: root cause -> per-type list, solution type -> resolution. */
 export const deterministicClassify: ClassifyFn = (input) => {
-  const rootCause = categorizeField(input.notes, ["rootCauseCategory"], input.rootCauseLabels, input.hints);
-  const solutionType = categorizeField(input.notes, ["resolutionType"], input.resolutionLabels, input.hints);
+  const rootCause = categorizeField(
+    input.notes,
+    ["rootCauseCategory"],
+    input.rootCauseLabels,
+    input.hints
+  );
+  const solutionType = categorizeField(
+    input.notes,
+    ["resolutionType"],
+    input.resolutionLabels,
+    input.hints
+  );
   return {
     solutionType: {
       value: solutionType.label,
@@ -103,7 +117,7 @@ export class ClassifierService {
     this.onProgress = deps.onProgress;
     this.modelId = deps.modelId || "deterministic";
     const cacheEnabled = deps.cacheEnabled !== false;
-    this.cache = cacheEnabled ? (deps.cache || new ClassificationCacheStore()) : null;
+    this.cache = cacheEnabled ? deps.cache || new ClassificationCacheStore() : null;
   }
 
   /** Full cache key for an input row: notes + both label lists + model id. */

@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 import {
-  ExportService, MAP_MAX_COL, DEFAULT_EXPORT_MAP,
-  expStr, tsvCell, sanitizeFilePart, b64FromBuffer, bufferFromB64
+  ExportService,
+  MAP_MAX_COL,
+  DEFAULT_EXPORT_MAP,
+  expStr,
+  tsvCell,
+  sanitizeFilePart,
+  b64FromBuffer,
+  bufferFromB64
 } from "../viewer/services/export-service.ts";
 import { buildReport } from "../core/sla/report.ts";
 
@@ -9,7 +15,9 @@ let failed = 0;
 function check(name, got, want) {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) failed++;
-  console.log(`  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`);
+  console.log(
+    `  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`
+  );
 }
 
 const identity = (v) => (v ? String(v) : "");
@@ -35,15 +43,31 @@ check("40 template columns", svc.tplColumns.length, 40);
 check("col 1 is 1-based row number", svc.tplColumns[0].get(mkRow(), 0), "1");
 check("col 5 is the raw ticket number", svc.tplColumns[4].get(mkRow(), 0), "INC001");
 check("col 18 stays blank", svc.tplColumns[17].get(mkRow(), 0), "");
-check("col 26 maps the report incident hours field", svc.tplColumns[25].get(mkRow(), 0), buildReport(mkRow(), identity).incidentHours);
+check(
+  "col 26 maps the report incident hours field",
+  svc.tplColumns[25].get(mkRow(), 0),
+  buildReport(mkRow(), identity).incidentHours
+);
 check("MAP_MAX_COL matches the last template column", MAP_MAX_COL, svc.tplColumns.length);
 
 console.log("== ExportService — field groups for the map dialog ==");
 
-check("four groups, in order", svc.exportGroups.map((g) => g.name), ["General", "Ticket fields", "Report / SLA fields", "Durations"]);
-check("fieldById resolves a report field label", svc.fieldById.get("rep:opCo")?.label, "Report: Op co");
+check(
+  "four groups, in order",
+  svc.exportGroups.map((g) => g.name),
+  ["General", "Ticket fields", "Report / SLA fields", "Durations"]
+);
+check(
+  "fieldById resolves a report field label",
+  svc.fieldById.get("rep:opCo")?.label,
+  "Report: Op co"
+);
 check("fieldById getter for #row", svc.fieldById.get("#row")?.get(mkRow(), 2), "3");
-check("DEFAULT_EXPORT_MAP anchors", { a: DEFAULT_EXPORT_MAP["#row"], z: DEFAULT_EXPORT_MAP["rep:analysedDate"] }, { a: "A", z: "AN" });
+check(
+  "DEFAULT_EXPORT_MAP anchors",
+  { a: DEFAULT_EXPORT_MAP["#row"], z: DEFAULT_EXPORT_MAP["rep:analysedDate"] },
+  { a: "A", z: "AN" }
+);
 
 const durRow = mkRow({
   assignTimeUtcIso: "2026-01-05T09:00:00.000Z",
@@ -52,12 +76,22 @@ const durRow = mkRow({
   resumeTimeUtcIso: "2026-01-05T11:15:00.000Z",
   resolvedAtRaw: "2026-01-05 17:00:00"
 });
-check("dur fields resolve through the map dialog groups", [
-  svc.fieldById.get("dur:assignToAckn")?.get(durRow, 0),
-  svc.fieldById.get("dur:assignToResolve")?.get(durRow, 0),
-  svc.fieldById.get("dur:suspendTotal")?.get(durRow, 0)
-], ["0:30:00", "8:00:00", "1:15:00"]);
-check("dur fields are not part of the default export map (byte-identical defaults)", ["dur:assignToAckn", "dur:assignToResolve", "dur:suspendTotal"].every((k) => !(k in DEFAULT_EXPORT_MAP)), true);
+check(
+  "dur fields resolve through the map dialog groups",
+  [
+    svc.fieldById.get("dur:assignToAckn")?.get(durRow, 0),
+    svc.fieldById.get("dur:assignToResolve")?.get(durRow, 0),
+    svc.fieldById.get("dur:suspendTotal")?.get(durRow, 0)
+  ],
+  ["0:30:00", "8:00:00", "1:15:00"]
+);
+check(
+  "dur fields are not part of the default export map (byte-identical defaults)",
+  ["dur:assignToAckn", "dur:assignToResolve", "dur:suspendTotal"].every(
+    (k) => !(k in DEFAULT_EXPORT_MAP)
+  ),
+  true
+);
 
 console.log("== ExportService — column map pre-processing ==");
 
@@ -66,7 +100,7 @@ const custom = svc.tplColumnsFromMap({ "#row": "B", "rep:opCo": "C" });
 check("custom map keeps full column width", custom.length, 40);
 check("custom map remaps #row to column B", custom[1].get(mkRow(), 0), "1");
 check("custom map remaps rep:opCo to column C", typeof custom[2].get(mkRow(), 0), "string");
-const junk = svc.tplColumnsFromMap({ "nope": "A", "rep:opCo": "ZZ" });
+const junk = svc.tplColumnsFromMap({ nope: "A", "rep:opCo": "ZZ" });
 check("unknown fields and out-of-range letters are skipped", junk.length, 40);
 
 console.log("== ExportService — MSR clipboard TSV ==");
@@ -79,56 +113,136 @@ check("one line per row", lines.length, 2);
 check("21 cells per row", lines[0].split("\t").length, 21);
 check("column A is the row index", [lines[0].split("\t")[0], lines[1].split("\t")[0]], ["1", "2"]);
 check("column E carries the number", lines[1].split("\t")[4], "INC002");
-check("newlines and tabs inside a cell are collapsed to spaces", lines[0].split("\t")[7], "alpha beta tab");
+check(
+  "newlines and tabs inside a cell are collapsed to spaces",
+  lines[0].split("\t")[7],
+  "alpha beta tab"
+);
 
 // Column D (msrType) labels: PRB -> P_Ticket, SCTASK -> RFS, REQ -> RFS.
-check("column D for a PRB row is P_Ticket", svc.buildMsrTsv([mkRow({ number: "PRB0001234" })]).split("\t")[3], "P_Ticket");
-check("column D for a SCTASK row is RFS", svc.buildMsrTsv([mkRow({ number: "SCTASK0001234" })]).split("\t")[3], "RFS");
-check("column D for a REQ row is RFS", svc.buildMsrTsv([mkRow({ number: "REQ0001234" })]).split("\t")[3], "RFS");
-check("column D for an INC row is Incident", svc.buildMsrTsv([mkRow({ number: "INC0001234" })]).split("\t")[3], "Incident");
+check(
+  "column D for a PRB row is P_Ticket",
+  svc.buildMsrTsv([mkRow({ number: "PRB0001234" })]).split("\t")[3],
+  "P_Ticket"
+);
+check(
+  "column D for a SCTASK row is RFS",
+  svc.buildMsrTsv([mkRow({ number: "SCTASK0001234" })]).split("\t")[3],
+  "RFS"
+);
+check(
+  "column D for a REQ row is RFS",
+  svc.buildMsrTsv([mkRow({ number: "REQ0001234" })]).split("\t")[3],
+  "RFS"
+);
+check(
+  "column D for an INC row is Incident",
+  svc.buildMsrTsv([mkRow({ number: "INC0001234" })]).split("\t")[3],
+  "Incident"
+);
 
 console.log("== ExportService — sc_task shows RITM number and RFS priority ==");
 // MSR: E (index 4) = number, G (index 6) = priority.
-const scTsv = svc.buildMsrTsv([mkRow({ number: "SCTASK0001234", requestItem: "RITM0009999", priority: "3 - Moderate" })]).split("\t");
+const scTsv = svc
+  .buildMsrTsv([
+    mkRow({ number: "SCTASK0001234", requestItem: "RITM0009999", priority: "3 - Moderate" })
+  ])
+  .split("\t");
 check("MSR col E is the RITM number for sc_task", scTsv[4], "RITM0009999");
 check("MSR col G is RFS for sc_task", scTsv[6], "RFS");
-const scNoRitm = svc.buildMsrTsv([mkRow({ number: "SCTASK0005678", priority: "2 - High" })]).split("\t");
+const scNoRitm = svc
+  .buildMsrTsv([mkRow({ number: "SCTASK0005678", priority: "2 - High" })])
+  .split("\t");
 check("MSR col E falls back to SCTASK number when no RITM", scNoRitm[4], "SCTASK0005678");
 check("MSR col G still RFS when no RITM", scNoRitm[6], "RFS");
 // Regression: REQ / RITM rows are RFS too. Their priority column must be "RFS",
 // not empty, even when the source priority is blank.
 const reqTsv = svc.buildMsrTsv([mkRow({ number: "REQ0001234", priority: "" })]).split("\t");
 check("MSR col G is RFS for a REQ row with empty priority", reqTsv[6], "RFS");
-const ritmTsv = svc.buildMsrTsv([mkRow({ number: "RITM0001234", priority: undefined })]).split("\t");
+const ritmTsv = svc
+  .buildMsrTsv([mkRow({ number: "RITM0001234", priority: undefined })])
+  .split("\t");
 check("MSR col G is RFS for a RITM row with no priority", ritmTsv[6], "RFS");
-check("export col 7 is RFS for a REQ row with empty priority", svc.tplColumns[6].get(mkRow({ number: "REQ0001234", priority: "" }), 0), "RFS");
-check("export col 7 is RFS for a RITM row with no priority", svc.tplColumns[6].get(mkRow({ number: "RITM0001234" }), 0), "RFS");
+check(
+  "export col 7 is RFS for a REQ row with empty priority",
+  svc.tplColumns[6].get(mkRow({ number: "REQ0001234", priority: "" }), 0),
+  "RFS"
+);
+check(
+  "export col 7 is RFS for a RITM row with no priority",
+  svc.tplColumns[6].get(mkRow({ number: "RITM0001234" }), 0),
+  "RFS"
+);
 
 // The map-dialog field group is what a SAVED CUSTOM MAP resolves through
 // (tplColumnsFromMap -> fieldById). Regression: this used the raw row field, so
 // a custom-mapped priority column came out empty for RFS. It must match the
 // default column: "RFS" for SCTASK/REQ/RITM, and the RITM number for sc_task.
-check("field 'priority' is RFS for SCTASK regardless of value", svc.fieldById.get("priority")?.get(mkRow({ number: "SCTASK0001", priority: "1 - Critical" }), 0), "RFS");
-check("field 'priority' is RFS for RITM with empty priority", svc.fieldById.get("priority")?.get(mkRow({ number: "RITM0001", priority: "" }), 0), "RFS");
-check("field 'priority' passes through for incident", svc.fieldById.get("priority")?.get(mkRow({ number: "INC0001", priority: "2 - High" }), 0), "2 - High");
-check("field 'number' is the RITM number for sc_task", svc.fieldById.get("number")?.get(mkRow({ number: "SCTASK0001", requestItem: "RITM0009999" }), 0), "RITM0009999");
+check(
+  "field 'priority' is RFS for SCTASK regardless of value",
+  svc.fieldById.get("priority")?.get(mkRow({ number: "SCTASK0001", priority: "1 - Critical" }), 0),
+  "RFS"
+);
+check(
+  "field 'priority' is RFS for RITM with empty priority",
+  svc.fieldById.get("priority")?.get(mkRow({ number: "RITM0001", priority: "" }), 0),
+  "RFS"
+);
+check(
+  "field 'priority' passes through for incident",
+  svc.fieldById.get("priority")?.get(mkRow({ number: "INC0001", priority: "2 - High" }), 0),
+  "2 - High"
+);
+check(
+  "field 'number' is the RITM number for sc_task",
+  svc.fieldById.get("number")?.get(mkRow({ number: "SCTASK0001", requestItem: "RITM0009999" }), 0),
+  "RITM0009999"
+);
 // A custom map that routes priority to some column must also emit RFS.
-const custPrio = svc.tplColumnsFromMap({ "priority": "A" });
-check("custom-mapped priority column is RFS for SCTASK", custPrio[0].get(mkRow({ number: "SCTASK0001", priority: "3 - Moderate" }), 0), "RFS");
+const custPrio = svc.tplColumnsFromMap({ priority: "A" });
+check(
+  "custom-mapped priority column is RFS for SCTASK",
+  custPrio[0].get(mkRow({ number: "SCTASK0001", priority: "3 - Moderate" }), 0),
+  "RFS"
+);
 
 // cellValue (grid/search/copy) matches the displayed+exported value.
-check("cellValue priority is RFS for SCTASK", svc.cellValue(mkRow({ number: "SCTASK0001", priority: "3 - Moderate" }), "priority", ""), "RFS");
-check("cellValue number is the RITM for sc_task", svc.cellValue(mkRow({ number: "SCTASK0001", requestItem: "RITM0009999" }), "number", ""), "RITM0009999");
+check(
+  "cellValue priority is RFS for SCTASK",
+  svc.cellValue(mkRow({ number: "SCTASK0001", priority: "3 - Moderate" }), "priority", ""),
+  "RFS"
+);
+check(
+  "cellValue number is the RITM for sc_task",
+  svc.cellValue(mkRow({ number: "SCTASK0001", requestItem: "RITM0009999" }), "number", ""),
+  "RITM0009999"
+);
 // Non-sc_task unchanged: E = number, G = priority digit.
 const incTsv = svc.buildMsrTsv([mkRow({ number: "INC0001234", priority: "2 - High" })]).split("\t");
 check("MSR col E unchanged for incident", incTsv[4], "INC0001234");
 check("MSR col G is the priority digit for incident", incTsv[6], "2");
 // Export template: col 5 (index 4) = number, col 7 (index 6) = priority.
-const scRow = mkRow({ number: "SCTASK0001234", requestItem: "RITM0009999", priority: "3 - Moderate" });
-check("export col 5 is the RITM number for sc_task", svc.tplColumns[4].get(scRow, 0), "RITM0009999");
+const scRow = mkRow({
+  number: "SCTASK0001234",
+  requestItem: "RITM0009999",
+  priority: "3 - Moderate"
+});
+check(
+  "export col 5 is the RITM number for sc_task",
+  svc.tplColumns[4].get(scRow, 0),
+  "RITM0009999"
+);
 check("export col 7 is RFS for sc_task", svc.tplColumns[6].get(scRow, 0), "RFS");
-check("export col 5 unchanged for incident", svc.tplColumns[4].get(mkRow({ number: "INC001" }), 0), "INC001");
-check("export col 7 is the raw priority for incident", svc.tplColumns[6].get(mkRow({ priority: "2 - High" }), 0), "2 - High");
+check(
+  "export col 5 unchanged for incident",
+  svc.tplColumns[4].get(mkRow({ number: "INC001" }), 0),
+  "INC001"
+);
+check(
+  "export col 7 is the raw priority for incident",
+  svc.tplColumns[6].get(mkRow({ priority: "2 - High" }), 0),
+  "2 - High"
+);
 
 // Column N serializes resolvedAt (a display string) directly. It must NOT be
 // routed through the instant formatter, which would misparse a dd-MM-yyyy
@@ -139,8 +253,10 @@ const gridFmt = (utcIso) => {
   if (!utcIso) return "";
   const d = new Date(utcIso);
   if (isNaN(d.getTime())) return String(utcIso);
-  return `${pad(d.getUTCDate())}-${pad(d.getUTCMonth() + 1)}-${d.getUTCFullYear()} ` +
-    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+  return (
+    `${pad(d.getUTCDate())}-${pad(d.getUTCMonth() + 1)}-${d.getUTCFullYear()} ` +
+    `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
+  );
 };
 const svcGrid = new ExportService(gridFmt);
 const dispRow = mkRow({
@@ -152,8 +268,16 @@ const dispRow = mkRow({
   resolvedAt: "01-08-2026 15:00:00"
 });
 const dispCells = svcGrid.buildMsrTsv([dispRow]).split("\n")[0].split("\t");
-check("column K serial is createdOn 1 Aug 2026 10:00 (not the ~205-day-off value)", dispCells[10], "46235.4166666667");
-check("column N serial is resolvedAt 1 Aug 2026 15:00 (not the ~205-day-off value)", dispCells[13], "46235.625");
+check(
+  "column K serial is createdOn 1 Aug 2026 10:00 (not the ~205-day-off value)",
+  dispCells[10],
+  "46235.4166666667"
+);
+check(
+  "column N serial is resolvedAt 1 Aug 2026 15:00 (not the ~205-day-off value)",
+  dispCells[13],
+  "46235.625"
+);
 check("column K is not the misparsed serial", dispCells[10] !== "46030.4166666667", true);
 check("column N is not the misparsed serial", dispCells[13] !== "46030.625", true);
 
@@ -172,33 +296,71 @@ const splitRows = [
   mkRow({ configItem: "" })
 ];
 const groups = svc.buildCiGroups(splitRows, groupDefs);
-check("group order follows config, Others appended last", groups.map((g) => g.name), ["Support", "DevOps", "Others"]);
+check(
+  "group order follows config, Others appended last",
+  groups.map((g) => g.name),
+  ["Support", "DevOps", "Others"]
+);
 check("prefix matching is case-insensitive", groups[0].rows.length, 2);
 check("DevOps catches exact and prefixed items", groups[1].rows.length, 2);
 check("unmatched rows land in Others", groups[2].rows.length, 2);
-check("empty Others bucket is omitted", svc.buildCiGroups([mkRow({ configItem: "Dev" })], groupDefs).map((g) => g.name), ["DevOps"]);
+check(
+  "empty Others bucket is omitted",
+  svc.buildCiGroups([mkRow({ configItem: "Dev" })], groupDefs).map((g) => g.name),
+  ["DevOps"]
+);
 
-const ties = svc.buildCiGroups([mkRow({ configItem: "xyz-core" })], [
-  { name: "A", items: ["xyz"] },
-  { name: "B", items: ["xyz"] }
-]);
+const ties = svc.buildCiGroups(
+  [mkRow({ configItem: "xyz-core" })],
+  [
+    { name: "A", items: ["xyz"] },
+    { name: "B", items: ["xyz"] }
+  ]
+);
 check("equal-length match resolves to the earlier group", ties[0].name, "A");
 
 const diag = svc.ciSplitDiagnostics(groups, splitRows, groupDefs);
-check("split diagnostics totals", { t: diag.total, o: diag.others, e: diag.emptyGroups }, { t: 6, o: 2, e: [] });
-const diag2 = svc.ciSplitDiagnostics(groups, splitRows, [...groupDefs, { name: "Empty", items: ["emptiness"] }]);
+check(
+  "split diagnostics totals",
+  { t: diag.total, o: diag.others, e: diag.emptyGroups },
+  { t: 6, o: 2, e: [] }
+);
+const diag2 = svc.ciSplitDiagnostics(groups, splitRows, [
+  ...groupDefs,
+  { name: "Empty", items: ["emptiness"] }
+]);
 check("empty configured groups are reported", diag2.emptyGroups, ["Empty"]);
 
 console.log("== ExportService — filled filename and cell helpers ==");
 
 const fn = svc.filledFilename("report.xlsx");
-check("filled filename carries the template base and a timestamp", /^report_filled_\d{8}-\d{4}\.xlsx$/.test(fn), true);
-check("group label is sanitized into the filename", svc.filledFilename("report.xlsx", "CI/CD Group!").includes("_CI-CD-Group_filled_"), true);
+check(
+  "filled filename carries the template base and a timestamp",
+  /^report_filled_\d{8}-\d{4}\.xlsx$/.test(fn),
+  true
+);
+check(
+  "group label is sanitized into the filename",
+  svc.filledFilename("report.xlsx", "CI/CD Group!").includes("_CI-CD-Group_filled_"),
+  true
+);
 check("expStr null/undefined become empty", [expStr(null), expStr(undefined)], ["", ""]);
 check("tsvCell collapses whitespace controls", tsvCell("a\tb\r\nc "), "a b c");
-check("sanitizeFilePart strips edge dashes and falls back to 'group'", [sanitizeFilePart("/CI/CD/"), sanitizeFilePart("")], ["CI-CD", "group"]);
-check("cellValue rep: branch uses the report", svc.cellValue(mkRow(), "rep:incCurrentHours", ""), "8:00:00");
-check("cellValue inst branch formats a value", svc.cellValue(mkRow({ assignTimeUtcIso: "2026-01-05T09:00:00Z" }), "assignTimeUtcIso", "inst"), "2026-01-05T09:00:00Z");
+check(
+  "sanitizeFilePart strips edge dashes and falls back to 'group'",
+  [sanitizeFilePart("/CI/CD/"), sanitizeFilePart("")],
+  ["CI-CD", "group"]
+);
+check(
+  "cellValue rep: branch uses the report",
+  svc.cellValue(mkRow(), "rep:incCurrentHours", ""),
+  "8:00:00"
+);
+check(
+  "cellValue inst branch formats a value",
+  svc.cellValue(mkRow({ assignTimeUtcIso: "2026-01-05T09:00:00Z" }), "assignTimeUtcIso", "inst"),
+  "2026-01-05T09:00:00Z"
+);
 
 console.log("== ExportService — selectable opCo/domain (was hardcoded BA/AO) ==");
 (() => {
@@ -210,13 +372,24 @@ console.log("== ExportService — selectable opCo/domain (was hardcoded BA/AO) =
   check("MSR col C defaults to AO", svc2.buildMsrTsv([mkRow()]).split("\t")[2], "AO");
   // Apply a selection sourced from the MSR option lists.
   svc2.setReportChoices({ opCo: "IB", domain: "SharePoint" });
-  check("getReportChoices reflects the selection", svc2.getReportChoices(), { opCo: "IB", domain: "SharePoint" });
+  check("getReportChoices reflects the selection", svc2.getReportChoices(), {
+    opCo: "IB",
+    domain: "SharePoint"
+  });
   check("template col B follows the selection", svc2.tplColumns[1].get(mkRow(), 0), "IB");
   check("template col C follows the selection", svc2.tplColumns[2].get(mkRow(), 0), "SharePoint");
   check("MSR col B follows the selection", svc2.buildMsrTsv([mkRow()]).split("\t")[1], "IB");
-  check("MSR col C follows the selection", svc2.buildMsrTsv([mkRow()]).split("\t")[2], "SharePoint");
+  check(
+    "MSR col C follows the selection",
+    svc2.buildMsrTsv([mkRow()]).split("\t")[2],
+    "SharePoint"
+  );
   check("cellValue rep:opCo follows the selection", svc2.cellValue(mkRow(), "rep:opCo", ""), "IB");
-  check("cellValue rep:domain follows the selection", svc2.cellValue(mkRow(), "rep:domain", ""), "SharePoint");
+  check(
+    "cellValue rep:domain follows the selection",
+    svc2.cellValue(mkRow(), "rep:domain", ""),
+    "SharePoint"
+  );
   // Clearing falls back to the buildReport defaults.
   svc2.setReportChoices(null);
   check("clearing restores BA default", svc2.tplColumns[1].get(mkRow(), 0), "BA");
@@ -227,6 +400,10 @@ console.log("== ExportService — base64 helpers ==");
 
 check("bufferFromB64 decodes", new TextDecoder().decode(bufferFromB64("SGVsbG8=")), "Hello");
 const buf = new Uint8Array([1, 2, 3, 254, 255]).buffer;
-check("b64FromBuffer round-trips", new Uint8Array(bufferFromB64(b64FromBuffer(buf))).join(","), "1,2,3,254,255");
+check(
+  "b64FromBuffer round-trips",
+  new Uint8Array(bufferFromB64(b64FromBuffer(buf))).join(","),
+  "1,2,3,254,255"
+);
 
 process.exit(failed ? 1 : 0);

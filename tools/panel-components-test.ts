@@ -30,14 +30,29 @@ win.document.body.innerHTML = html;
 
 const { LogCard } = await import("../panel/components/log-card.ts");
 const { ProgressCard } = await import("../panel/components/progress-card.ts");
-const { ConditionBuilder, validateConditions, COND_OPS } = await import("../panel/components/condition-builder.ts");
+const { ConditionBuilder, validateConditions, COND_OPS } = await import(
+  "../panel/components/condition-builder.ts"
+);
 
 const FIELDS = [
   { key: "assignedTo", label: "Assigned to", field: "assigned_to", type: "ref" },
-  { key: "state", label: "State", field: "state", type: "choice", choicesKey: "states", fieldByTable: { problem: "problem_state" } },
+  {
+    key: "state",
+    label: "State",
+    field: "state",
+    type: "choice",
+    choicesKey: "states",
+    fieldByTable: { problem: "problem_state" }
+  },
   { key: "number", label: "Number", field: "number", type: "string" },
   { key: "createdOn", label: "Created", field: "sys_created_on", type: "date" },
-  { key: "parentIncident", label: "Parent incident", field: "parent_incident", type: "ref", tables: ["incident"] }
+  {
+    key: "parentIncident",
+    label: "Parent incident",
+    field: "parent_incident",
+    type: "ref",
+    tables: ["incident"]
+  }
 ];
 
 const $ = (id) => {
@@ -54,7 +69,13 @@ function makeBuilder(table = "incident") {
     { on: { change: () => changed.push("change") } },
     {
       fields: FIELDS,
-      choiceList: (key) => (key === "states" ? [{ value: 2, label: "In Progress" }, { value: 7, label: "Closed" }] : []),
+      choiceList: (key) =>
+        key === "states"
+          ? [
+              { value: 2, label: "In Progress" },
+              { value: 7, label: "Closed" }
+            ]
+          : [],
       tableLabel: (t) => ({ incident: "Incident", problem: "Problem" })[t] || t,
       addButton: $("addCondBtn")
     }
@@ -164,7 +185,9 @@ test("hasConditions reflects presence of rows without validating", () => {
 test("panel disables the Add-to-filter button until a condition exists", () => {
   const builder = makeBuilder();
   const addBtn = $("addFilterBtn");
-  const sync = () => { addBtn.disabled = !builder.hasConditions(); };
+  const sync = () => {
+    addBtn.disabled = !builder.hasConditions();
+  };
 
   sync();
   assert.equal(addBtn.disabled, true, "disabled with no conditions");
@@ -212,7 +235,10 @@ test("changing the field resets operator and value, and rebuilds", () => {
   fieldSelect.dispatchEvent(new win.Event("change"));
 
   const ops = [...$("condRows").querySelectorAll(".cop option")].map((o) => o.value);
-  assert.deepEqual(ops, COND_OPS.date.map(([v]) => v));
+  assert.deepEqual(
+    ops,
+    COND_OPS.date.map(([v]) => v)
+  );
   assert.equal($("condRows").querySelector(".cop").value, "before");
 
   const opSelect = $("condRows").querySelector(".cop");
@@ -227,7 +253,10 @@ test("the join selector sits at the end of the preceding row and is wired to sta
   builder.addRow();
 
   const rows = $("condRows").querySelectorAll(".crow");
-  assert.ok(rows[0].querySelector(".cjoin"), "the join to the next row sits at the end of the first row");
+  assert.ok(
+    rows[0].querySelector(".cjoin"),
+    "the join to the next row sits at the end of the first row"
+  );
   assert.equal(rows[1].querySelector(".cjoin"), null, "the last row has no trailing join");
 
   rows[0].querySelector(".cjoin").value = "OR";
@@ -241,7 +270,9 @@ test("deleting a row re-renders and normalises joins", () => {
   builder.addRow();
   builder.addRow();
 
-  $("condRows").querySelectorAll(".cdel")[0].dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
+  $("condRows")
+    .querySelectorAll(".cdel")[0]
+    .dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
 
   assert.equal($("condRows").querySelectorAll(".crow").length, 1);
   assert.equal(builder.conditions().length, 1);
@@ -304,7 +335,9 @@ test("validateConditions rejects a field absent from the chosen table", () => {
 
 // --- filter set list ---
 
-const { FilterSetList, migrateLegacyFilterSets } = await import("../panel/components/filter-set-list.ts");
+const { FilterSetList, migrateLegacyFilterSets } = await import(
+  "../panel/components/filter-set-list.ts"
+);
 const { createMemoryKeyValueStore } = await import("../data/key-value-store.ts");
 const { FilterListStore } = await import("../data/repositories/filter-list-repository.ts");
 
@@ -360,7 +393,8 @@ test("clicking edit emits the row index without mutating the list", async () => 
   await list.add({ table: "incident", conditions: [] });
   await list.add({ table: "problem", conditions: [] });
 
-  $("filterListBox").querySelectorAll(".flitem")[1]
+  $("filterListBox")
+    .querySelectorAll(".flitem")[1]
     .querySelector('button[aria-label="Edit"]')
     .dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
 
@@ -386,7 +420,8 @@ test("removing and clearing a filter list persists each change", async () => {
   await list.add({ table: "incident", conditions: [] });
   await list.add({ table: "problem", conditions: [] });
 
-  $("filterListBox").querySelectorAll(".flitem")[0]
+  $("filterListBox")
+    .querySelectorAll(".flitem")[0]
     .querySelector('button[aria-label="Remove"]')
     .dispatchEvent(new win.MouseEvent("click", { bubbles: true }));
   await new Promise((r) => setTimeout(r, 0));
@@ -402,7 +437,10 @@ test("removing and clearing a filter list persists each change", async () => {
 
 test("legacy localStorage filter sets are imported once", async () => {
   const repo = new FilterListStore(createMemoryKeyValueStore());
-  globalThis.localStorage.setItem("snFilterList", JSON.stringify([{ table: "incident", conditions: [] }]));
+  globalThis.localStorage.setItem(
+    "snFilterList",
+    JSON.stringify([{ table: "incident", conditions: [] }])
+  );
 
   assert.equal(await migrateLegacyFilterSets(repo), 1);
   assert.equal((await repo.load()).length, 1);
@@ -416,7 +454,10 @@ test("legacy localStorage filter sets are imported once", async () => {
 test("legacy import is a no-op when the new store already has sets", async () => {
   const repo = new FilterListStore(createMemoryKeyValueStore());
   await repo.save([{ table: "problem", conditions: [] }]);
-  globalThis.localStorage.setItem("snFilterList", JSON.stringify([{ table: "incident", conditions: [] }]));
+  globalThis.localStorage.setItem(
+    "snFilterList",
+    JSON.stringify([{ table: "incident", conditions: [] }])
+  );
 
   assert.equal(await migrateLegacyFilterSets(repo), 0);
   assert.equal((await repo.load())[0].table, "problem", "existing sets win");

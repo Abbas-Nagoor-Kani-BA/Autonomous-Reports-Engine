@@ -32,15 +32,36 @@ export const TPL_SHEET_NAME = "all_ticket_details";
 // Mirrors the hardcoded TPL_COLUMNS layout; AK-AM stay blank like T-Y.
 export const DEFAULT_EXPORT_MAP: Record<string, string> = {
   "#row": "A",
-  "rep:opCo": "B", "rep:domain": "C", "rep:type": "D",
-  "number": "E", "assignmentGroup": "F", "priority": "G", "shortDescription": "H",
-  "state": "I", "assignedTo": "J", "rep:created": "K", "rep:assigned": "L",
-  "rep:ackn": "M", "rep:resolved": "N", "rep:susp": "O", "rep:resumed": "P",
-  "rep:impactedApplication": "Q", "rep:rootCauseCategory": "S", "rep:resolutionType": "T",
-  "rep:incidentHours": "Z", "rep:incidentTotalAge": "AA", "rep:incCurrentHours": "AB",
-  "rep:incidentCurrentAge": "AC", "rep:responseSLA": "AD", "rep:cumulativeSla": "AE",
-  "rep:cumulativeDays": "AF", "rep:timeTaken": "AG", "rep:metResponseSLA": "AH",
-  "rep:metMinResolutionSLA": "AI", "rep:metMaxResolutionSLA": "AJ", "rep:analysedDate": "AN"
+  "rep:opCo": "B",
+  "rep:domain": "C",
+  "rep:type": "D",
+  number: "E",
+  assignmentGroup: "F",
+  priority: "G",
+  shortDescription: "H",
+  state: "I",
+  assignedTo: "J",
+  "rep:created": "K",
+  "rep:assigned": "L",
+  "rep:ackn": "M",
+  "rep:resolved": "N",
+  "rep:susp": "O",
+  "rep:resumed": "P",
+  "rep:impactedApplication": "Q",
+  "rep:rootCauseCategory": "S",
+  "rep:resolutionType": "T",
+  "rep:incidentHours": "Z",
+  "rep:incidentTotalAge": "AA",
+  "rep:incCurrentHours": "AB",
+  "rep:incidentCurrentAge": "AC",
+  "rep:responseSLA": "AD",
+  "rep:cumulativeSla": "AE",
+  "rep:cumulativeDays": "AF",
+  "rep:timeTaken": "AG",
+  "rep:metResponseSLA": "AH",
+  "rep:metMinResolutionSLA": "AI",
+  "rep:metMaxResolutionSLA": "AJ",
+  "rep:analysedDate": "AN"
 };
 
 export const MAP_MAX_COL = 40;
@@ -51,11 +72,18 @@ export function expStr(v: unknown): string {
 
 export function tsvCell(v: unknown): string {
   const s = v === null || v === undefined ? "" : String(v);
-  return s.replace(/\s*[\r\n]+\s*/g, " ").replace(/[\t\v\f]+/g, " ").trim();
+  return s
+    .replace(/\s*[\r\n]+\s*/g, " ")
+    .replace(/[\t\v\f]+/g, " ")
+    .trim();
 }
 
 export function sanitizeFilePart(s: unknown): string {
-  return String(s).replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "group";
+  return (
+    String(s)
+      .replace(/[^\w.-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "group"
+  );
 }
 
 export function b64FromBuffer(buf: ArrayBuffer): string {
@@ -101,51 +129,60 @@ export class ExportService {
     this.fmt = fmt;
     this.rep = new ReportService();
 
-    const expRaw = (key: string): ColGet => (r: Row) => expStr(r[key]);
-    const expRep = (key: string): ColGet => (r: Row) => this.rep.rep(r, this.fmt, this.reportChoices)[key] ?? "";
-    const durGet = (key: keyof Durations): ColGet => (r: Row) => computeDurations(r)[key];
+    const expRaw =
+      (key: string): ColGet =>
+      (r: Row) =>
+        expStr(r[key]);
+    const expRep =
+      (key: string): ColGet =>
+      (r: Row) =>
+        this.rep.rep(r, this.fmt, this.reportChoices)[key] ?? "";
+    const durGet =
+      (key: keyof Durations): ColGet =>
+      (r: Row) =>
+        computeDurations(r)[key];
 
     this.tplColumns = [
       { col: 1, get: (r, i) => String(i + 1) },
-      { col: 2, get: r => this.rep.rep(r, this.fmt, this.reportChoices).opCo },
-      { col: 3, get: r => this.rep.rep(r, this.fmt, this.reportChoices).domain },
-      { col: 4, get: r => this.rep.rep(r, this.fmt, this.reportChoices).type },
-      { col: 5, get: r => displayNumber(r) },
-      { col: 6, get: r => r.assignmentGroup },
-      { col: 7, get: r => priorityCell(r) },
-      { col: 8, get: r => r.shortDescription },
-      { col: 9, get: r => r.state },
-      { col: 10, get: r => r.assignedTo },
-      { col: 11, get: r => this.rep.rep(r, this.fmt, this.reportChoices).created },
-      { col: 12, get: r => this.rep.rep(r, this.fmt, this.reportChoices).assigned },
-      { col: 13, get: r => this.rep.rep(r, this.fmt, this.reportChoices).ackn },
-      { col: 14, get: r => this.rep.rep(r, this.fmt, this.reportChoices).resolved },
-      { col: 15, get: r => this.rep.rep(r, this.fmt, this.reportChoices).susp },
-      { col: 16, get: r => this.rep.rep(r, this.fmt, this.reportChoices).resumed },
-      { col: 17, get: r => this.rep.rep(r, this.fmt, this.reportChoices).impactedApplication },
+      { col: 2, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).opCo },
+      { col: 3, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).domain },
+      { col: 4, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).type },
+      { col: 5, get: (r) => displayNumber(r) },
+      { col: 6, get: (r) => r.assignmentGroup },
+      { col: 7, get: (r) => priorityCell(r) },
+      { col: 8, get: (r) => r.shortDescription },
+      { col: 9, get: (r) => r.state },
+      { col: 10, get: (r) => r.assignedTo },
+      { col: 11, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).created },
+      { col: 12, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).assigned },
+      { col: 13, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).ackn },
+      { col: 14, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).resolved },
+      { col: 15, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).susp },
+      { col: 16, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).resumed },
+      { col: 17, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).impactedApplication },
       { col: 18, get: () => "" },
-      { col: 19, get: r => this.rep.rep(r, this.fmt, this.reportChoices).rootCauseCategory },
-      { col: 20, get: r => this.rep.rep(r, this.fmt, this.reportChoices).resolutionType },
+      { col: 19, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).rootCauseCategory },
+      { col: 20, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).resolutionType },
       { col: 21, get: () => "" },
       { col: 22, get: () => "" },
       { col: 23, get: () => "" },
       { col: 24, get: () => "" },
       { col: 25, get: () => "" },
-      { col: 26, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incidentHours },
-      { col: 27, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incidentTotalAge },
-      { col: 28, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incCurrentHours },
-      { col: 29, get: r => this.rep.rep(r, this.fmt, this.reportChoices).incidentCurrentAge },
-      { col: 30, get: r => this.rep.rep(r, this.fmt, this.reportChoices).responseSLA },
-      { col: 31, get: r => this.rep.rep(r, this.fmt, this.reportChoices).cumulativeSla },
-      { col: 32, get: r => this.rep.rep(r, this.fmt, this.reportChoices).cumulativeDays },
-      { col: 33, get: r => this.rep.rep(r, this.fmt, this.reportChoices).timeTaken },
-      { col: 34, get: r => this.rep.rep(r, this.fmt, this.reportChoices).metResponseSLA },
-      { col: 35, get: r => this.rep.rep(r, this.fmt, this.reportChoices).metMinResolutionSLA },
-      { col: 36, get: r => this.rep.rep(r, this.fmt, this.reportChoices).metMaxResolutionSLA },
+      { col: 26, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).incidentHours },
+      { col: 27, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).incidentTotalAge },
+      { col: 28, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).incCurrentHours },
+      { col: 29, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).incidentCurrentAge },
+      { col: 30, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).responseSLA },
+      { col: 31, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).cumulativeSla },
+      { col: 32, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).cumulativeDays },
+      { col: 33, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).timeTaken },
+      { col: 34, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).metResponseSLA },
+      { col: 35, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).metMinResolutionSLA },
+      { col: 36, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).metMaxResolutionSLA },
       { col: 37, get: () => "" },
       { col: 38, get: () => "" },
       { col: 39, get: () => "" },
-      { col: 40, get: r => this.rep.rep(r, this.fmt, this.reportChoices).analysedDate }
+      { col: 40, get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).analysedDate }
     ];
 
     this.exportGroups = [
@@ -176,20 +213,44 @@ export class ExportService {
           ["rep:resolved", "Report: Resolved", expRep("resolved")],
           ["rep:susp", "Report: Suspended", expRep("susp")],
           ["rep:resumed", "Report: Resumed", expRep("resumed")],
-          ["rep:impactedApplication", "Report: Impacted application", expRep("impactedApplication")],
+          [
+            "rep:impactedApplication",
+            "Report: Impacted application",
+            expRep("impactedApplication")
+          ],
           ["rep:resolutionType", "Report: Resolution type", expRep("resolutionType")],
           ["rep:rootCauseCategory", "Report: Root cause", expRep("rootCauseCategory")],
           ["rep:incidentHours", "Report: Incident hours", expRep("incidentHours")],
           ["rep:incidentTotalAge", "Report: Incident total age", expRep("incidentTotalAge")],
-          ["rep:incCurrentHours", "Report: Inc current hours (from ASG)", expRep("incCurrentHours")],
+          [
+            "rep:incCurrentHours",
+            "Report: Inc current hours (from ASG)",
+            expRep("incCurrentHours")
+          ],
           ["rep:incidentCurrentAge", "Report: Incident current age", expRep("incidentCurrentAge")],
           ["rep:responseSLA", "Report: Response SLA", expRep("responseSLA")],
-          ["rep:cumulativeSla", "Report: Cumulative SLA (= Inc current hours)", expRep("cumulativeSla")],
-          ["rep:cumulativeDays", "Report: Cumulative days (= Incident current age)", expRep("cumulativeDays")],
+          [
+            "rep:cumulativeSla",
+            "Report: Cumulative SLA (= Inc current hours)",
+            expRep("cumulativeSla")
+          ],
+          [
+            "rep:cumulativeDays",
+            "Report: Cumulative days (= Incident current age)",
+            expRep("cumulativeDays")
+          ],
           ["rep:timeTaken", "Report: Time taken (= Incident current age)", expRep("timeTaken")],
           ["rep:metResponseSLA", "Report: Met response SLA", expRep("metResponseSLA")],
-          ["rep:metMinResolutionSLA", "Report: Met min resolution SLA", expRep("metMinResolutionSLA")],
-          ["rep:metMaxResolutionSLA", "Report: Met max resolution SLA", expRep("metMaxResolutionSLA")],
+          [
+            "rep:metMinResolutionSLA",
+            "Report: Met min resolution SLA",
+            expRep("metMinResolutionSLA")
+          ],
+          [
+            "rep:metMaxResolutionSLA",
+            "Report: Met max resolution SLA",
+            expRep("metMaxResolutionSLA")
+          ],
           ["rep:analysedDate", "Report: Analysed date", expRep("analysedDate")]
         ]
       },
@@ -207,44 +268,49 @@ export class ExportService {
     for (const g of this.exportGroups) {
       for (const [id, label, get] of g.items) defs.push({ id, label, get });
     }
-    this.fieldById = new Map(defs.map(d => [d.id, d]));
+    this.fieldById = new Map(defs.map((d) => [d.id, d]));
 
     const msrWallSerial = (wall: unknown): string => {
       const s = MsrChoices.displayToSerial(wall);
       return s === null ? "" : String(s);
     };
-    const msrInstSerial = (row: Row, key: string): string => row[key] ? msrWallSerial(this.fmt(String(row[key]), row)) : "";
-    const msrDispSerial = (v: unknown): string => v ? msrWallSerial(String(v)) : "";
+    const msrInstSerial = (row: Row, key: string): string =>
+      row[key] ? msrWallSerial(this.fmt(String(row[key]), row)) : "";
+    const msrDispSerial = (v: unknown): string => (v ? msrWallSerial(String(v)) : "");
 
     this.msrColumns = [
       { letter: "A", get: (r, i) => i + 1 },
-      { letter: "B", get: r => this.rep.rep(r, this.fmt, this.reportChoices).opCo },
-      { letter: "C", get: r => this.rep.rep(r, this.fmt, this.reportChoices).domain },
-      { letter: "D", get: r => MsrChoices.msrType(r.number) },
-      { letter: "E", get: r => displayNumber(r) },
-      { letter: "F", get: r => expStr(r.assignmentGroup) },
-      { letter: "G", get: r => isRfs(r) ? "RFS" : (String(r.priority ?? "").match(/\d+/)?.[0] ?? expStr(r.priority)) },
-      { letter: "H", get: r => expStr(r.shortDescription) },
-      { letter: "I", get: r => MsrChoices.msrStatus(expStr(r.state)) },
-      { letter: "J", get: r => expStr(r.assignedTo) },
-      { letter: "K", get: r => msrDispSerial(r.createdOn) },
-      { letter: "L", get: r => msrInstSerial(r, "assignTimeUtcIso") },
-      { letter: "M", get: r => msrInstSerial(r, "acknTimeUtcIso") },
-      { letter: "N", get: r => msrDispSerial(r.resolvedAt) },
-      { letter: "O", get: r => msrInstSerial(r, "suspendTimeUtcIso") },
-      { letter: "P", get: r => msrInstSerial(r, "resumeTimeUtcIso") },
-      { letter: "Q", get: r => expStr(r.configItem) },
-      { letter: "R", get: r => MsrChoices.normResolution(expStr(r.solutionType)) },
-      { letter: "S", get: r => expStr(r.rootCause) },
-      { letter: "T", get: r => expStr(r.subCategory) },
-      { letter: "U", get: r => expStr(r.duplicateIncident) }
+      { letter: "B", get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).opCo },
+      { letter: "C", get: (r) => this.rep.rep(r, this.fmt, this.reportChoices).domain },
+      { letter: "D", get: (r) => MsrChoices.msrType(r.number) },
+      { letter: "E", get: (r) => displayNumber(r) },
+      { letter: "F", get: (r) => expStr(r.assignmentGroup) },
+      {
+        letter: "G",
+        get: (r) =>
+          isRfs(r) ? "RFS" : (String(r.priority ?? "").match(/\d+/)?.[0] ?? expStr(r.priority))
+      },
+      { letter: "H", get: (r) => expStr(r.shortDescription) },
+      { letter: "I", get: (r) => MsrChoices.msrStatus(expStr(r.state)) },
+      { letter: "J", get: (r) => expStr(r.assignedTo) },
+      { letter: "K", get: (r) => msrDispSerial(r.createdOn) },
+      { letter: "L", get: (r) => msrInstSerial(r, "assignTimeUtcIso") },
+      { letter: "M", get: (r) => msrInstSerial(r, "acknTimeUtcIso") },
+      { letter: "N", get: (r) => msrDispSerial(r.resolvedAt) },
+      { letter: "O", get: (r) => msrInstSerial(r, "suspendTimeUtcIso") },
+      { letter: "P", get: (r) => msrInstSerial(r, "resumeTimeUtcIso") },
+      { letter: "Q", get: (r) => expStr(r.configItem) },
+      { letter: "R", get: (r) => MsrChoices.normResolution(expStr(r.solutionType)) },
+      { letter: "S", get: (r) => expStr(r.rootCause) },
+      { letter: "T", get: (r) => expStr(r.subCategory) },
+      { letter: "U", get: (r) => expStr(r.duplicateIncident) }
     ];
   }
 
   buildMsrTsv(rows: Row[]): string {
-    return rows.map((row, i) =>
-      this.msrColumns.map(c => tsvCell(c.get(row, i))).join("\t")
-    ).join("\n");
+    return rows
+      .map((row, i) => this.msrColumns.map((c) => tsvCell(c.get(row, i))).join("\t"))
+      .join("\n");
   }
 
   cellValue(row: Row, key: string, cls: string): string {
@@ -282,7 +348,10 @@ export class ExportService {
   }
 
   buildCiGroups(rows: Row[], groupDefs: CiGroupDef[]): CiGroupRows[] {
-    const norm = (s: unknown): string => String(s ?? "").trim().toLowerCase();
+    const norm = (s: unknown): string =>
+      String(s ?? "")
+        .trim()
+        .toLowerCase();
     const bounds: Array<{ key: string; name: string; gi: number }> = [];
     for (let gi = 0; gi < groupDefs.length; gi++) {
       const g = groupDefs[gi];
@@ -298,8 +367,12 @@ export class ExportService {
       let best: { key: string; name: string; gi: number } | null = null;
       if (k) {
         for (const b of bounds) {
-          if ((k.startsWith(b.key) || k.includes(b.key)) &&
-            (!best || b.key.length > best.key.length || (b.key.length === best.key.length && b.gi < best.gi))) {
+          if (
+            (k.startsWith(b.key) || k.includes(b.key)) &&
+            (!best ||
+              b.key.length > best.key.length ||
+              (b.key.length === best.key.length && b.gi < best.gi))
+          ) {
             best = b;
           }
         }
@@ -312,18 +385,22 @@ export class ExportService {
       }
     }
     const out = groupDefs
-      .filter(g => byGroup.has(g.name))
-      .map(g => ({ name: g.name, rows: byGroup.get(g.name)! }));
+      .filter((g) => byGroup.has(g.name))
+      .map((g) => ({ name: g.name, rows: byGroup.get(g.name)! }));
     if (others.length) out.push({ name: "Others", rows: others });
     return out;
   }
 
-  ciSplitDiagnostics(groups: CiGroupRows[], rows: Row[], groupDefs: CiGroupDef[]): { total: number; others: number; emptyGroups: string[] } {
-    const names = new Set(groups.map(g => g.name));
-    const others = groups.find(g => g.name === "Others");
+  ciSplitDiagnostics(
+    groups: CiGroupRows[],
+    rows: Row[],
+    groupDefs: CiGroupDef[]
+  ): { total: number; others: number; emptyGroups: string[] } {
+    const names = new Set(groups.map((g) => g.name));
+    const others = groups.find((g) => g.name === "Others");
     const emptyGroups = groupDefs
-      .filter(g => g.items.length && !names.has(g.name))
-      .map(g => g.name);
+      .filter((g) => g.items.length && !names.has(g.name))
+      .map((g) => g.name);
     return {
       total: rows.length,
       others: others ? others.rows.length : 0,

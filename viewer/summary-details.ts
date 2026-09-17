@@ -80,7 +80,14 @@ function renderChangeTable(tbl: HTMLTableElement, rows: SummaryChangeRow[]): voi
 }
 
 function renderIncidentTable(tbl: HTMLTableElement, rows: SummaryIncidentRow[]): void {
-  renderTableHead(tbl, ["Resolution Date", "System/Area", "Incident Number", "Details", "Status", "Root Cause & Resolution"]);
+  renderTableHead(tbl, [
+    "Resolution Date",
+    "System/Area",
+    "Incident Number",
+    "Details",
+    "Status",
+    "Root Cause & Resolution"
+  ]);
   const tbody = tbl.tBodies[0];
   tbody.innerHTML = "";
   if (!rows.length) {
@@ -95,7 +102,14 @@ function renderIncidentTable(tbl: HTMLTableElement, rows: SummaryIncidentRow[]):
   }
   for (const r of rows) {
     const tr = document.createElement("tr");
-    fillCells(tr, [serialToDisplay(r.resolutionDate), r.systemArea, r.incidentNumber, r.details, r.status, r.rootCauseResolution]);
+    fillCells(tr, [
+      serialToDisplay(r.resolutionDate),
+      r.systemArea,
+      r.incidentNumber,
+      r.details,
+      r.status,
+      r.rootCauseResolution
+    ]);
     tbody.appendChild(tr);
   }
 }
@@ -140,9 +154,10 @@ export function renderSummaryDetails(): void {
   const planned = details.changesPlanned ?? [];
   const failedC = details.changesFailed ?? [];
   const changeCount = impl.length + planned.length + failedC.length;
-  $("sdMeta").textContent = data && Array.isArray((data as { changeSummaryRows?: unknown[] }).changeSummaryRows)
-    ? `${changeCount} change(s) bucketed · ${keyInc.length} key incident(s). Type the narrative fields below; they and the tables export to the Summary sheet.`
-    : "No change requests pulled. Enable \u201CPull change requests for Weekly Summary\u201D in the side panel and run a pull. You can still type the narrative fields below.";
+  $("sdMeta").textContent =
+    data && Array.isArray((data as { changeSummaryRows?: unknown[] }).changeSummaryRows)
+      ? `${changeCount} change(s) bucketed · ${keyInc.length} key incident(s). Type the narrative fields below; they and the tables export to the Summary sheet.`
+      : "No change requests pulled. Enable \u201CPull change requests for Weekly Summary\u201D in the side panel and run a pull. You can still type the narrative fields below.";
   renderNarrative();
   renderIncidentTable($("sdKeyIncTbl"), keyInc);
   renderChangeTable($("sdImplTbl"), impl);
@@ -152,7 +167,7 @@ export function renderSummaryDetails(): void {
 
 export function initSummaryDetails(): void {
   void loadOnce<Record<string, string>>(STORAGE.viewerSummaryNarrative, {}).then((n) => {
-    narrative = (n && typeof n === "object") ? n : {};
+    narrative = n && typeof n === "object" ? n : {};
     renderNarrative();
   });
   // Re-render when the tab is shown; summary.ts owns the tab buttons, so hook

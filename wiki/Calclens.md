@@ -35,7 +35,7 @@ one active attention flag**, so you can work through the flagged set without
 scrolling past clean rows.
 
 **How it interacts with the Highlights toggles:** the filter respects which rules
-are currently enabled. If you disable the *SLA breached* rule in the Highlights
+are currently enabled. If you disable the _SLA breached_ rule in the Highlights
 dropdown, tickets flagged solely by that rule are removed from the filtered view.
 Enabling it again immediately brings them back.
 
@@ -61,5 +61,6 @@ Because a non-identity time formatter changes derived SLA results (see
 a ticket's numbers before they land in the exported report.
 
 ---
+
 Related: [Data Viewer](Data-Viewer) ·
 [Timeline and SLA Rules](Timeline-and-SLA-Rules) · [Export](Export)

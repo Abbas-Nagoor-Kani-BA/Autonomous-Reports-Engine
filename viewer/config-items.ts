@@ -18,8 +18,11 @@ export function refreshStoredConfigItems(): void {
   chrome.storage.local
     .get(STORAGE.pluginSettings)
     .then((res: Record<string, unknown>) => {
-      const defaults = (res?.[STORAGE.pluginSettings] as { defaults?: { configItems?: unknown } })?.defaults;
-      storedConfigItems = normalizeNames(Array.isArray(defaults?.configItems) ? defaults?.configItems : []);
+      const defaults = (res?.[STORAGE.pluginSettings] as { defaults?: { configItems?: unknown } })
+        ?.defaults;
+      storedConfigItems = normalizeNames(
+        Array.isArray(defaults?.configItems) ? defaults?.configItems : []
+      );
     })
     .catch(() => {
       storedConfigItems = [];

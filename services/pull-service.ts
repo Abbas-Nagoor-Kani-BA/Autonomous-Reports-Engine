@@ -1,6 +1,10 @@
 import { RUN_SCOPE_FACTORY, DATASET_REPO, RUN_STATE_REPO, SETTINGS_REPO } from "../di/tokens.ts";
 import type { RunScope, RunScopeFactory } from "../di/tokens.ts";
-import type { DatasetRepository, Dataset, RunEntry } from "../data/repositories/dataset-repository.ts";
+import type {
+  DatasetRepository,
+  Dataset,
+  RunEntry
+} from "../data/repositories/dataset-repository.ts";
 import type { RunStateRepository } from "../data/repositories/run-state-repository.ts";
 import type { SettingsRepository } from "../data/repositories/settings-repository.ts";
 import type { TicketRepository } from "../data/repositories/ticket-repository.ts";
@@ -120,23 +124,40 @@ export class PullService {
     const scope = await this.scopeFactory(req.instanceUrl, req.onDiagnostic);
     const configured = await this.#resolveSettings(req, progress, scope.tickets);
 
-    const sets = Array.isArray(req.filterSets) && req.filterSets.length ? req.filterSets : [req.filters || {}];
+    const sets =
+      Array.isArray(req.filterSets) && req.filterSets.length ? req.filterSets : [req.filters || {}];
     const bundle = await this.#pullFilterSets(scope.tickets, sets, configured, req, progress);
 
-    const analysed = await this.#fetchAllTimelines(scope.timelines, bundle.byTable, configured, req, progress);
+    const analysed = await this.#fetchAllTimelines(
+      scope.timelines,
+      bundle.byTable,
+      configured,
+      req,
+      progress
+    );
     if (!analysed.rows.length) throw new Error("No tickets match this filter list");
 
     const changeSummaryRows = req.includeChangeSummary
       ? await this.#pullChangeSummary(scope.tickets, configured, req, progress)
       : undefined;
 
-    const merged = await this.#persist(analysed, bundle.runEntries, bundle.plannedSum, req, configured, progress, changeSummaryRows);
+    const merged = await this.#persist(
+      analysed,
+      bundle.runEntries,
+      bundle.plannedSum,
+      req,
+      configured,
+      progress,
+      changeSummaryRows
+    );
 
     return {
       pulled: analysed.rows.length,
       total: merged.length,
       missingAudit: analysed.missingAudit,
-      skipped: bundle.runEntries.filter((e) => e.skippedLimit).map((e) => ({ matched: e.matched ?? 0 }))
+      skipped: bundle.runEntries
+        .filter((e) => e.skippedLimit)
+        .map((e) => ({ matched: e.matched ?? 0 }))
     };
   }
 
@@ -149,9 +170,15 @@ export class PullService {
 
     const teamNames = normalizeNames(settings?.defaults?.teamMembers || []);
     if (!teamNames.length) {
-      progress("resolve", "No team members configured \u2014 acknowledgement dates will stay empty");
+      progress(
+        "resolve",
+        "No team members configured \u2014 acknowledgement dates will stay empty"
+      );
     } else {
-      progress("resolve", `${teamNames.length} team member(s) configured for acknowledgement detection`);
+      progress(
+        "resolve",
+        `${teamNames.length} team member(s) configured for acknowledgement detection`
+      );
     }
 
     const membersByQueue = Object.fromEntries(groups.map((g) => [g, teamNames]));
@@ -179,7 +206,10 @@ export class PullService {
       const table = sets[i].table || "incident";
       const label = `Filter ${i + 1}/${sets.length}`;
       const { memberSysIds: _drop, ...rest } = sets[i];
-      const encodedQuery = buildEncodedQuery({ ...rest, ...configured.groupScope } as QueryBuilderConfig);
+      const encodedQuery = buildEncodedQuery({
+        ...rest,
+        ...configured.groupScope
+      } as QueryBuilderConfig);
 
       progress("count", `${label}: counting...`);
       const total = await tickets.count(table, encodedQuery);
@@ -218,12 +248,18 @@ export class PullService {
 
       if (source === "cache") {
         const ageMin = Math.max(1, Math.round((Date.now() - (cachedAt || Date.now())) / 6e4));
-        progress("phase1", `${label}: CACHE HIT \u2014 reused ${records.length} tickets from ${ageMin} min ago (no API calls)`);
+        progress(
+          "phase1",
+          `${label}: CACHE HIT \u2014 reused ${records.length} tickets from ${ageMin} min ago (no API calls)`
+        );
       }
 
       pulledDone += records.length;
       plannedSum += total;
-      progress("phase1", `${label}: ${records.length} tickets`, { pulled: pulledDone, planned: plannedSum });
+      progress("phase1", `${label}: ${records.length} tickets`, {
+        pulled: pulledDone,
+        planned: plannedSum
+      });
 
       if (!byTable.has(table)) byTable.set(table, new Map());
       const bucket = byTable.get(table) as Map<string, TicketRow>;
@@ -279,7 +315,10 @@ export class PullService {
     for (const win of [windows.lastWeek, windows.nextWeek]) {
       const query = encodeChangeSummaryWindow(win, groupNames);
       const label = labelByField[win.dateField];
-      progress("summary", `Weekly Summary: change requests for ${label} (${win.from} \u2013 ${win.to})...`);
+      progress(
+        "summary",
+        `Weekly Summary: change requests for ${label} (${win.from} \u2013 ${win.to})...`
+      );
       try {
         const total = await tickets.count("change_request", query);
         progress("summary", `Weekly Summary: ${total} change request(s) in ${label}`);
@@ -292,12 +331,19 @@ export class PullService {
           onProgress: (p) => progress("summary", `Weekly Summary (${label}): ${p.fetched}/${total}`)
         });
         for (const rec of records as TicketRow[]) {
-          const id = String((rec as { sys_id?: { value?: string } }).sys_id?.value || (rec as { sys_id?: string }).sys_id || "");
+          const id = String(
+            (rec as { sys_id?: { value?: string } }).sys_id?.value ||
+              (rec as { sys_id?: string }).sys_id ||
+              ""
+          );
           if (id && !byId.has(id)) byId.set(id, rec);
           else if (!id) byId.set(`_${byId.size}`, rec);
         }
       } catch (err) {
-        progress("summary", `Weekly Summary: ${label} change request pull failed \u2014 ${(err as Error).message}`);
+        progress(
+          "summary",
+          `Weekly Summary: ${label} change request pull failed \u2014 ${(err as Error).message}`
+        );
       }
     }
     progress("summary", `Weekly Summary: ${byId.size} change request(s) pulled`);
@@ -332,22 +378,31 @@ export class PullService {
           updatedOn: String(r.sys_updated_on?.value || r.sys_updated_on || "")
         })),
         signal: req.signal,
-        onProgress: (p) => progress("phase2", `Phase 2 (${tLabel}): activity ticket ${p.ticketsDone}/${p.total}`)
+        onProgress: (p) =>
+          progress("phase2", `Phase 2 (${tLabel}): activity ticket ${p.ticketsDone}/${p.total}`)
       });
 
       if (reused) {
-        progress("phase2", `Phase 2 (${tLabel}): ${reused}/${sysIds.length} timelines reused from cache`);
+        progress(
+          "phase2",
+          `Phase 2 (${tLabel}): ${reused}/${sysIds.length} timelines reused from cache`
+        );
       }
 
       const eventsObject: Record<string, unknown[]> = {};
       for (const [sysId, events] of eventsByTicket) eventsObject[sysId] = events;
 
       progress("analyze", `Applying timeline rules (${tLabel})...`);
-      const { rows: tableRows, missingAudit } = analyzeAll(records, eventsObject, snStateMap(table), {
-        membersByQueue: configured.membersByQueue,
-        fallbackMembers: configured.teamNames,
-        tableName: table
-      });
+      const { rows: tableRows, missingAudit } = analyzeAll(
+        records,
+        eventsObject,
+        snStateMap(table),
+        {
+          membersByQueue: configured.membersByQueue,
+          fallbackMembers: configured.teamNames,
+          tableName: table
+        }
+      );
 
       auditCounts[table] = Object.keys(eventsObject).length;
       if (!sampleRecord) sampleRecord = records[0] || null;
@@ -385,10 +440,7 @@ export class PullService {
     const at = new Date().toISOString();
     const group = configured.groups.join(", ");
 
-    const runs = [
-      ...(previous?.runs || []),
-      ...runEntries.map((e) => ({ ...e, at, group }))
-    ];
+    const runs = [...(previous?.runs || []), ...runEntries.map((e) => ({ ...e, at, group }))];
 
     const dataset: Dataset = {
       at,
@@ -416,7 +468,8 @@ export class PullService {
       },
       runs,
       rows: merged,
-      changeSummaryRows: changeSummaryRows !== undefined ? changeSummaryRows : previous?.changeSummaryRows
+      changeSummaryRows:
+        changeSummaryRows !== undefined ? changeSummaryRows : previous?.changeSummaryRows
     };
 
     await this.dataset.save(dataset);

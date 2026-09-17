@@ -5,7 +5,10 @@ import { PresetStore, WSR_PRESET_VALUE } from "../data/repositories/preset-repos
 import { createMemoryKeyValueStore } from "../data/key-value-store.ts";
 
 const sampleSets = [
-  { table: "incident", conditions: [{ join: "AND", field: "state", oper: "eq", value: "2", value2: "" }] }
+  {
+    table: "incident",
+    conditions: [{ join: "AND", field: "state", oper: "eq", value: "2", value2: "" }]
+  }
 ];
 
 test("add then load round-trips a preset", async () => {
@@ -56,7 +59,12 @@ test("data persists across a fresh store over the same key-value backing", async
 });
 
 test("load ignores malformed entries", async () => {
-  const kv = createMemoryKeyValueStore({ snFilterPresets: [{ name: "ok", sets: [] }, { nope: 1 }, null, { name: "x" }] });
+  const kv = createMemoryKeyValueStore({
+    snFilterPresets: [{ name: "ok", sets: [] }, { nope: 1 }, null, { name: "x" }]
+  });
   const loaded = await new PresetStore(kv).load();
-  assert.deepEqual(loaded.map((p) => p.name), ["ok"]);
+  assert.deepEqual(
+    loaded.map((p) => p.name),
+    ["ok"]
+  );
 });

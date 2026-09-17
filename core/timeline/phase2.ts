@@ -48,7 +48,9 @@ function parseUtc(s: string | null | undefined): number {
 }
 
 function nameKey(v: unknown): string {
-  return String(v ?? "").trim().toLowerCase();
+  return String(v ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function toIso(epoch: number): string {
@@ -88,13 +90,13 @@ function fieldRank(field: string | undefined): number {
 
 function normalizeEvents(auditRows: AuditRowLike[] | null | undefined): Event[] {
   return (auditRows || [])
-    .map(r => ({
+    .map((r) => ({
       field: r.field,
       oldValue: String(r.oldValue || ""),
       newValue: String(r.newValue || ""),
       atEpoch: utcRawToEpochMs(r.at)
     }))
-    .filter(e => Number.isFinite(e.atEpoch))
+    .filter((e) => Number.isFinite(e.atEpoch))
     .sort((a, b) => a.atEpoch - b.atEpoch || fieldRank(a.field) - fieldRank(b.field));
 }
 
@@ -110,16 +112,24 @@ function createResult(): Timeline {
   };
 }
 
-function applyBornInQueueFallback(events: Event[], result: Timeline, ctx: ExtractCtx, ourQueues: Set<string>): { group: string | null; stays: QueueStay[] } {
-  const hasGroupEvent = events.some(e => e.field === "assignment_group");
-  if (hasGroupEvent || !inOurQueues(ourQueues, ctx.snapshotGroupName)) return { group: null, stays: [] };
+function applyBornInQueueFallback(
+  events: Event[],
+  result: Timeline,
+  ctx: ExtractCtx,
+  ourQueues: Set<string>
+): { group: string | null; stays: QueueStay[] } {
+  const hasGroupEvent = events.some((e) => e.field === "assignment_group");
+  if (hasGroupEvent || !inOurQueues(ourQueues, ctx.snapshotGroupName))
+    return { group: null, stays: [] };
   const bornEpoch = utcRawToEpochMs(ctx.openedAtUtcRaw);
   if (!Number.isFinite(bornEpoch)) return { group: null, stays: [] };
   result.assignTimeUtcIso = epochMsToUtcIso(bornEpoch);
   result.lastQueueEntryEpoch = bornEpoch;
   return {
     group: ctx.snapshotGroupName,
-    stays: [{ entryEpoch: bornEpoch, exitEpoch: null, memberAcks: [], queue: ctx.snapshotGroupName }]
+    stays: [
+      { entryEpoch: bornEpoch, exitEpoch: null, memberAcks: [], queue: ctx.snapshotGroupName }
+    ]
   };
 }
 
@@ -176,12 +186,22 @@ function handleGroupEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState
   if (nowInQueue) {
     result.assignTimeUtcIso = epochMsToUtcIso(e.atEpoch);
     result.lastQueueEntryEpoch = e.atEpoch;
-    loopState.queueStays.push({ entryEpoch: e.atEpoch, exitEpoch: null, memberAcks: [], queue: e.newValue });
+    loopState.queueStays.push({
+      entryEpoch: e.atEpoch,
+      exitEpoch: null,
+      memberAcks: [],
+      queue: e.newValue
+    });
   }
   loopState.currentGroup = e.newValue;
 }
 
-function handleAssignmentEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState: LoopState): void {
+function handleAssignmentEvent(
+  e: Event,
+  result: Timeline,
+  ctx: ExtractCtx,
+  loopState: LoopState
+): void {
   if (loopState.memberSet.has(nameKey(e.newValue))) {
     const openStay = lastOpenStay(loopState.queueStays);
     if (openStay) openStay.memberAcks.push(e.atEpoch);
@@ -196,7 +216,12 @@ function handleStateEvent(e: Event, result: Timeline, ctx: ExtractCtx, loopState
 
   if (toLabel === "on hold" && fromLabel !== "on hold") {
     result.onHoldCount++;
-    loopState.allHolds.push({ suspendEpoch: e.atEpoch, resumeEpoch: null, resumeSource: null, queue: loopState.currentGroup });
+    loopState.allHolds.push({
+      suspendEpoch: e.atEpoch,
+      resumeEpoch: null,
+      resumeSource: null,
+      queue: loopState.currentGroup
+    });
     loopState.lastSuspendEpoch = e.atEpoch;
   }
 
@@ -223,7 +248,7 @@ function resolveAssignAndAckTime(result: Timeline, queueStays: QueueStay[]): Que
   // even if a later un-acked our-queue stay exists (assignTime "goes back").
   for (let i = queueStays.length - 1; i >= 0; i--) {
     const stay = queueStays[i];
-    const validAcks = stay.memberAcks.filter(a => a >= stay.entryEpoch).sort((a, b) => a - b);
+    const validAcks = stay.memberAcks.filter((a) => a >= stay.entryEpoch).sort((a, b) => a - b);
     if (validAcks.length > 0) {
       result.assignTimeUtcIso = epochMsToUtcIso(stay.entryEpoch);
       result.lastQueueEntryEpoch = stay.entryEpoch;
@@ -247,7 +272,11 @@ function resolveAssignAndAckTime(result: Timeline, queueStays: QueueStay[]): Que
   return null;
 }
 
-function resolveSuspendResume(result: Timeline, allHolds: HoldRecord[], chosenStay: QueueStay | null): void {
+function resolveSuspendResume(
+  result: Timeline,
+  allHolds: HoldRecord[],
+  chosenStay: QueueStay | null
+): void {
   const assignEpoch = result.assignTimeUtcIso ? parseUtc(result.assignTimeUtcIso) : null;
   if (assignEpoch === null || !Number.isFinite(assignEpoch)) return;
 
@@ -257,7 +286,10 @@ function resolveSuspendResume(result: Timeline, allHolds: HoldRecord[], chosenSt
   // excluded so a hold in a queue we did not pick cannot leak in.
   const chosenQueue = chosenStay ? nameKey(chosenStay.queue) : null;
   const valid = allHolds
-    .filter(h => h.suspendEpoch > assignEpoch && (chosenQueue === null || nameKey(h.queue) === chosenQueue))
+    .filter(
+      (h) =>
+        h.suspendEpoch > assignEpoch && (chosenQueue === null || nameKey(h.queue) === chosenQueue)
+    )
     .sort((a, b) => a.suspendEpoch - b.suspendEpoch);
   if (valid.length === 0) return;
 
@@ -304,7 +336,7 @@ function extractTimelines(auditRows: AuditRowLike[] | null | undefined, ctx: Ext
   const ourQueues = new Set<string>(
     ((ctx.queueNames && ctx.queueNames.length ? ctx.queueNames : [ctx.queueName]) || [])
       .map(nameKey)
-      .filter(q => q.length > 0)
+      .filter((q) => q.length > 0)
   );
 
   const fallback = applyBornInQueueFallback(events, result, ctx, ourQueues);
@@ -335,7 +367,12 @@ type SnValue = string | { display_value?: string; value?: string } | null | unde
 function fieldValue(v: SnValue | unknown): string {
   if (v === null || v === undefined) return "";
   if (typeof v === "string") return v;
-  if (typeof v === "object") return (v as { display_value?: string; value?: string }).display_value || (v as { display_value?: string; value?: string }).value || "";
+  if (typeof v === "object")
+    return (
+      (v as { display_value?: string; value?: string }).display_value ||
+      (v as { display_value?: string; value?: string }).value ||
+      ""
+    );
   return "";
 }
 
@@ -427,9 +464,10 @@ function analyzeAll(
   for (const rec of records) {
     const snapshotGroupName = fieldValue(rec.assignment_group);
     const sysIdRec = rec.sys_id as { value?: string; display_value?: string } | null | undefined;
-    const sysId = typeof rec.sys_id === "object" && sysIdRec
-      ? (sysIdRec.value || sysIdRec.display_value)
-      : rec.sys_id;
+    const sysId =
+      typeof rec.sys_id === "object" && sysIdRec
+        ? sysIdRec.value || sysIdRec.display_value
+        : rec.sys_id;
     const sysIdStr = typeof sysId === "string" ? sysId : null;
     const rows = sysIdStr ? (auditByTicket[sysIdStr] as AuditRowLike[] | undefined) : undefined;
     if (!rows) missingAudit++;
@@ -456,7 +494,7 @@ function analyzeAll(
       t.resumeSource = null;
     }
     const activity = (rows || [])
-      .map(r => {
+      .map((r) => {
         const ms = parseUtc(r.at);
         return {
           f: r.field,
@@ -465,8 +503,8 @@ function analyzeAll(
           atEpoch: Number.isFinite(ms) ? ms : null
         };
       })
-      .filter(e => e.atEpoch !== null)
-      .map(e => ({ f: e.f, o: e.o, n: e.n, atEpoch: e.atEpoch as number }))
+      .filter((e) => e.atEpoch !== null)
+      .map((e) => ({ f: e.f, o: e.o, n: e.n, atEpoch: e.atEpoch as number }))
       .sort((a, b) => b.atEpoch - a.atEpoch)
       .slice(0, 500);
     out.push({
@@ -516,7 +554,8 @@ const ACTIVITY_ANCHORS = [
   { field: "state", labels: ["state", "incident state"] }
 ];
 
-const ACTIVITY_DT_RE = /(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{4}|\d{1,2}\/\d{1,2}\/\d{4})[ T](\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?/g;
+const ACTIVITY_DT_RE =
+  /(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{4}|\d{1,2}\/\d{1,2}\/\d{4})[ T](\d{1,2}:\d{2}(?::\d{2})?)\s*([AaPp][Mm])?/g;
 
 function scanSnDateTime(text: unknown): string {
   const re = new RegExp(ACTIVITY_DT_RE.source, "g");
@@ -549,16 +588,17 @@ function extractEventsFromActivity(entries: unknown[]): ActivityChange[] {
   for (const entry of entries || []) {
     if (!entry || typeof entry !== "object") continue;
 
-    const changes = Array.isArray((entry as { changes?: unknown }).changes) ? (entry as { changes: unknown[] }).changes : null;
+    const changes = Array.isArray((entry as { changes?: unknown }).changes)
+      ? (entry as { changes: unknown[] }).changes
+      : null;
     if (changes) {
       for (const ch of changes) {
         if (!ch || typeof ch !== "object") continue;
         const c = ch as Record<string, unknown>;
         const label = String(c.label ?? c.field_label ?? "").toLowerCase();
-        const anchor = ACTIVITY_ANCHORS.find(a => a.labels.some(l => label === l));
+        const anchor = ACTIVITY_ANCHORS.find((a) => a.labels.some((l) => label === l));
         if (!anchor) continue;
-        const atIso = scanSnDateTime(JSON.stringify(ch)) ||
-          scanSnDateTime(JSON.stringify(entry));
+        const atIso = scanSnDateTime(JSON.stringify(ch)) || scanSnDateTime(JSON.stringify(entry));
         const ev = {
           field: anchor.field,
           oldValue: cleanCapture(c.old_value ?? c.old ?? c.from ?? ""),
@@ -582,11 +622,13 @@ function extractEventsFromActivity(entries: unknown[]): ActivityChange[] {
         const idx = low.indexOf(label);
         if (idx === -1) continue;
         const window = text.slice(idx, idx + 200);
-        const m = window.match(new RegExp(
-          label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
-          "[^a-z]{0,3}changed from (.+?) to (.+?)(?=\\s+on\\s+[\\d<\"]|<|,|\\}|$)",
-          "i"
-        ));
+        const m = window.match(
+          new RegExp(
+            label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+              '[^a-z]{0,3}changed from (.+?) to (.+?)(?=\\s+on\\s+[\\d<"]|<|,|\\}|$)',
+            "i"
+          )
+        );
         if (!m) continue;
         const atIso = scanSnDateTime(window);
         if (!atIso) break;
@@ -616,7 +658,9 @@ type ListHistoryEntry = {
   entries?: { changes?: Array<Record<string, unknown>> };
 };
 
-function extractEventsFromListHistory(payload: { entries?: unknown[] } | null | undefined): Record<string, ListHistoryRow[]> {
+function extractEventsFromListHistory(
+  payload: { entries?: unknown[] } | null | undefined
+): Record<string, ListHistoryRow[]> {
   const byTicket: Record<string, ListHistoryRow[]> = {};
   for (const e of payload?.entries || []) {
     const entry = e as ListHistoryEntry;
@@ -625,7 +669,7 @@ function extractEventsFromListHistory(payload: { entries?: unknown[] } | null | 
     if (!docId) continue;
     const at = String(entry.sys_created_on || "").trim();
     if (!at) continue;
-    for (const ch of (entry.entries?.changes || [])) {
+    for (const ch of entry.entries?.changes || []) {
       if (!ch || typeof ch !== "object") continue;
       let fname = String(ch.field_name || "").trim();
       if (!fname) continue;

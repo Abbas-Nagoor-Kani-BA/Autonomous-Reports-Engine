@@ -8,8 +8,12 @@ function sortKey(e: Entry): string {
 }
 
 function cleanAuthor(a: unknown): string {
-  return String(a || "").replace(/\([^)]*\)/g, "").replace(/@.*$/, "")
-    .replace(/[._\-]+/g, " ").replace(/\s+/g, " ").trim();
+  return String(a || "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/@.*$/, "")
+    .replace(/[._\-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function authorInitials(a: unknown): string {
@@ -22,7 +26,9 @@ function authorInitials(a: unknown): string {
  * Parse a journal blob (work notes/comments) into entries with a heading date.
  */
 function parseEntries(blob: unknown, label: string): Entry[] {
-  const txt = String(blob || "").replace(/\r\n/g, "\n").trim();
+  const txt = String(blob || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
   if (!txt) return [];
   const headRe = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})(?:\s+(?:-\s*)?(.*))?$/;
   const raw: Array<{ label: string; time: string; author: string; body: string[] }> = [];
@@ -40,8 +46,8 @@ function parseEntries(blob: unknown, label: string): Entry[] {
     }
   }
   return raw
-    .map(e => ({ label, time: e.time, author: e.author, text: e.body.join("\n").trim() }))
-    .filter(e => e.text);
+    .map((e) => ({ label, time: e.time, author: e.author, text: e.body.join("\n").trim() }))
+    .filter((e) => e.text);
 }
 
 type JournalItem = Entry & { cls: string; sort?: string };
@@ -87,12 +93,5 @@ function group(entries: JournalItem[]): JournalGroup[] {
   return groups;
 }
 
-export {
-  sortKey,
-  cleanAuthor,
-  authorInitials,
-  parseEntries,
-  build,
-  group,
-};
+export { sortKey, cleanAuthor, authorInitials, parseEntries, build, group };
 export type { Entry, JournalItem, Row };

@@ -5,7 +5,9 @@ let failed = 0;
 function check(name, got, want) {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   if (!ok) failed++;
-  console.log(`  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`);
+  console.log(
+    `  ${ok ? "ok " : "FAIL"} ${name}${ok ? "" : ` got=${JSON.stringify(got)} want=${JSON.stringify(want)}`}`
+  );
 }
 function has(name, arr, re) {
   const list = Array.isArray(arr) ? arr : [arr];
@@ -41,7 +43,12 @@ const baseRow = {
   onHoldCount: 1,
   activity: [
     { f: "state", o: "1", n: "1", atEpoch: at("2026-01-07T09:00:00.000Z") },
-    { f: "assignment_group", o: "Service Desk", n: "Service Desk", atEpoch: at("2026-01-07T09:15:00.000Z") },
+    {
+      f: "assignment_group",
+      o: "Service Desk",
+      n: "Service Desk",
+      atEpoch: at("2026-01-07T09:15:00.000Z")
+    },
     { f: "assigned_to", o: "", n: "Jasmine Lee", atEpoch: at("2026-01-07T09:35:00.000Z") },
     { f: "state", o: "2", n: "3", atEpoch: at("2026-01-07T10:00:00.000Z") },
     { f: "state", o: "3", n: "2", atEpoch: at("2026-01-07T11:30:00.000Z") },
@@ -62,19 +69,38 @@ has("priority raw", rRaw.steps, /copied|not computed/);
 
 console.log("== static column: timeline + markers + counts + digests ==");
 check("raw timeline present", Array.isArray(rRaw.timeline) && rRaw.timeline.length > 0, true);
-check("raw timeline chronological", rRaw.timeline.every((e, i, a) => i === 0 || a[i - 1].atIso <= e.atIso), true);
+check(
+  "raw timeline chronological",
+  rRaw.timeline.every((e, i, a) => i === 0 || a[i - 1].atIso <= e.atIso),
+  true
+);
 const markLabels = rRaw.timeline.flatMap((e) => (e.markers || []).map((m) => m.label)).sort();
 check("raw four key-moment markers", markLabels, ["Ackn", "Assign", "Resume", "Suspend"].sort());
 const assignMark = rRaw.timeline.find((e) => (e.markers || []).some((m) => m.label === "Assign"));
-check("assign marker shows display time", assignMark && assignMark.markers.find((m) => m.label === "Assign").time, "07-01-2026 09:15:00");
-check("assign marker target column", assignMark && assignMark.markers.find((m) => m.label === "Assign").key, "assignTimeUtcIso");
-check("no Opened marker", rRaw.timeline.some((e) => (e.markers || []).some((m) => m.label === "Opened")), false);
-check("no Resolved marker", rRaw.timeline.some((e) => (e.markers || []).some((m) => m.label === "Resolved")), false);
+check(
+  "assign marker shows display time",
+  assignMark && assignMark.markers.find((m) => m.label === "Assign").time,
+  "07-01-2026 09:15:00"
+);
+check(
+  "assign marker target column",
+  assignMark && assignMark.markers.find((m) => m.label === "Assign").key,
+  "assignTimeUtcIso"
+);
+check(
+  "no Opened marker",
+  rRaw.timeline.some((e) => (e.markers || []).some((m) => m.label === "Opened")),
+  false
+);
+check(
+  "no Resolved marker",
+  rRaw.timeline.some((e) => (e.markers || []).some((m) => m.label === "Resolved")),
+  false
+);
 check("raw change counts", rRaw.counts, { assignments: 1, states: 4, groups: 1 });
 check("raw SLA digests present", Array.isArray(rRaw.digests) && rRaw.digests.length === 2, true);
 check("raw response digest verdict", typeof rRaw.digests[0].met, "boolean");
 check("raw resolution digest verdict", typeof rRaw.digests[1].met, "boolean");
-
 
 console.log("== timeline: assign ==");
 const rAssign = explainCell(baseRow, "assignTimeUtcIso", { fmtInstant: fmt });
@@ -138,40 +164,76 @@ const rRepMet = explainCell(baseRow, "rep:metResponseSLA", { fmtInstant: fmt });
 check("kind report", rRepMet.kind, "report");
 
 console.log("== timeline strip (highlight) ==");
-check("assign timeline present", Array.isArray(rAssign.timeline) && rAssign.timeline.length > 0, true);
+check(
+  "assign timeline present",
+  Array.isArray(rAssign.timeline) && rAssign.timeline.length > 0,
+  true
+);
 const selAssign = rAssign.timeline.filter((e) => e.selected);
 check("one selected on assign", selAssign.length, 1);
 check("selected is assignment_group event", selAssign[0] && selAssign[0].fieldIcon, "group");
-check("timeline chronological", rAssign.timeline.every((e, i, a) => i === 0 || a[i - 1].atIso <= e.atIso), true);
+check(
+  "timeline chronological",
+  rAssign.timeline.every((e, i, a) => i === 0 || a[i - 1].atIso <= e.atIso),
+  true
+);
 const selSuspend = rSuspend.timeline.filter((e) => e.selected);
 check("suspend selected is state event", selSuspend[0] && selSuspend[0].fieldIcon, "state");
 const rBFc = explainCell(fallbackRow, "assignTimeUtcIso", { fmtInstant: fmt });
 check("born-in-queue: timeline present", Array.isArray(rBFc.timeline), true);
-check("born-in-queue: no selected event", rBFc.timeline.some((e) => e.selected), false);
+check(
+  "born-in-queue: no selected event",
+  rBFc.timeline.some((e) => e.selected),
+  false
+);
 
 console.log("== SLA digest ==");
 check("response digest present", !!rRep.digest, true);
 has("response target contains hours", rRep.digest.target, /h/);
 check("response met is boolean", typeof rRep.digest.met, "boolean");
 check("response metLabel matches met", rRep.digest.metLabel, rRep.digest.met ? "Met" : "Breached");
-check("response sourceTimes present", Array.isArray(rRep.digest.sourceTimes) && rRep.digest.sourceTimes.length === 2, true);
+check(
+  "response sourceTimes present",
+  Array.isArray(rRep.digest.sourceTimes) && rRep.digest.sourceTimes.length === 2,
+  true
+);
 check("response Assigned source time", rRep.digest.sourceTimes[0].label, "Assigned");
 check("response Ack source time", rRep.digest.sourceTimes[1].label, "Ack");
-check("response Assigned value non-empty", rRep.digest.sourceTimes[0].value !== "" && rRep.digest.sourceTimes[0].value !== "—", true);
-check("response op matches priority-2 branch", rRep.digest.op, "Ack \u2212 Assigned (straight elapsed)");
+check(
+  "response Assigned value non-empty",
+  rRep.digest.sourceTimes[0].value !== "" && rRep.digest.sourceTimes[0].value !== "—",
+  true
+);
+check(
+  "response op matches priority-2 branch",
+  rRep.digest.op,
+  "Ack \u2212 Assigned (straight elapsed)"
+);
 const rResD = explainCell(baseRow, "rep:incCurrentHours", { fmtInstant: fmt });
 check("resolution digest present", !!rResD.digest, true);
 has("resolution target range", rResD.digest.target, /–/);
 check("resolution met is boolean", typeof rResD.digest.met, "boolean");
-check("resolution sourceTimes present", Array.isArray(rResD.digest.sourceTimes) && rResD.digest.sourceTimes.length === 2, true);
+check(
+  "resolution sourceTimes present",
+  Array.isArray(rResD.digest.sourceTimes) && rResD.digest.sourceTimes.length === 2,
+  true
+);
 check("resolution Assigned source time", rResD.digest.sourceTimes[0].label, "Assigned");
 check("resolution Resolved source time", rResD.digest.sourceTimes[1].label, "Resolved");
-check("resolution op matches priority-2 branch", rResD.digest.op, "Resolved \u2212 Assigned (straight elapsed)");
+check(
+  "resolution op matches priority-2 branch",
+  rResD.digest.op,
+  "Resolved \u2212 Assigned (straight elapsed)"
+);
 
 console.log("== classification by source ==");
-const rcHeur = explainCell({ ...baseRow, rootCause: "Payment Gateway Timeout", __rcSource: "heuristic", __rcConf: 0.62 }, "rootCause", {});
+const rcHeur = explainCell(
+  { ...baseRow, rootCause: "Payment Gateway Timeout", __rcSource: "heuristic", __rcConf: 0.62 },
+  "rootCause",
+  {}
+);
 check("heur kind", rcHeur.kind, "classification");
-check("heur source input", rcHeur.inputs.find(i=>i.label==="Source").value, "HEURISTIC");
+check("heur source input", rcHeur.inputs.find((i) => i.label === "Source").value, "HEURISTIC");
 has("heur step two-way", rcHeur.steps, /deterministic cascade/);
 has("heur step mentions model", rcHeur.steps, /machine-learning model/);
 has("heur step best label", rcHeur.steps, /Payment Gateway Timeout/);
@@ -182,16 +244,24 @@ check("heur method confidence", rcHeur.method.confidence, "76%");
 check("heur resolution note label", rcHeur.note.label, "Resolution note");
 check("heur resolution note text", rcHeur.note.text, baseRow.closeNotes);
 
-const rcMl = explainCell({ ...baseRow, rootCause: "Hardware", __rcSource: "ml", __rcConf: 0.87, __modelId: "mobilebert" }, "rootCause", {});
+const rcMl = explainCell(
+  { ...baseRow, rootCause: "Hardware", __rcSource: "ml", __rcConf: 0.87, __modelId: "mobilebert" },
+  "rootCause",
+  {}
+);
 check("ml kind", rcMl.kind, "classification");
-check("ml source input", rcMl.inputs.find(i=>i.label==="Source").value, "ML");
+check("ml source input", rcMl.inputs.find((i) => i.label === "Source").value, "ML");
 check("ml confidence", rcMl.confidence, "87%");
 check("ml method kind", rcMl.method.kind, "ml");
 check("ml method label", rcMl.method.label, "ML model");
 check("ml method confidence", rcMl.method.confidence, "87%");
 has("ml step go-with-model", rcMl.steps, /go with the model's pick/);
 has("ml step shows ml label", rcMl.steps, /Hardware/);
-check("ml no 55% floor claim", rcMl.steps.some((s) => /55%|≥ 55/.test(s)), false);
+check(
+  "ml no 55% floor claim",
+  rcMl.steps.some((s) => /55%|≥ 55/.test(s)),
+  false
+);
 
 const rcManual = explainCell({ ...baseRow, rootCause: "Network", __rcSource: "" }, "rootCause", {});
 check("manual kind", rcManual.kind, "classification");
@@ -206,7 +276,11 @@ check("solutionType kind", rSol.kind, "classification");
 
 console.log("== classification not applicable (non-eligible rows) ==");
 // Problem ticket: never classified, but an existing value is still shown.
-const rcPrb = explainCell({ ...baseRow, number: "PRB0010001", rootCause: "Hardware" }, "rootCause", {});
+const rcPrb = explainCell(
+  { ...baseRow, number: "PRB0010001", rootCause: "Hardware" },
+  "rootCause",
+  {}
+);
 check("PRB kind still classification", rcPrb.kind, "classification");
 check("PRB keeps existing value", rcPrb.value, "Hardware");
 check("PRB method is Not classified", rcPrb.method.label, "Not classified");
@@ -215,21 +289,38 @@ has("PRB step explains skip", rcPrb.steps, /not (a )?closed Incident or RFS/i);
 check("PRB does not claim a note", rcPrb.note, undefined);
 
 // Open incident: eligible type but not closed/resolved -> not classified.
-const solOpen = explainCell({ ...baseRow, state: "In Progress", solutionType: "" }, "solutionType", {});
+const solOpen = explainCell(
+  { ...baseRow, state: "In Progress", solutionType: "" },
+  "solutionType",
+  {}
+);
 check("open INC method is Not classified", solOpen.method.label, "Not classified");
 check("open INC empty value", solOpen.value, "\u2014");
 
 // Closed RFS (SCTASK) IS eligible -> normal derivation path (manual here).
-const rcRfs = explainCell({ ...baseRow, number: "SCTASK0010001", state: "Closed", rootCause: "Network", __rcSource: "" }, "rootCause", {});
+const rcRfs = explainCell(
+  { ...baseRow, number: "SCTASK0010001", state: "Closed", rootCause: "Network", __rcSource: "" },
+  "rootCause",
+  {}
+);
 check("closed SCTASK is eligible (not the skip message)", rcRfs.method.label, "Manual");
 
 console.log("== MSR picklist choices ==");
-const msrLists = { subCategory: ["Login", "Performance", "Network", "Storage"], duplicate: ["Yes", "No"] };
+const msrLists = {
+  subCategory: ["Login", "Performance", "Network", "Storage"],
+  duplicate: ["Yes", "No"]
+};
 const rSub = explainCell({ ...baseRow, subCategory: "Network" }, "subCategory", { msrLists });
 check("subCategory kind", rSub.kind, "raw");
 has("subCategory exact member", rSub.steps, /exact member/);
-check("subCategory options count", rSub.inputs.find(i=>i.label==="Sub-category options").value, "4");
-const rDup = explainCell({ ...baseRow, duplicateIncident: "No" }, "duplicateIncident", { msrLists });
+check(
+  "subCategory options count",
+  rSub.inputs.find((i) => i.label === "Sub-category options").value,
+  "4"
+);
+const rDup = explainCell({ ...baseRow, duplicateIncident: "No" }, "duplicateIncident", {
+  msrLists
+});
 check("duplicate kind", rDup.kind, "raw");
 has("duplicate exact member", rDup.steps, /exact member/);
 
@@ -245,7 +336,11 @@ const rCurAge = explainCell(baseRow, "rep:incidentCurrentAge", { fmtInstant: fmt
 has("currentAge 9 work-hours per day", rCurAge.steps, /9 working hours per day|work-hours/);
 const rCum = explainCell({ ...baseRow }, "rep:cumulativeSla", { fmtInstant: fmt });
 check("cumulative digest present", !!rCum.digest, true);
-check("cumulative metLabel set", ["Met", "Breached", "unknown"].includes(rCum.digest.metLabel), true);
+check(
+  "cumulative metLabel set",
+  ["Met", "Breached", "unknown"].includes(rCum.digest.metLabel),
+  true
+);
 hasArr("cumulative digest pairs SLA/day", rCum.digest.sourceTimes, /Cumulative/);
 
 console.log("== unknown / null row ==");
