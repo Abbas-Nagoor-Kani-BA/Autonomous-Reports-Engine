@@ -379,15 +379,55 @@
     this._entries.forEach(function (e) {
       if (e.refItem) e.refItem.classList.toggle("is-active", e === entry);
     });
+
+    // Zoom emphasis: remove it from the previously active target, add it to the
+    // new one. Re-adding the class restarts the pop animation.
+    if (this._zoomedEl && this._zoomedEl !== entry.target) {
+      this._zoomedEl.classList.remove("anno-zoom");
+      this._zoomedEl.style.transformOrigin = "";
+      this._zoomedEl = null;
+    }
+
     this._activeEntry = entry;
     // Bring the target control into view inside its scroll container (the
     // stage), so pointing at a control lower in the mockup does not leave it
-    // hidden. Then draw the arrow once the scroll has settled.
+    // hidden. Then draw the arrow (and apply zoom) once the scroll settles.
     this._scrollTargetIntoStage(entry);
     var self = this;
     (window.requestAnimationFrame || window.setTimeout)(function () {
+      self._applyZoom(entry);
       self._drawArrow(entry);
+      // Redraw after the zoom transition settles so the ring/arrow line up with
+      // the enlarged control's final box.
+      window.setTimeout(function () {
+        if (self._activeEntry === entry) self._drawArrow(entry);
+      }, 240);
     });
+  };
+
+  // Zoom the active control toward the side the arrow comes from, so it grows
+  // "into" the pointer rather than off-screen.
+  Controller.prototype._applyZoom = function (entry) {
+    var target = entry && entry.target;
+    if (!target || !isVisible(target)) return;
+    var stage = this._stage;
+    var origin = "center";
+    if (stage) {
+      var sr = stage.getBoundingClientRect();
+      var tr = target.getBoundingClientRect();
+      var cx = tr.left + tr.width / 2;
+      // The cards sit to the right of the stage, so the arrow enters from the
+      // right in most cases — grow from the right edge. Near the stage's right
+      // edge, grow from the right; otherwise center is fine.
+      origin = cx > sr.left + sr.width * 0.55 ? "right center" : "center";
+    }
+    // Restart the pop animation by toggling the class off then on.
+    target.classList.remove("anno-zoom");
+    // force reflow so the animation replays
+    void target.offsetWidth;
+    target.style.transformOrigin = origin;
+    target.classList.add("anno-zoom");
+    this._zoomedEl = target;
   };
 
   // Find the nearest scrollable ancestor of the target (the stage, or an inner
@@ -714,6 +754,11 @@
     }
     if (this._boundStageScroll) {
       document.removeEventListener("scroll", this._boundStageScroll, true);
+    }
+    if (this._zoomedEl) {
+      this._zoomedEl.classList.remove("anno-zoom");
+      this._zoomedEl.style.transformOrigin = "";
+      this._zoomedEl = null;
     }
     if (this._createdToggle && this._createdToggle.parentNode) {
       this._createdToggle.parentNode.removeChild(this._createdToggle);
