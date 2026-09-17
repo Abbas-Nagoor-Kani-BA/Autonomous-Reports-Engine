@@ -67,6 +67,34 @@ test("run sends RUN with filterSets and resolves", async () => {
   });
 });
 
+test("run forwards changeSummaryWindows in the RUN message when provided", async () => {
+  const bridge = new RemoteBridge();
+  const sets = [{ table: "change_request", conditions: [] }];
+  const windows = {
+    overridden: true,
+    lastWeek: { dateField: "end_date", from: "2030-06-03", to: "2030-06-09", conditions: [] },
+    nextWeek: { dateField: "start_date", from: "2030-06-10", to: "2030-06-16", conditions: [] }
+  };
+  const res = await bridge.run({
+    instanceUrl: "https://x.service-now.com",
+    groups: ["A"],
+    filters: sets[0],
+    filterSets: sets,
+    includeChangeSummary: true,
+    changeSummaryWindows: windows
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.run,
+    instanceUrl: "https://x.service-now.com",
+    groups: ["A"],
+    filters: sets[0],
+    filterSets: sets,
+    includeChangeSummary: true,
+    changeSummaryWindows: windows
+  });
+});
+
 test("resolveScope sends RESOLVE_SCOPE and resolves with the reply", async () => {
   const bridge = new RemoteBridge();
   const res = await bridge.resolveScope({ instanceUrl: "https://x.service-now.com", currentUserId: "u1" });

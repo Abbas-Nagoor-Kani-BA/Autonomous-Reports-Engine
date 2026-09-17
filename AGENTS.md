@@ -205,6 +205,8 @@ Regression suites (`npm test` runs all of them):
 |---|---|
 | `phase2-unit-test.js` | the four timeline rules |
 | `querybuilder-test.js` | encoded-query construction |
+| `change-summary-filter-test.ts` | Weekly Summary change-request window model (defaults from `weekRanges()`, override resolution, encode byte-identical to the legacy two-window queries) |
+| `change-summary-repository-test.ts` | the persisted Weekly Summary filter override (`STORAGE.changeSummaryFilter`) |
 | `report-test.js`, `slasummary-test.js` | report and SLA derivation |
 | `durations-test.js` | derived durations from the four rules' UTC timestamps |
 | `ai-parse-test.js` | closure-note regex extraction |

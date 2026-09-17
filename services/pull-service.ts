@@ -12,7 +12,12 @@ import { snStateMap, snTableLabel } from "../core/sla/statechoices.ts";
 import { normalizeNames } from "../core/summary/names.ts";
 import { mergeRows } from "../core/timeline/rowmerge.ts";
 import { analyzeAll } from "../core/timeline/phase2.ts";
-import { weekRanges, CHANGE_SUMMARY_FIELDS } from "../core/summary/summarydetails.ts";
+import { CHANGE_SUMMARY_FIELDS } from "../core/summary/summarydetails.ts";
+import {
+  resolveChangeSummaryWindows,
+  encodeChangeSummaryWindow,
+  type ChangeSummaryWindows
+} from "../core/summary/change-summary-filter.ts";
 import { groupScopeOf, scopeGroups } from "./queue-scope.ts";
 
 export type ProgressFn = (stage: string, detail: string, extra?: Record<string, unknown>) => void;
@@ -35,6 +40,8 @@ export type PullRequest = {
   onDiagnostic?: (d: any) => void;
   /** When true, additionally pull change_request rows for the weekly Summary. */
   includeChangeSummary?: boolean;
+  /** Editable weekly-summary windows; when omitted or not overridden the defaults are recomputed. */
+  changeSummaryWindows?: ChangeSummaryWindows;
 };
 
 export type PullResult = {
@@ -261,37 +268,28 @@ export class PullService {
     req: PullRequest,
     progress: ProgressFn
   ): Promise<TicketRow[]> {
-    const weeks = weekRanges();
+    const windows = resolveChangeSummaryWindows(req.changeSummaryWindows);
     const groupNames = configured.groupScope.groupNames || [];
-    const scope = groupNames.length
-      ? `assignment_group.nameIN${groupNames.map((g) => String(g).replace(/['\\]/g, "")).join(",")}^`
-      : "";
-    // Last week: end_date in window = change ended last week = implemented.
-    const lastWeekQuery = (from: string, to: string): string =>
-      `${scope}end_dateBETWEENjavascript:gs.dateGenerate('${from}','00:00:00')@javascript:gs.dateGenerate('${to}','23:59:59')`;
-    // Next week: start_date in window = change starts next week = planned.
-    const nextWeekQuery = (from: string, to: string): string =>
-      `${scope}start_dateBETWEENjavascript:gs.dateGenerate('${from}','00:00:00')@javascript:gs.dateGenerate('${to}','23:59:59')`;
-
-    const windows: Array<{ label: string; from: string; to: string; queryFn: (f: string, t: string) => string }> = [
-      { label: "last week (end_date)",   from: weeks.last.from, to: weeks.last.to, queryFn: lastWeekQuery },
-      { label: "next week (start_date)", from: weeks.next.from, to: weeks.next.to, queryFn: nextWeekQuery }
-    ];
+    const labelByField: Record<"end_date" | "start_date", string> = {
+      end_date: "last week (end_date)",
+      start_date: "next week (start_date)"
+    };
 
     const byId = new Map<string, TicketRow>();
-    for (const w of windows) {
-      const query = w.queryFn(w.from, w.to);
-      progress("summary", `Weekly Summary: change requests for ${w.label} (${w.from} \u2013 ${w.to})...`);
+    for (const win of [windows.lastWeek, windows.nextWeek]) {
+      const query = encodeChangeSummaryWindow(win, groupNames);
+      const label = labelByField[win.dateField];
+      progress("summary", `Weekly Summary: change requests for ${label} (${win.from} \u2013 ${win.to})...`);
       try {
         const total = await tickets.count("change_request", query);
-        progress("summary", `Weekly Summary: ${total} change request(s) in ${w.label}`);
+        progress("summary", `Weekly Summary: ${total} change request(s) in ${label}`);
         if (!total) continue;
         const { records } = await tickets.list({
           table: "change_request",
           encodedQuery: query,
           fields: CHANGE_SUMMARY_FIELDS,
           signal: req.signal,
-          onProgress: (p) => progress("summary", `Weekly Summary (${w.label}): ${p.fetched}/${total}`)
+          onProgress: (p) => progress("summary", `Weekly Summary (${label}): ${p.fetched}/${total}`)
         });
         for (const rec of records as TicketRow[]) {
           const id = String((rec as { sys_id?: { value?: string } }).sys_id?.value || (rec as { sys_id?: string }).sys_id || "");
@@ -299,7 +297,7 @@ export class PullService {
           else if (!id) byId.set(`_${byId.size}`, rec);
         }
       } catch (err) {
-        progress("summary", `Weekly Summary: ${w.label} change request pull failed \u2014 ${(err as Error).message}`);
+        progress("summary", `Weekly Summary: ${label} change request pull failed \u2014 ${(err as Error).message}`);
       }
     }
     progress("summary", `Weekly Summary: ${byId.size} change request(s) pulled`);

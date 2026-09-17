@@ -50,6 +50,10 @@
     </select>
 
     <label class="pnLabel">Conditions</label>
+    <div id="summaryWindowTabs" class="hidden flex gap-1 mb-2">
+      <button type="button" id="summaryTabLast" class="btn-ghost text-[11px] px-2 py-1">Last week (implemented)</button>
+      <button type="button" id="summaryTabNext" class="btn-ghost text-[11px] px-2 py-1">Next week (planned)</button>
+    </div>
     <div id="condRows"></div>
     <button id="addCondBtn" type="button" class="linklike">+ Add condition</button>
 
@@ -64,6 +68,14 @@
       <input id="includeSummary" type="checkbox" class="accent-accent">
       <span>Pull change requests for Weekly Summary</span>
     </label>
+
+    <div id="summaryFilterBox" class="hidden mt-1.5 ml-6 text-[11.5px] text-dim">
+      <div id="summaryFilterText" class="leading-relaxed"></div>
+      <div class="flex items-center gap-2 mt-1">
+        <button id="editSummaryBtn" type="button" class="linklike px-0">Edit</button>
+        <button id="resetSummaryBtn" type="button" class="linklike px-0 hidden">Reset to this week&rsquo;s dates</button>
+      </div>
+    </div>
 
     <details id="advancedBox" class="mt-2.5">
       <summary class="text-[12px] text-dim cursor-pointer">Advanced — raw query override / generated query</summary>

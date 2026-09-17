@@ -2,6 +2,7 @@ import { Container } from "./container.ts";
 import {
   DATASET_REPO,
   EXPORT_CONFIG_REPO,
+  CHANGE_SUMMARY_REPO,
   FILTER_LIST_REPO,
   FILTER_PRESET_REPO,
   KEY_VALUE_STORE,
@@ -16,6 +17,7 @@ import {
 import { createChromeKeyValueStore } from "../data/chrome-key-value-store.ts";
 import { DatasetStore } from "../data/repositories/dataset-repository.ts";
 import { ExportConfigStore } from "../data/repositories/export-config-repository.ts";
+import { ChangeSummaryStore } from "../data/repositories/change-summary-repository.ts";
 import { FilterListStore } from "../data/repositories/filter-list-repository.ts";
 import { PresetStore } from "../data/repositories/preset-repository.ts";
 import { MsrListsStore } from "../data/repositories/msr-lists-repository.ts";
@@ -45,6 +47,7 @@ export function registerCoreRepositories(c: Container): Container {
   c.registerClass(VIEWER_PREFS_REPO, ViewerPrefsStore, { singleton: true });
   c.registerClass(TEMPLATE_REPO, TemplateStore, { singleton: true });
   c.registerClass(FILTER_LIST_REPO, FilterListStore, { singleton: true });
+  c.registerClass(CHANGE_SUMMARY_REPO, ChangeSummaryStore, { singleton: true });
   c.registerClass(FILTER_PRESET_REPO, PresetStore, { singleton: true });
   c.registerClass(MSR_LISTS_REPO, MsrListsStore, { singleton: true });
 

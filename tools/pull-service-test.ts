@@ -225,6 +225,52 @@ test("change summary pull issues two scoped change_request requests (last + next
   assert.notEqual(queries[0], queries[1], "last and next week windows differ");
 });
 
+test("change summary pull honours overridden changeSummaryWindows (custom date + extra condition)", async () => {
+  const remote = new FakeSnRemote();
+  remote.counts[`${TABLE}|${QUERY}`] = 1;
+  remote.records[`${TABLE}|${QUERY}`] = [ticket("abc", "INC001")];
+  remote.timelines.abc = [
+    { field: "assignment_group", oldValue: "", newValue: "Queue A", at: "2026-01-01 09:30:00" }
+  ];
+
+  const { run, remote: r } = harness(remote);
+  await run({
+    includeChangeSummary: true,
+    changeSummaryWindows: {
+      overridden: true,
+      lastWeek: {
+        dateField: "end_date",
+        from: "2030-06-03",
+        to: "2030-06-09",
+        datesCustom: true,
+        conditions: [{ join: "AND", field: "state", oper: "eq", value: "3", value2: "" }]
+      },
+      nextWeek: {
+        dateField: "start_date",
+        from: "2030-06-10",
+        to: "2030-06-16",
+        datesCustom: true,
+        conditions: []
+      }
+    }
+  });
+
+  const crCounts = r.calls.filter((c) => c.method === "count" && c.args[0] === "change_request");
+  assert.equal(crCounts.length, 2, "still one count per window");
+  const queries = crCounts.map((c) => String(c.args[1]));
+
+  // Last-week override: custom date range AND the appended state condition.
+  assert.ok(queries[0].includes("2030-06-03"), `custom last-week from date in ${queries[0]}`);
+  assert.ok(queries[0].includes("2030-06-09"), `custom last-week to date in ${queries[0]}`);
+  assert.ok(queries[0].includes("end_dateBETWEEN"), "last-week still anchors on end_date");
+  assert.ok(queries[0].includes("state=3"), `appended extra condition fragment in ${queries[0]}`);
+
+  // Next-week override: custom date range, no extra condition, start_date anchor.
+  assert.ok(queries[1].includes("2030-06-10"), `custom next-week from date in ${queries[1]}`);
+  assert.ok(queries[1].includes("2030-06-16"), `custom next-week to date in ${queries[1]}`);
+  assert.ok(queries[1].includes("start_dateBETWEEN"), "next-week still anchors on start_date");
+});
+
 test("change summary pull persists change rows onto the dataset", async () => {
   const remote = new FakeSnRemote();
   remote.counts[`${TABLE}|${QUERY}`] = 1;

@@ -55,16 +55,47 @@ workbook's Summary sheet. Weeks are **Monday–Sunday**, and the derivation
 | Summary section | Source | Rule |
 |---|---|---|
 | **Key Incidents** | already-pulled incident rows | P1/P2 incidents resolved **last** week |
-| **Changes Implemented** | change_request | `start_date` in **last** week, not failed and not cancelled |
-| **Changes Failed** | change_request | `start_date` in **last** week with `review_status = fail` |
-| **Changes Planned** | change_request | `start_date` in **next** week |
+| **Changes Implemented** | change_request | `end_date` in **last** week, not failed and not cancelled |
+| **Changes Failed** | change_request | `end_date` in **last** week with `review_status = fail` |
+| **Changes Planned** | change_request | `start_date` in the **current** week (this bucket is labelled "next week" in the UI) |
 
-The change requests are pulled as **two scoped requests** (last week, next week)
-filtered by `start_date` — kept separate because OR-ing the queue scope across
-both windows makes the encoded query long enough for ServiceNow to reject with
-400. They need no timelines. Dates are emitted as Excel serial numbers to match
-the template's date cells; the rest of the Summary sheet is human-authored
+The change requests are pulled as **two scoped requests** — kept separate
+because OR-ing the queue scope across both windows makes the encoded query long
+enough for ServiceNow to reject with 400. The **last week** window is keyed on
+`end_date` (changes that ended = implemented/failed) and the **planned** window
+on `start_date` in the **current** week (changes scheduled to start this week).
+The planned window is still named/labelled **"next week"** in the UI and stored
+model for historical reasons, but it deliberately covers the current week. They
+need no timelines. Dates are emitted as Excel serial numbers to match the
+template's date cells; the rest of the Summary sheet is human-authored
 narrative.
+
+### Viewing and editing the change-request filter
+
+The exact filter used for those two requests is shown as text directly beneath
+the **Pull change requests for Weekly Summary** checkbox, so you can see what
+will be pulled. An **Edit** button opens the same condition builder used for
+other ticket types, pre-loaded with the two windows (a **Last week
+(implemented)** / **Next week (planned)** switcher). While editing, the primary
+button reads **Save weekly summary** instead of *Add to filter list*.
+
+- You may change the **start/end dates** of each window and add extra
+  `change_request` conditions.
+- Each window **must keep its date range** — the last-week window keeps its
+  `end_date` range and the next-week window keeps its `start_date` range. Saving
+  is rejected with a message if a window's dates are removed or emptied, because
+  the Summary sheet derivation depends on those two windows.
+- A saved override keeps your **extra conditions** sticky, but the **date
+  windows auto-advance** to the current Monday–Sunday weeks on every run — so an
+  override never silently pins a stale week. If you explicitly change a window's
+  start/end date and save, that window's dates are treated as custom and kept as
+  you set them (the other window still auto-advances). **Reset to this week's
+  dates** clears the override entirely and returns to the computed defaults.
+
+The override is stored locally (`STORAGE.changeSummaryFilter`), resolved by
+`core/summary/change-summary-filter.ts`, and threaded into the pull via the run
+request's `changeSummaryWindows`; when no override is stored the pull is
+byte-identical to the previous hardcoded behaviour.
 
 ## Closed-state date filtering
 

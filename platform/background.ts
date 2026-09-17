@@ -181,6 +181,7 @@ chrome.runtime.onMessage.addListener((msg: WorkerRequest, _sender: unknown, send
         filters: msg.filters,
         fields: msg.fields,
         includeChangeSummary: msg.includeChangeSummary,
+        changeSummaryWindows: msg.changeSummaryWindows,
         signal: abort.signal,
         onProgress: progress,
         onDiagnostic

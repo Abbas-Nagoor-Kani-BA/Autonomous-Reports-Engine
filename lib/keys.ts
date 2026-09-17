@@ -16,7 +16,8 @@ export const STORAGE = Object.freeze({
   snFilterList: "snFilterList",
   snFilterPresets: "snFilterPresets",
   includeSummary: "includeSummary",
-  viewerSummaryNarrative: "viewerSummaryNarrative"
+  viewerSummaryNarrative: "viewerSummaryNarrative",
+  changeSummaryFilter: "changeSummaryFilter"
 } as const);
 
 export const MSG = Object.freeze({

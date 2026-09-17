@@ -39,6 +39,8 @@ export type MsgRun = {
   maxTickets?: number;
   /** When true, additionally pull change_request rows for the weekly Summary. */
   includeChangeSummary?: boolean;
+  /** Editable weekly-summary windows; when omitted or not overridden the defaults are recomputed. */
+  changeSummaryWindows?: import("../core/summary/change-summary-filter.ts").ChangeSummaryWindows;
 };
 export type MsgCount = {
   type: "COUNT";

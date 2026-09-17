@@ -10,6 +10,7 @@ import type { MsrListsRepository } from "../data/repositories/msr-lists-reposito
 import type { SnRemote } from "../data/datasource/sn-remote.ts";
 import type { KeyValueStore } from "../data/key-value-store.ts";
 import type { DatasetRepository, Notifier, TicketRow } from "../data/repositories/dataset-repository.ts";
+import type { ChangeSummaryRepository } from "../data/repositories/change-summary-repository.ts";
 import type { ExportConfigRepository } from "../data/repositories/export-config-repository.ts";
 import type { FilterListRepository } from "../data/repositories/filter-list-repository.ts";
 import type { PresetRepository } from "../data/repositories/preset-repository.ts";
@@ -65,6 +66,7 @@ export const TEMPLATE_REPO = token<TemplateRepository>("template-repo");
 export const FILTER_LIST_REPO = token<FilterListRepository>("filter-list-repo");
 export const FILTER_PRESET_REPO = token<PresetRepository>("filter-preset-repo");
 export const MSR_LISTS_REPO = token<MsrListsRepository>("msr-lists-repo");
+export const CHANGE_SUMMARY_REPO = token<ChangeSummaryRepository>("change-summary-repo");
 
 // Repositories — IndexedDB cache + ServiceNow remote (service worker only)
 export const TICKET_REPO = token<TicketRepository>("ticket-repo");

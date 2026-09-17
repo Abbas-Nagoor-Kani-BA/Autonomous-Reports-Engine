@@ -3,6 +3,9 @@ import type { QueryBuilderConfig } from "../core/query/querybuilder.ts";
 import { snStateChoices, SN_PRIORITY_CHOICES, snTableLabel } from "../core/sla/statechoices.ts";
 import { presetOptions, resolvePresetSets } from "../core/query/preset-controller.ts";
 import { FILTER_PRESET_REPO } from "../di/tokens.ts";
+import { CHANGE_SUMMARY_REPO } from "../di/tokens.ts";
+import { resolveChangeSummaryWindows, defaultChangeSummaryWindows } from "../core/summary/change-summary-filter.ts";
+import type { ChangeSummaryWindows, ChangeSummaryWindow, PanelCondition } from "../core/summary/change-summary-filter.ts";
 import { STORAGE } from "../lib/keys.ts";
 import { createPanel, describeFilterSet, filterSetToRows } from "./index.ts";
 import { showToast } from "../lib/toast.ts";
@@ -29,6 +32,13 @@ const els = {
   viewBtn: $("viewBtn"),
   lastRun: $("lastRun"),
   includeSummary: $("includeSummary"),
+  summaryFilterBox: $("summaryFilterBox"),
+  summaryFilterText: $("summaryFilterText"),
+  editSummaryBtn: $("editSummaryBtn"),
+  resetSummaryBtn: $("resetSummaryBtn"),
+  summaryWindowTabs: $("summaryWindowTabs"),
+  summaryTabLast: $("summaryTabLast"),
+  summaryTabNext: $("summaryTabNext"),
   addFilter: $("addFilterBtn")
 };
 function choiceList(key: string): { value: string | number; label: string }[] {
@@ -66,6 +76,15 @@ const panel = createPanel({
 const { logCard, progressCard, conditions, filterSets, bridge } = panel;
 const presetRepo = panel.container.resolve(FILTER_PRESET_REPO);
 let userPresets: UserPreset[] = [];
+
+// --- Weekly Summary change-request filter (read-only display; Task 4) ---
+const changeSummaryRepo = panel.container.resolve(CHANGE_SUMMARY_REPO);
+let summaryWindows: ChangeSummaryWindows = resolveChangeSummaryWindows(null);
+// --- Weekly Summary change-request edit mode (Task 5) ---
+let summaryEditMode = false;
+let summaryEditActiveWindow: "lastWeek" | "nextWeek" = "lastWeek";
+let summaryDraft: ChangeSummaryWindows | null = null;
+let summaryPrevTicketType = "";
 const logger = { log: (text: string, level?: LogLevel) => logCard.log(text, level || "") };
 let busy = false;
 type Entry = { name: string; sysId: string };
@@ -125,10 +144,13 @@ panel.ready.then(async () => {
   refreshGenerated();
   userPresets = await presetRepo.load();
   refreshPresetDropdown();
+  summaryWindows = resolveChangeSummaryWindows(await changeSummaryRepo.load());
+  renderSummaryFilter();
 }).catch(() => {});
 chrome.storage.local.get(["snInstance", "lastRun", STORAGE.includeSummary], async (cfg: { snInstance?: unknown; lastRun?: unknown; includeSummary?: unknown }) => {
   await applyPluginSettings();
   els.includeSummary.checked = cfg.includeSummary === true;
+  renderSummaryFilter();
   if (cfg.snInstance && !els.instance.value) els.instance.value = String(cfg.snInstance);
   const effective = els.instance.value || cfg.snInstance;
   if (effective) {
@@ -151,6 +173,12 @@ chrome.storage.local.get(["snInstance", "lastRun", STORAGE.includeSummary], asyn
 chrome.storage.onChanged.addListener((ch: Record<string, { newValue?: unknown }>, area: string) => {
   if (area === "local") {
     if (ch.pluginSettings) applyPluginSettings();
+    if (ch[STORAGE.changeSummaryFilter]) {
+      void changeSummaryRepo.load().then((stored) => {
+        summaryWindows = resolveChangeSummaryWindows(stored);
+        renderSummaryFilter();
+      });
+    }
     if (ch.lastRun) {
       const cfg = ch.lastRun.newValue as { tickets?: unknown; group?: unknown; at?: string } | undefined;
       if (cfg) {
@@ -176,6 +204,10 @@ function instanceUrl(): string {
   return els.instance.value.trim();
 }
 $("addFilterBtn").addEventListener("click", async () => {
+  if (summaryEditMode) {
+    await saveSummaryDraft();
+    return;
+  }
   try {
     if (!conditions.hasConditions()) {
       const msg = "Add at least one condition before adding to the filter list";
@@ -445,6 +477,7 @@ els.ticketType.addEventListener("change", () => {
 els.connect.addEventListener("click", () => connect(true));
 els.includeSummary.addEventListener("change", () => {
   chrome.storage.local.set({ [STORAGE.includeSummary]: els.includeSummary.checked });
+  renderSummaryFilter();
 });
 els.instance.addEventListener("change", () => {
   els.connState.textContent = "Not ready";
@@ -527,7 +560,8 @@ els.runBtn.addEventListener("click", async () => {
       groups: configuredGroups(),
       filters: sets[0],
       filterSets: sets,
-      includeChangeSummary: els.includeSummary.checked
+      includeChangeSummary: els.includeSummary.checked,
+      changeSummaryWindows: els.includeSummary.checked ? summaryWindows : undefined
     });
     logger.log(`Run started with ${sets.length} filter set${sets.length > 1 ? "s" : ""}${els.includeSummary.checked ? " \xB7 + Weekly Summary change requests" : ""}\u2026`);
   } catch (err) {
@@ -590,3 +624,229 @@ bridge.onProgress((msg: MsgProgress) => {
   }
   logger.log(detail);
 });
+
+// ===========================================================================
+// Weekly Summary change-request filter — read-only display (Task 4)
+// Tasks 5 and 6 build the edit mode on top of the pieces below. Keep grouped.
+// ===========================================================================
+function describeSummaryWindows(w: ChangeSummaryWindows): string[] {
+  const extra = (n: number): string => (n ? ` \u00B7 +${n} condition${n === 1 ? "" : "s"}` : "");
+  const last = w.lastWeek;
+  const next = w.nextWeek;
+  return [
+    `Change Request \u00B7 Implemented last week (${last.dateField} ${last.from} \u2013 ${last.to})${extra(last.conditions.length)}`,
+    `Change Request \u00B7 Planned next week (${next.dateField} ${next.from} \u2013 ${next.to})${extra(next.conditions.length)}`
+  ];
+}
+function renderSummaryFilter(): void {
+  const lines = describeSummaryWindows(summaryWindows);
+  els.summaryFilterText.innerHTML = "";
+  for (const line of lines) {
+    const div = document.createElement("div");
+    div.textContent = line;
+    els.summaryFilterText.appendChild(div);
+  }
+  els.summaryFilterBox.classList.toggle("hidden", !els.includeSummary.checked);
+  els.resetSummaryBtn.classList.toggle("hidden", summaryWindows.overridden !== true);
+}
+els.editSummaryBtn.addEventListener("click", () => {
+  enterSummaryEditMode();
+});
+els.summaryTabLast.addEventListener("click", () => {
+  loadWindowIntoBuilder("lastWeek");
+});
+els.summaryTabNext.addEventListener("click", () => {
+  loadWindowIntoBuilder("nextWeek");
+});
+els.resetSummaryBtn.addEventListener("click", async () => {
+  await changeSummaryRepo.clear();
+  summaryWindows = resolveChangeSummaryWindows(null);
+  renderSummaryFilter();
+  showToast("Weekly Summary dates reset to this week");
+});
+
+// ===========================================================================
+// Weekly Summary change-request filter — edit mode (Task 5)
+// Task 6 implements persistence + the run guardrail. saveSummaryDraft() is a
+// stub here (see the TODO); everything else is complete.
+// ===========================================================================
+
+/**
+ * Convert one summary window into condition-builder rows. The date anchor is
+ * synthesized as the first row (start_date -> plannedStart, end_date ->
+ * plannedEnd) because it is stored on the window, not in window.conditions.
+ * Reuses filterSetToRows so field-name -> def-key mapping matches exactly.
+ */
+function rowsFor(window: ChangeSummaryWindow) {
+  const anchor: PanelCondition = {
+    join: "AND",
+    field: window.dateField,
+    oper: "between",
+    value: window.from,
+    value2: window.to
+  };
+  const set = {
+    table: "change_request",
+    conditions: [anchor, ...window.conditions]
+  } as unknown as FilterSet;
+  return filterSetToRows(set, COND_FIELDS);
+}
+
+/**
+ * Read whatever is currently in the builder back into a ChangeSummaryWindow,
+ * splitting the first date-anchor row (start_date/end_date with oper 'between')
+ * out into dateField/from/to and keeping the rest as window.conditions. Falls
+ * back to the provided prior window when the builder cannot be validated so a
+ * mid-edit invalid row never wipes the draft.
+ */
+function captureWindowFromBuilder(prior: ChangeSummaryWindow): ChangeSummaryWindow {
+  let rows: PanelCond[];
+  try {
+    rows = conditions.conditions() as PanelCond[];
+  } catch {
+    return prior;
+  }
+  let dateField: "end_date" | "start_date" = prior.dateField;
+  let from = prior.from;
+  let to = prior.to;
+  const rest: PanelCondition[] = [];
+  let anchorSeen = false;
+  for (const r of rows) {
+    const isAnchor = !anchorSeen && (r.field === "start_date" || r.field === "end_date") && r.oper === "between";
+    if (isAnchor) {
+      anchorSeen = true;
+      dateField = r.field === "end_date" ? "end_date" : "start_date";
+      from = r.value;
+      to = r.value2;
+      continue;
+    }
+    rest.push({
+      join: r.join === "OR" ? "OR" : "AND",
+      field: r.field,
+      oper: r.oper,
+      value: r.value,
+      value2: r.value2
+    });
+  }
+  return { dateField, from, to, conditions: rest };
+}
+
+function markActiveSummaryTab(): void {
+  const active = "btn-primary";
+  const inactive = "btn-ghost";
+  const last = summaryEditActiveWindow === "lastWeek";
+  els.summaryTabLast.classList.toggle(active, last);
+  els.summaryTabLast.classList.toggle(inactive, !last);
+  els.summaryTabNext.classList.toggle(active, !last);
+  els.summaryTabNext.classList.toggle(inactive, last);
+}
+
+function enterSummaryEditMode(): void {
+  summaryEditMode = true;
+  summaryDraft = structuredClone(summaryWindows);
+  summaryPrevTicketType = els.ticketType.value;
+  els.ticketType.value = "change_request";
+  conditions.setTable("change_request");
+  els.summaryWindowTabs.classList.remove("hidden");
+  els.addFilter.textContent = "Save weekly summary";
+  els.addFilter.disabled = false;
+  summaryEditActiveWindow = "lastWeek";
+  loadWindowIntoBuilder("lastWeek");
+}
+
+/**
+ * Switch the builder to a window. Before switching it captures whatever is in
+ * the builder now back into summaryDraft[current] so unsaved typing survives a
+ * tab switch (Task 6 adds the on-save validation/guardrail).
+ */
+function loadWindowIntoBuilder(which: "lastWeek" | "nextWeek"): void {
+  if (!summaryEditMode || !summaryDraft) return;
+  const current = summaryEditActiveWindow;
+  summaryDraft[current] = captureWindowFromBuilder(summaryDraft[current]);
+  summaryEditActiveWindow = which;
+  conditions.setRows(rowsFor(summaryDraft[which]));
+  markActiveSummaryTab();
+}
+
+function exitSummaryEditMode(_persist: boolean): void {
+  summaryEditMode = false;
+  summaryDraft = null;
+  els.summaryWindowTabs.classList.add("hidden");
+  els.addFilter.textContent = "+ Add to filter list";
+  conditions.setRows([]);
+  els.ticketType.value = summaryPrevTicketType || els.ticketType.value;
+  conditions.setTable(els.ticketType.value);
+  renderSummaryFilter();
+  refreshGenerated();
+}
+
+/**
+ * Enforce the DATES-ALWAYS-PRESENT guardrail: each window's saved filter must
+ * still carry its date anchor (lastWeek keys on end_date, nextWeek on
+ * start_date) with a non-empty from AND to. start/end dates are editable but
+ * may not be removed. Returns null when the window is valid (already normalised
+ * by captureWindowFromBuilder splitting the anchor out into dateField/from/to),
+ * or a user-facing error message naming the offending window.
+ */
+function summaryWindowGuardError(which: "lastWeek" | "nextWeek", window: ChangeSummaryWindow): string | null {
+  const expectedField = which === "lastWeek" ? "end_date" : "start_date";
+  const label = which === "lastWeek" ? "last week" : "next week";
+  const rangeName = which === "lastWeek" ? "end date range" : "start date range";
+  if (window.dateField !== expectedField || !window.from.trim() || !window.to.trim()) {
+    return `Weekly Summary: the ${label} window must keep its ${rangeName}`;
+  }
+  return null;
+}
+
+/**
+ * Persist the edited windows with the DATES-ALWAYS-PRESENT guardrail.
+ *
+ * 1. Capture the currently-shown builder rows into the active window. Unlike
+ *    the tab-switch capture, a validation throw here is surfaced (log + toast)
+ *    and aborts the save so the user can fix the row.
+ * 2. Validate BOTH windows: each must retain its date anchor (lastWeek =>
+ *    end_date, nextWeek => start_date) with non-empty from AND to. The inactive
+ *    window's data already lives in summaryDraft (captured on enter / tab
+ *    switch), so validating its stored from/to is sufficient.
+ * 3. On success normalise each window's dateField, mark overridden:true,
+ *    persist through changeSummaryRepo, publish into summaryWindows, then exit
+ *    edit mode and re-render.
+ */
+async function saveSummaryDraft(): Promise<void> {
+  if (!summaryDraft) {
+    exitSummaryEditMode(false);
+    return;
+  }
+  try {
+    conditions.conditions();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.log(msg, "error");
+    showToast(msg, "error");
+    return;
+  }
+  summaryDraft[summaryEditActiveWindow] = captureWindowFromBuilder(summaryDraft[summaryEditActiveWindow]);
+  summaryDraft.lastWeek.dateField = "end_date";
+  summaryDraft.nextWeek.dateField = "start_date";
+  for (const which of ["lastWeek", "nextWeek"] as const) {
+    const guardError = summaryWindowGuardError(which, summaryDraft[which]);
+    if (guardError) {
+      logger.log(guardError, "error");
+      showToast(guardError, "error");
+      return;
+    }
+  }
+  const currentDefaults = defaultChangeSummaryWindows(new Date());
+  for (const which of ["lastWeek", "nextWeek"] as const) {
+    const win = summaryDraft[which];
+    const def = currentDefaults[which];
+    win.datesCustom = win.from !== def.from || win.to !== def.to;
+  }
+  summaryDraft.overridden = true;
+  summaryWindows = summaryDraft;
+  await changeSummaryRepo.save(summaryWindows);
+  exitSummaryEditMode(true);
+  renderSummaryFilter();
+  logger.log("Weekly Summary filter saved", "success");
+  showToast("Weekly summary filter saved");
+}

@@ -10,10 +10,11 @@ import { displayToSerial } from "../classification/msrchoices.ts";
 //                               not failed and not cancelled
 //   - Changes Failed          : change_request end_date in LAST week with
 //                               review_status = fail
-//   - Changes Planned         : change_request start_date in NEXT week
+//   - Changes Planned         : change_request start_date in the CURRENT week
+//                               (still labelled "next week" in the UI)
 //
 // The pull issues two scoped requests per cycle: last week keyed on end_date,
-// next week keyed on start_date. Weeks are Monday-Sunday.
+// current week keyed on start_date (the "planned" window). Weeks are Monday-Sunday.
 // Dates are emitted as Excel serial numbers (the template's date cells store
 // serials like 46253.68), or null when unparseable. Everything else on the
 // Summary sheet is human-authored narrative left for the editable section.
@@ -194,12 +195,13 @@ function changeRow(row: SummarySourceRow, dateStr: string): ChangeRow {
  * Bucket change_request rows:
  *   - implemented: end_date in LAST week, not failed and not cancelled
  *   - failed:      end_date in LAST week, review_status = fail
- *   - planned:     start_date in NEXT week
+ *   - planned:     start_date in the CURRENT week
  *
  * Using end_date for last-week rows means a change is counted as
  * "implemented last week" when it finished last week, regardless of when it
- * started. Using start_date for next-week rows means a change is "planned"
- * when it is scheduled to begin next week.
+ * started. Using start_date for current-week rows means a change is "planned"
+ * when it is scheduled to begin this week (this bucket is still labelled
+ * "next week" in the UI for historical reasons).
  *
  * Failed takes precedence over implemented; cancelled rows are excluded.
  */
@@ -222,7 +224,7 @@ export function bucketChanges(rows: SummarySourceRow[], weeks: WeekRanges): {
       } else if (!isCancelled(row)) {
         implemented.push(changeRow(row, endStr));
       }
-    } else if (inWindow(startMs, weeks.next)) {
+    } else if (inWindow(startMs, weeks.current)) {
       planned.push(changeRow(row, startStr));
     }
   }

@@ -41,15 +41,15 @@ const changes = [
   // failed last week: end_date in last week, review_status Unsuccessful
   { number: "CHG002", short_description: "fail b", state: "Closed", cmdb_ci: "STAFF (prd)",
     start_date: "2026-08-19 09:00:00", end_date: "2026-08-26 09:00:00", review_status: "Unsuccessful" },
-  // planned next week: start_date in next week (no end_date yet)
+  // planned (labelled "next week"): start_date in the CURRENT week (no end_date yet)
   { number: "CHG003", short_description: "plan c", state: "Scheduled", cmdb_ci: "RIBI (prd)",
-    start_date: "2026-09-08 09:00:00" },
+    start_date: "2026-09-01 09:00:00" },
   // last week, in progress (Implement), end_date in last week, not failed/cancelled -> IMPLEMENTED
   { number: "CHG004", short_description: "open d", state: "Implement", cmdb_ci: "OPS (prd)",
     start_date: "2026-08-20 09:00:00", end_date: "2026-08-27 09:00:00" },
-  // end_date in current week -> in none of the three buckets
+  // start_date in NEXT week + end_date not in last week -> in none of the three buckets
   { number: "CHG005", short_description: "old e", state: "Closed", cmdb_ci: "X (prd)",
-    start_date: "2026-08-31 09:00:00", end_date: "2026-09-02 09:00:00" },
+    start_date: "2026-09-08 09:00:00", end_date: "2026-09-12 09:00:00" },
   // u_failure flag failed, end_date in last week
   { number: "CHG006", short_description: "fail f", state: "Closed", cmdb_ci: "Y (prd)",
     start_date: "2026-08-21 09:00:00", end_date: "2026-08-28 09:00:00", u_failure: "true" },
@@ -66,7 +66,7 @@ check("failed includes CHG002", b.failed.some((r) => r.crNumber === "CHG002"), t
 check("failed includes CHG006 (u_failure)", b.failed.some((r) => r.crNumber === "CHG006"), true);
 check("planned count", b.planned.length, 1);
 check("planned cr", b.planned[0].crNumber, "CHG003");
-check("current-week change excluded", b.implemented.concat(b.planned, b.failed).some((r) => r.crNumber === "CHG005"), false);
+check("next-week change excluded", b.implemented.concat(b.planned, b.failed).some((r) => r.crNumber === "CHG005"), false);
 check("cancelled change excluded", b.implemented.concat(b.planned, b.failed).some((r) => r.crNumber === "CHG007"), false);
 check("implemented date is a serial number (end_date)", typeof b.implemented[0].date, "number");
 
