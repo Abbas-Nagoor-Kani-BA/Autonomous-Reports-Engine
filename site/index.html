@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Autonomous Reports Engine — Documentation &amp; UI Guide</title>
+    <meta
+      name="description"
+      content="Documentation and interactive UI guide for the Autonomous Reports Engine, a Chrome extension that pulls ServiceNow ticket timelines, analyzes SLAs, classifies resolution notes, and exports Excel reports."
+    />
+    <link rel="stylesheet" href="assets/css/site.css" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+    <script defer src="assets/js/layout.js"></script>
+    <script src="assets/js/vendor/mermaid.min.js"></script>
+  </head>
+  <body class="site" data-site-page="home" data-site-root=".">
+    <div id="site-header"></div>
+
+    <main class="site-main">
+      <!-- ───────────────────────── Hero ───────────────────────── -->
+      <section class="hero">
+        <h1>
+          The <span class="accent">Autonomous Reports Engine</span>, explained
+          screen by screen.
+        </h1>
+        <p class="lead">
+          A Chrome (Manifest V3) side-panel extension that pulls ServiceNow
+          ticket timelines, analyzes SLA performance, classifies resolution
+          notes, and exports a filled Excel report — running entirely offline
+          and reusing your existing logged-in ServiceNow session, so it needs no
+          API keys. This site recreates each interface with annotated callouts
+          and hosts the full documentation.
+        </p>
+        <div class="hero-cta">
+          <a class="site-btn primary" href="surfaces/panel.html">Explore the interface</a>
+          <a class="site-btn" href="docs.html?p=Quick-Start">Quick start</a>
+          <a class="site-btn" href="docs.html?p=Home">All docs</a>
+        </div>
+      </section>
+
+      <!-- ───────────────────── What it does ───────────────────── -->
+      <h2 class="section-title">What it does</h2>
+      <p class="section-sub">
+        A pull reuses your open ServiceNow tab's session, reconstructs each
+        ticket's timeline and SLA metrics, classifies the closure notes, and
+        writes the results to local storage — which the Data Viewer reads for
+        search, editing, and export.
+      </p>
+      <div class="diagram">
+        <div class="mermaid">
+flowchart LR
+    SN[(ServiceNow<br/>instance)] -->|session auth via open tab| PULL[Pull pipeline<br/>Phase 1 + Phase 2]
+    PULL -->|write dataset| LOC[[chrome.storage.local<br/>dataset + settings]]
+    LOC -->|read dataset| VIEW[Data Viewer<br/>search / edit / classify]
+    VIEW -->|write edits| LOC
+    VIEW --> EXPORT[Export Excel workbook<br/>+ Copy for MSR]
+    PULL <-->|query + timeline cache| DB[(IndexedDB caches)]
+    VIEW <-->|classification + ML model| DB
+        </div>
+      </div>
+
+      <!-- ───────────────── The three surfaces ─────────────────── -->
+      <h2 class="section-title">The three surfaces</h2>
+      <p class="section-sub">
+        Each page is a faithful, static recreation of the real extension UI —
+        built from the same markup and stylesheet — with numbered callouts
+        explaining every control. The mockups use sample data and are inert (no
+        live connection).
+      </p>
+      <div class="card-grid">
+        <a class="info-card" href="surfaces/panel.html">
+          <span class="info-card-kicker">Surface 1 · Side panel</span>
+          <h3>Side Panel</h3>
+          <p>
+            Connect to your instance, build filters and presets, preview the
+            match count, and run a pull. The command center of the extension.
+          </p>
+        </a>
+        <a class="info-card" href="surfaces/viewer.html">
+          <span class="info-card-kicker">Surface 2 · Full tab</span>
+          <h3>Data Viewer</h3>
+          <p>
+            Search and sort, bulk-edit a column, classify, inspect derivations
+            with Calclens, review the SLA summary, and export the workbook.
+          </p>
+        </a>
+        <a class="info-card" href="surfaces/settings.html">
+          <span class="info-card-kicker">Surface 3 · Options</span>
+          <h3>Settings</h3>
+          <p>
+            Instance and scope, queues and team members, classification mode and
+            model, MSR option lists and keywords, and settings backup.
+          </p>
+        </a>
+      </div>
+
+      <!-- ───────────────────── Key features ───────────────────── -->
+      <h2 class="section-title">Key features</h2>
+      <p class="section-sub">Everything the extension does, at a glance.</p>
+      <ul class="feature-list">
+        <li>
+          <strong>Session-based pull</strong>
+          <span
+            >Reads incident / RFS / problem / task tickets through your
+            logged-in ServiceNow tab. No credentials stored, no API keys.</span
+          >
+        </li>
+        <li>
+          <strong>Queue timelines &amp; SLA</strong>
+          <span
+            >Reconstructs assign, acknowledge, suspend and resume moments from
+            audit history and derives SLA metrics on the instance clock.</span
+          >
+        </li>
+        <li>
+          <strong>Automatic classification</strong>
+          <span
+            >Fills root-cause category and solution type from closure notes with
+            an offline scorer, plus an optional local ML model.</span
+          >
+        </li>
+        <li>
+          <strong>Data viewer</strong>
+          <span
+            >Column-scoped search, a fast single-column bulk editor, CI split
+            preview, ticket stats, and Calclens explanations.</span
+          >
+        </li>
+        <li>
+          <strong>Excel export</strong>
+          <span
+            >Fills a template workbook and offers Copy for MSR for pasting into
+            an existing sheet.</span
+          >
+        </li>
+        <li>
+          <strong>Offline &amp; private</strong>
+          <span
+            >Pulled data and settings stay local; the ML model runs entirely
+            offline after a one-time download.</span
+          >
+        </li>
+      </ul>
+
+      <!-- ─────────────── How to read the mockups ──────────────── -->
+      <div class="note">
+        <strong>How to read the UI mockups:</strong> each surface page shows the
+        real interface with numbered
+        <span aria-hidden="true">①②③</span> callout markers. Click a marker (or
+        tab to it and press Enter) to read what that control does, or scroll to
+        the “Every control, explained” reference list at the bottom of the page.
+        Use the <em>Hide callouts</em> toggle to see the clean interface.
+      </div>
+
+      <!-- ───────────────────── Documentation ──────────────────── -->
+      <h2 class="section-title">Documentation</h2>
+      <p class="section-sub">
+        The complete wiki — user guide and developer guide — rendered here with
+        live diagrams.
+      </p>
+      <div class="card-grid">
+        <a class="info-card" href="docs.html?p=Quick-Start">
+          <span class="info-card-kicker">User guide</span>
+          <h3>Quick Start</h3>
+          <p>From install to your first export in a few steps.</p>
+        </a>
+        <a class="info-card" href="docs.html?p=Configuration">
+          <span class="info-card-kicker">User guide</span>
+          <h3>Configuration</h3>
+          <p>Every Settings control explained in detail.</p>
+        </a>
+        <a class="info-card" href="docs.html?p=Architecture">
+          <span class="info-card-kicker">Developer guide</span>
+          <h3>Architecture</h3>
+          <p>The layered design and the rules that hold it together.</p>
+        </a>
+        <a class="info-card" href="docs.html?p=Classification-Algorithm">
+          <span class="info-card-kicker">Deep dive</span>
+          <h3>Classification Algorithm</h3>
+          <p>How the offline scorer decides, step by step.</p>
+        </a>
+        <a class="info-card" href="docs.html?p=Caching">
+          <span class="info-card-kicker">Developer guide</span>
+          <h3>Caching</h3>
+          <p>Query, timeline, classification, and model caches.</p>
+        </a>
+        <a class="info-card" href="docs.html?p=Home">
+          <span class="info-card-kicker">Index</span>
+          <h3>All pages</h3>
+          <p>Browse the complete documentation set.</p>
+        </a>
+      </div>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script>
+      // Render the overview diagram with the same dark Catppuccin theme the
+      // docs pages use, so the landing flow matches the rest of the site.
+      document.addEventListener("DOMContentLoaded", function () {
+        if (typeof mermaid === "undefined") return;
+        try {
+          mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "loose",
+            theme: "dark",
+            themeVariables: {
+              background: "#181825",
+              primaryColor: "#1e1e2e",
+              primaryTextColor: "#cdd6f4",
+              primaryBorderColor: "#89b4fa",
+              lineColor: "#89b4fa",
+              textColor: "#cdd6f4",
+              mainBkg: "#1e1e2e",
+              nodeBorder: "#89b4fa",
+              clusterBkg: "#11111b",
+              clusterBorder: "#45475a",
+              edgeLabelBackground: "#181825",
+              fontFamily:
+                'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+            },
+          });
+          var nodes = document.querySelectorAll(".mermaid");
+          if (nodes.length && typeof mermaid.run === "function") {
+            mermaid.run({ nodes: nodes });
+          } else if (nodes.length && typeof mermaid.init === "function") {
+            mermaid.init(undefined, nodes);
+          }
+        } catch (e) {
+          /* a failed diagram must not break the page */
+        }
+      });
+    </script>
+  </body>
+</html>

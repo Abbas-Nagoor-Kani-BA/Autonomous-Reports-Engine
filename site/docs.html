@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Documentation — Autonomous Reports Engine</title>
+    <meta
+      name="description"
+      content="The Autonomous Reports Engine wiki, rendered in-browser with diagrams, a sidebar, and cross-linked pages."
+    />
+    <link rel="stylesheet" href="assets/css/site.css" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+    <link rel="stylesheet" href="assets/css/docs.css" />
+    <script defer src="assets/js/layout.js"></script>
+    <script defer src="assets/js/vendor/marked.min.js"></script>
+    <script defer src="assets/js/vendor/mermaid.min.js"></script>
+    <script defer src="assets/js/docs.js"></script>
+  </head>
+  <body class="site" data-site-page="docs" data-site-root=".">
+    <div id="site-header"></div>
+
+    <main class="site-main wide docs-main">
+      <div class="docs-layout">
+        <nav id="docs-sidebar" class="docs-sidebar" aria-label="Documentation">
+          <p class="docs-sidebar-loading">Loading navigation…</p>
+        </nav>
+        <article id="docs-content" class="docs-content">
+          <p class="docs-loading">Loading documentation…</p>
+        </article>
+      </div>
+    </main>
+
+    <div id="site-footer"></div>
+  </body>
+</html>

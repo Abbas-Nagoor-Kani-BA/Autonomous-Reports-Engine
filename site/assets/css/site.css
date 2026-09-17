@@ -1,0 +1,325 @@
+/*
+ * site.css — chrome and layout for the documentation site.
+ *
+ * This styles the wrapper around the extension mockups (header, nav, footer,
+ * page container, hero, cards). It intentionally reuses the extension theme
+ * tokens (Catppuccin Mocha palette) so the site frame and the embedded UI feel
+ * like one product. app.css (built from the extension's Tailwind theme)
+ * provides the component classes used inside the mockups.
+ */
+
+:root {
+  --site-bg: #16161f;
+  --site-surface: #1e1e2e;
+  --site-surface-2: #181825;
+  --site-line: #313244;
+  --site-text: #cdd6f4;
+  --site-dim: #a6adc8;
+  --site-faint: #6c7086;
+  --site-accent: #89b4fa;
+  --site-accent-2: #9dc4ff;
+  --site-mauve: #cba6f7;
+  --site-good: #a6e3a1;
+  --site-max: 1180px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body.site {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(137, 180, 250, 0.08), transparent 60%),
+    var(--site-bg);
+  color: var(--site-text);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--site-accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Header / nav ---- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(24, 24, 37, 0.86);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--site-line);
+}
+.site-header-inner {
+  max-width: var(--site-max);
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.site-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  color: var(--site-text);
+}
+.site-brand:hover {
+  text-decoration: none;
+}
+.site-brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--site-accent);
+  box-shadow: 0 0 10px rgba(137, 180, 250, 0.7);
+  align-self: center;
+}
+.site-brand-name {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.site-brand-tag {
+  color: var(--site-faint);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.site-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.site-nav-link {
+  color: var(--site-dim);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.site-nav-link:hover {
+  color: var(--site-text);
+  background: var(--site-surface-2);
+  text-decoration: none;
+}
+.site-nav-link.is-active {
+  color: var(--site-accent);
+  background: rgba(137, 180, 250, 0.12);
+}
+
+/* ---- Page container ---- */
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--site-max);
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+.site-main.wide {
+  max-width: 1320px;
+}
+
+/* ---- Footer ---- */
+.site-footer {
+  border-top: 1px solid var(--site-line);
+  background: var(--site-surface-2);
+}
+.site-footer-inner {
+  max-width: var(--site-max);
+  margin: 0 auto;
+  padding: 22px 20px;
+  color: var(--site-dim);
+  font-size: 13px;
+}
+.site-footer-meta {
+  color: var(--site-faint);
+  font-size: 12.5px;
+}
+.site-footer code,
+.site-main code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--site-surface-2);
+  border: 1px solid var(--site-line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+/* ---- Hero ---- */
+.hero {
+  padding: 20px 0 8px;
+}
+.hero h1 {
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+}
+.hero h1 .accent {
+  color: var(--site-accent);
+}
+.hero p.lead {
+  font-size: 18px;
+  color: var(--site-dim);
+  max-width: 760px;
+  margin: 0 0 20px;
+}
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.site-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  border: 1px solid var(--site-line);
+  background: var(--site-surface-2);
+  color: var(--site-text);
+  cursor: pointer;
+}
+.site-btn:hover {
+  border-color: var(--site-accent);
+  text-decoration: none;
+}
+.site-btn.primary {
+  background: var(--site-accent);
+  color: #11111b;
+  border-color: var(--site-accent);
+}
+.site-btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+/* ---- Section headings ---- */
+.section-title {
+  font-size: 22px;
+  margin: 40px 0 6px;
+  letter-spacing: -0.2px;
+}
+.section-sub {
+  color: var(--site-dim);
+  margin: 0 0 20px;
+}
+
+/* ---- Card grid ---- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.info-card {
+  background: linear-gradient(180deg, #1b1b2b 0%, #181825 100%);
+  border: 1px solid var(--site-line);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+a.info-card:hover {
+  transform: translateY(-2px);
+  border-color: #3d4158;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+.info-card h3 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--site-text);
+}
+.info-card p {
+  margin: 0;
+  color: var(--site-dim);
+  font-size: 14px;
+}
+.info-card .info-card-kicker {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--site-accent);
+  font-weight: 700;
+}
+
+/* ---- Feature list ---- */
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.feature-list li {
+  background: var(--site-surface-2);
+  border: 1px solid var(--site-line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.feature-list li strong {
+  color: var(--site-text);
+  display: block;
+  margin-bottom: 3px;
+}
+.feature-list li span {
+  color: var(--site-dim);
+  font-size: 14px;
+}
+
+/* ---- Mermaid figure ---- */
+.diagram {
+  background: var(--site-surface-2);
+  border: 1px solid var(--site-line);
+  border-radius: 14px;
+  padding: 18px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+.diagram .mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- Callout note ---- */
+.note {
+  border-left: 3px solid var(--site-accent);
+  background: rgba(137, 180, 250, 0.08);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px;
+  margin: 20px 0;
+  color: var(--site-dim);
+}
+.note strong {
+  color: var(--site-text);
+}
+
+@media (max-width: 720px) {
+  .site-nav {
+    width: 100%;
+    margin-left: 0;
+  }
+}

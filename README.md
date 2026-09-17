@@ -136,6 +136,24 @@ combine:
   verdict, and **clears** a cell when the model produces no label. Switching the
   model therefore changes the results.
 
+## Documentation
+
+Full documentation — a user guide, a developer guide, and an interactive UI
+guide that recreates the side panel, data viewer, and settings screens with
+annotated callouts — is published as a static site with **GitHub Pages**. The
+documentation source lives under [`wiki/`](wiki/) and the site under
+[`site/`](site/); the `Deploy Pages` workflow rebuilds and publishes them on
+every push to `main`. To preview locally:
+
+```bash
+node site/build-css.mjs      # build the site CSS from the extension theme
+node site/sync-docs.mjs      # copy wiki/ pages into site/docs/
+cd site && python3 -m http.server 8080   # open http://localhost:8080/
+```
+
+Edit docs in `wiki/`, not in `site/docs/` (those copies are regenerated). See
+[`site/README.md`](site/README.md) for details.
+
 ## Development
 
 | Command                | What it does                                         |

@@ -1,0 +1,303 @@
+/*
+ * annotations.css — styling for the annotation / hotspot system (annotations.js).
+ *
+ * Uses the Catppuccin Mocha palette so callouts blend with the documentation
+ * site frame (site.css) and the embedded extension mockups (app.css).
+ *
+ *   bg      #1e1e2e   surface   #181825   line   #313244
+ *   text    #cdd6f4   dim       #a6adc8   accent #89b4fa
+ *   crust   #11111b (dark text on the accent badge)
+ */
+
+:root {
+  --anno-bg: #1e1e2e;
+  --anno-surface: #181825;
+  --anno-line: #313244;
+  --anno-text: #cdd6f4;
+  --anno-dim: #a6adc8;
+  --anno-accent: #89b4fa;
+  --anno-crust: #11111b;
+}
+
+/* ── Numbered marker ─────────────────────────────────────────────────────── */
+.anno-marker {
+  position: absolute;
+  z-index: 9000;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--anno-surface);
+  border-radius: 999px;
+  background: var(--anno-accent);
+  color: var(--anno-crust);
+  font: 700 12px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.45),
+    0 0 0 3px rgba(137, 180, 250, 0.22);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.anno-marker:hover {
+  transform: scale(1.12);
+}
+.anno-marker:focus-visible {
+  outline: 2px solid var(--anno-accent);
+  outline-offset: 2px;
+}
+.anno-marker.is-active {
+  background: #b4befe;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 0 4px rgba(137, 180, 250, 0.45);
+}
+.anno-marker.is-flash {
+  animation: anno-flash 1.2s ease;
+}
+@keyframes anno-flash {
+  0%,
+  100% {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.45),
+      0 0 0 3px rgba(137, 180, 250, 0.22);
+  }
+  30% {
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.55),
+      0 0 0 8px rgba(137, 180, 250, 0.55);
+  }
+}
+
+/* ── Popover ─────────────────────────────────────────────────────────────── */
+.anno-popover {
+  position: absolute;
+  z-index: 9500;
+  max-width: 320px;
+  min-width: 200px;
+  background: var(--anno-surface);
+  border: 1px solid var(--anno-line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--anno-text);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  animation: anno-pop-in 0.14s ease;
+}
+@keyframes anno-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.anno-popover:focus {
+  outline: none;
+}
+.anno-popover:focus-visible {
+  outline: 2px solid var(--anno-accent);
+  outline-offset: 2px;
+}
+.anno-popover-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.anno-popover-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--anno-text);
+  flex: 1;
+}
+.anno-popover-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--anno-dim);
+}
+.anno-popover-body :first-child {
+  margin-top: 0;
+}
+.anno-popover-body :last-child {
+  margin-bottom: 0;
+}
+.anno-popover-body a {
+  color: var(--anno-accent);
+}
+.anno-popover-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--anno-bg);
+  border: 1px solid var(--anno-line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.anno-popover-close {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--anno-line);
+  border-radius: 7px;
+  background: var(--anno-bg);
+  color: var(--anno-dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+.anno-popover-close:hover {
+  color: var(--anno-text);
+  border-color: var(--anno-accent);
+}
+.anno-popover-close:focus-visible {
+  outline: 2px solid var(--anno-accent);
+  outline-offset: 2px;
+}
+
+/* ── Feature reference list ──────────────────────────────────────────────── */
+.anno-reference {
+  list-style: none;
+  counter-reset: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.anno-reference-item {
+  margin: 0;
+  padding: 0;
+}
+.anno-reference-btn {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  background: var(--anno-surface);
+  border: 1px solid var(--anno-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--anno-text);
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+.anno-reference-btn:hover {
+  border-color: var(--anno-accent);
+  transform: translateY(-1px);
+}
+.anno-reference-btn:focus-visible {
+  outline: 2px solid var(--anno-accent);
+  outline-offset: 2px;
+}
+.anno-reference-chip {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--anno-accent);
+  color: var(--anno-crust);
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.anno-reference-text {
+  display: block;
+  min-width: 0;
+}
+.anno-reference-title {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--anno-text);
+  margin-bottom: 2px;
+}
+.anno-reference-body {
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--anno-dim);
+}
+.anno-reference-body a {
+  color: var(--anno-accent);
+}
+.anno-reference-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--anno-bg);
+  border: 1px solid var(--anno-line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+/* ── Toggle control ──────────────────────────────────────────────────────── */
+.anno-toggle {
+  position: fixed;
+  z-index: 9600;
+  right: 18px;
+  bottom: 18px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--anno-line);
+  background: var(--anno-surface);
+  color: var(--anno-text);
+  font: 700 13px/1 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transition:
+    border-color 0.12s ease,
+    transform 0.12s ease;
+}
+.anno-toggle:hover {
+  border-color: var(--anno-accent);
+  transform: translateY(-1px);
+}
+.anno-toggle:focus-visible {
+  outline: 2px solid var(--anno-accent);
+  outline-offset: 2px;
+}
+.anno-toggle[aria-pressed="false"] {
+  color: var(--anno-dim);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .anno-marker,
+  .anno-popover,
+  .anno-reference-btn,
+  .anno-toggle {
+    transition: none;
+  }
+  .anno-marker:hover,
+  .anno-reference-btn:hover,
+  .anno-toggle:hover {
+    transform: none;
+  }
+  .anno-popover {
+    animation: none;
+  }
+  .anno-marker.is-flash {
+    animation: none;
+  }
+}
