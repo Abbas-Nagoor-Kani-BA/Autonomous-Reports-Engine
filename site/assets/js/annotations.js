@@ -363,6 +363,14 @@
     this._arrowSvg = svg;
     this._arrowPath = path;
     this._arrowRing = ring;
+
+    // Redraw as the mockup scrolls inside the stage (or any inner scroller),
+    // so the arrow tracks the target. Capture-phase catches inner scrollers.
+    var self = this;
+    this._boundStageScroll = function () {
+      if (self._activeEntry) self._drawArrow(self._activeEntry);
+    };
+    document.addEventListener("scroll", this._boundStageScroll, true);
   };
 
   Controller.prototype._activate = function (entry) {
@@ -372,7 +380,55 @@
       if (e.refItem) e.refItem.classList.toggle("is-active", e === entry);
     });
     this._activeEntry = entry;
-    this._drawArrow(entry);
+    // Bring the target control into view inside its scroll container (the
+    // stage), so pointing at a control lower in the mockup does not leave it
+    // hidden. Then draw the arrow once the scroll has settled.
+    this._scrollTargetIntoStage(entry);
+    var self = this;
+    (window.requestAnimationFrame || window.setTimeout)(function () {
+      self._drawArrow(entry);
+    });
+  };
+
+  // Find the nearest scrollable ancestor of the target (the stage, or an inner
+  // scrolling frame like the viewer grid) and scroll it minimally so the target
+  // is within view. Kept minimal so the mockup does not jump around.
+  Controller.prototype._scrollTargetIntoStage = function (entry) {
+    var target = entry && entry.target;
+    if (!target || !isVisible(target)) return;
+    var container = this._scrollParent(target);
+    if (!container) return;
+
+    var cRect = container.getBoundingClientRect();
+    var tRect = target.getBoundingClientRect();
+    var margin = 24;
+    var delta = 0;
+    if (tRect.top < cRect.top + margin) {
+      delta = tRect.top - (cRect.top + margin);
+    } else if (tRect.bottom > cRect.bottom - margin) {
+      delta = tRect.bottom - (cRect.bottom - margin);
+    }
+    if (delta !== 0) {
+      var behavior = prefersReducedMotion() ? "auto" : "smooth";
+      try {
+        container.scrollBy({ top: delta, behavior: behavior });
+      } catch (e) {
+        container.scrollTop += delta;
+      }
+    }
+  };
+
+  Controller.prototype._scrollParent = function (el) {
+    var node = el.parentElement;
+    while (node && node !== document.body) {
+      var cs = window.getComputedStyle(node);
+      var oy = cs.overflowY;
+      if ((oy === "auto" || oy === "scroll") && node.scrollHeight > node.clientHeight + 1) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
   };
 
   Controller.prototype._drawArrow = function (entry) {
@@ -655,6 +711,9 @@
     }
     if (this._arrowSvg && this._arrowSvg.parentNode) {
       this._arrowSvg.parentNode.removeChild(this._arrowSvg);
+    }
+    if (this._boundStageScroll) {
+      document.removeEventListener("scroll", this._boundStageScroll, true);
     }
     if (this._createdToggle && this._createdToggle.parentNode) {
       this._createdToggle.parentNode.removeChild(this._createdToggle);

@@ -330,11 +330,17 @@
   position: sticky;
   top: 84px; /* clears the sticky site header */
   align-self: start;
+  /* Cap the rail to the viewport so a tall mockup never scrolls its top out of
+     view. When the mockup is taller than this, the stage scrolls internally
+     (below) instead of the whole rail sliding away under the header. */
+  max-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* The stage frames the scaled mockup. The mockup is rendered at its natural
    size then scaled down with transform, so the real component CSS is untouched
-   and it stays crisp. */
+   and it stays crisp. It scrolls internally when taller than the capped rail. */
 .surface-stage {
   position: relative;
   border: 1px solid var(--anno-line);
@@ -343,7 +349,8 @@
     radial-gradient(900px 400px at 70% -20%, rgba(137, 180, 250, 0.08), transparent 60%),
     #16161f;
   padding: 16px;
-  overflow: hidden;
+  overflow: auto;
+  min-height: 0; /* allow the flex child to shrink and scroll */
 }
 
 .surface-stage-label {
