@@ -273,7 +273,7 @@ check(
   JSON.stringify({ 1: 1, 2: 0, 3: 0, 4: 0 })
 );
 
-console.log("== SLA gate: open incidents excluded, problem block unaffected ==");
+console.log("== SLA gate: resolve closed-only, respond all-state acknowledged ==");
 const gateRows = [
   {
     number: "INC-OPEN",
@@ -282,6 +282,21 @@ const gateRows = [
     createdOn: "10-08-2026 00:00:00",
     assignTimeUtcIso: "2026-08-10T00:00:00.000Z",
     acknTimeUtcIso: "2026-08-10T00:05:00.000Z"
+  },
+  {
+    number: "INC-OPEN-NOACK",
+    priority: "1 - Critical",
+    state: "In Progress",
+    createdOn: "10-08-2026 00:00:00",
+    assignTimeUtcIso: "2026-08-10T00:00:00.000Z"
+  },
+  {
+    number: "INC-OPEN-LATE",
+    priority: "2 - High",
+    state: "In Progress",
+    createdOn: "10-08-2026 00:00:00",
+    assignTimeUtcIso: "2026-08-10T00:00:00.000Z",
+    acknTimeUtcIso: "2026-08-10T02:00:00.000Z"
   },
   {
     number: "INC-DONE",
@@ -304,9 +319,39 @@ const gateRows = [
 ];
 const sg = buildSlaSummary(gateRows, fmt);
 check(
-  "open INC excluded, only the resolved INC counts",
+  "resolve pool: open INC excluded, only the resolved INC counts",
   JSON.stringify(sg.incidentTotals),
   JSON.stringify({ 1: 1, 2: 0, 3: 0, 4: 0 })
+);
+check(
+  "respond P1 total: open + resolved acknowledged INC (unacknowledged excluded)",
+  sg.items.find((i) => i.metric === "Time to Respond" && i.category === "Severity 1 Incidents")
+    .total,
+  2
+);
+check(
+  "respond P1 count: both acknowledged within 15 minutes",
+  sg.items.find((i) => i.metric === "Time to Respond" && i.category === "Severity 1 Incidents")
+    .count,
+  2
+);
+check(
+  "respond P1 green: 100% within target",
+  sg.items.find((i) => i.metric === "Time to Respond" && i.category === "Severity 1 Incidents")
+    .status,
+  "GREEN"
+);
+check(
+  "respond P2 total: the late open acknowledged INC counts",
+  sg.items.find((i) => i.metric === "Time to Respond" && i.category === "Severity 2 Incidents")
+    .total,
+  1
+);
+check(
+  "respond P2 red: acknowledged after target (all-state, still breaches)",
+  sg.items.find((i) => i.metric === "Time to Respond" && i.category === "Severity 2 Incidents")
+    .status,
+  "RED"
 );
 const sgReocc = sg.items.find((i) => i.metric === "Reoccuring Incident - Problem creation");
 check("problem block still counts the PTASK regardless of state", sgReocc.total, 1);

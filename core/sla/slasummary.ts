@@ -156,23 +156,35 @@ function buildSlaSummary(
   items: SlaSummaryItem[];
 } {
   const incidentReps: Record<number, RepLike[]> = { 1: [], 2: [], 3: [], 4: [] };
+  const respondReps: Record<number, RepLike[]> = { 1: [], 2: [], 3: [], 4: [] };
   const problemReps: Record<number, RepLike[]> = { 1: [], 2: [], 3: [], 4: [] };
   for (const row of rows || []) {
     const p = slaPriority(row.priority);
     if (!p) continue;
     const rep = buildReport(row, fmt);
-    // Incident SLA counts only include closed/resolved incidents. The problem
-    // block is left as-is (state-independent): it reads an ungated report so its
-    // metMaxResolutionSLA-based counts are unaffected by the incident SLA gate.
+    // Two distinct incident pools:
+    // - Time to Resolve (and incidentTotals) reads the closed/resolved-only
+    //   pool (isSlaEligible gate).
+    // - Time to Respond reads an all-state pool of acknowledged incidents
+    //   (skipSlaGate so responseSLA is populated for open tickets). Rows with
+    //   no acknowledgment are excluded. The ungated report is internal-only and
+    //   never touches the row cache.
+    // The problem block is left as-is (state-independent): it reads an ungated
+    // report so its metMaxResolutionSLA-based counts are unaffected.
     if (deriveType(row.number) === "Incident") {
       if (isSlaEligible(row)) incidentReps[p].push(rep);
+      if (String(row.number ?? "").startsWith("INC") && String(row.acknTimeUtcIso ?? "").trim()) {
+        respondReps[p].push(buildReport(row, fmt, undefined, { skipSlaGate: true }));
+      }
     } else if (deriveType(row.number) === "Problem Record") {
       problemReps[p].push(buildReport(row, fmt, undefined, { skipSlaGate: true }));
     }
   }
   const incidentTotals: Record<number, number> = {};
+  const respondTotals: Record<number, number> = {};
   for (let sev = 1; sev <= 4; sev++) {
     incidentTotals[sev] = incidentReps[sev].length;
+    respondTotals[sev] = respondReps[sev].length;
   }
   const items: SlaSummaryItem[] = [];
   for (let sev = 1; sev <= 4; sev++) {
@@ -197,8 +209,8 @@ function buildSlaSummary(
     }
   }
   for (let sev = 1; sev <= 4; sev++) {
-    const reps = incidentReps[sev];
-    const total = incidentTotals[sev];
+    const reps = respondReps[sev];
+    const total = respondTotals[sev];
     const category = SEVERITY_LABELS[sev];
     const rTier = RESPOND_TIERS[sev];
     const count = total ? countRespond(rTier, reps) : 0;
