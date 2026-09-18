@@ -405,34 +405,24 @@
     });
   };
 
-  // Zoom the active control toward the side the arrow comes from, so it grows
-  // "into" the pointer rather than off-screen.
+  // Zoom the active control. It grows from its own centre so it expands
+  // symmetrically and stays clear of the stage edges (the target is centred in
+  // the stage first, in _scrollTargetIntoStage).
   Controller.prototype._applyZoom = function (entry) {
     var target = entry && entry.target;
     if (!target || !isVisible(target)) return;
-    var stage = this._stage;
-    var origin = "center";
-    if (stage) {
-      var sr = stage.getBoundingClientRect();
-      var tr = target.getBoundingClientRect();
-      var cx = tr.left + tr.width / 2;
-      // The cards sit to the right of the stage, so the arrow enters from the
-      // right in most cases — grow from the right edge. Near the stage's right
-      // edge, grow from the right; otherwise center is fine.
-      origin = cx > sr.left + sr.width * 0.55 ? "right center" : "center";
-    }
     // Restart the pop animation by toggling the class off then on.
     target.classList.remove("anno-zoom");
     // force reflow so the animation replays
     void target.offsetWidth;
-    target.style.transformOrigin = origin;
+    target.style.transformOrigin = "center center";
     target.classList.add("anno-zoom");
     this._zoomedEl = target;
   };
 
-  // Find the nearest scrollable ancestor of the target (the stage, or an inner
-  // scrolling frame like the viewer grid) and scroll it minimally so the target
-  // is within view. Kept minimal so the mockup does not jump around.
+  // Scroll the nearest scrollable ancestor (the stage, or an inner scroller
+  // like the viewer grid) so the target is centred, giving a zoomed control
+  // room on all sides instead of being clipped at an edge.
   Controller.prototype._scrollTargetIntoStage = function (entry) {
     var target = entry && entry.target;
     if (!target || !isVisible(target)) return;
@@ -441,14 +431,11 @@
 
     var cRect = container.getBoundingClientRect();
     var tRect = target.getBoundingClientRect();
-    var margin = 24;
-    var delta = 0;
-    if (tRect.top < cRect.top + margin) {
-      delta = tRect.top - (cRect.top + margin);
-    } else if (tRect.bottom > cRect.bottom - margin) {
-      delta = tRect.bottom - (cRect.bottom - margin);
-    }
-    if (delta !== 0) {
+    // Desired: target centre aligned with the container centre.
+    var targetCenter = tRect.top + tRect.height / 2;
+    var containerCenter = cRect.top + cRect.height / 2;
+    var delta = targetCenter - containerCenter;
+    if (Math.abs(delta) > 4) {
       var behavior = prefersReducedMotion() ? "auto" : "smooth";
       try {
         container.scrollBy({ top: delta, behavior: behavior });
