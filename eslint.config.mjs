@@ -178,6 +178,27 @@ export default [
       "no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_", caughtErrors: "none" }]
     }
   },
+  // The GitHub Pages site scripts are classic browser scripts (UMD wrappers,
+  // vendored marked/mermaid globals). Declare those ambient globals so no-undef
+  // does not fire on them.
+  {
+    files: ["site/assets/js/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: {
+        ...browserGlobals,
+        module: "readonly",
+        marked: "readonly",
+        mermaid: "readonly"
+      }
+    },
+    rules: {
+      ...baseRules,
+      "no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_", caughtErrors: "none" }],
+      "no-undef": "error"
+    }
+  },
   // Must stay LAST: disables ESLint stylistic rules that would conflict with
   // Prettier so the formatter and linter never fight over the same code.
   prettier

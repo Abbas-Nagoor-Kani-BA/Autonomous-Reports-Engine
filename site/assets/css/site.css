@@ -41,7 +41,14 @@ body.site {
     var(--site-bg);
   color: var(--site-text);
   font-family:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
   font-size: 15px;
   line-height: 1.6;
 }

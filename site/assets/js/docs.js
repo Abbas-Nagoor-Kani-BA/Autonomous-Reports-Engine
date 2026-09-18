@@ -18,7 +18,7 @@
  */
 (function (root, factory) {
   "use strict";
-  var api = factory();
+  const api = factory();
   if (typeof module === "object" && module.exports) {
     module.exports = api; // Node / test
   }
@@ -28,7 +28,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var DEFAULT_PAGE = "Home";
+  const DEFAULT_PAGE = "Home";
 
   // ---- Pure helpers (unit-testable) -----------------------------------------
 
@@ -48,7 +48,7 @@
    */
   function rewriteHref(href) {
     if (href == null) return href;
-    var raw = String(href).trim();
+    let raw = String(href).trim();
     if (raw === "") return href;
 
     // In-page anchors — leave alone.
@@ -61,8 +61,8 @@
     if (raw.slice(0, 2) === "//") return raw;
 
     // Split off any #fragment and ?query so we can preserve the fragment.
-    var frag = "";
-    var hashIdx = raw.indexOf("#");
+    let frag = "";
+    const hashIdx = raw.indexOf("#");
     if (hashIdx !== -1) {
       frag = raw.slice(hashIdx); // includes leading #
       raw = raw.slice(0, hashIdx);
@@ -71,7 +71,7 @@
 
     // Explicit .md link -> strip extension, route through docs.html.
     if (/\.md$/i.test(raw)) {
-      var mdName = raw.replace(/\.md$/i, "");
+      let mdName = raw.replace(/\.md$/i, "");
       // keep only the final path segment as the page id
       mdName = mdName.split("/").pop();
       return "docs.html?p=" + encodeURIComponent(mdName) + frag;
@@ -81,7 +81,7 @@
     if (/\.[a-z0-9]{1,5}$/i.test(raw)) return raw + frag;
 
     // Bare wiki link — route through docs.html.
-    var name = raw.split("/").pop();
+    const name = raw.split("/").pop();
     return "docs.html?p=" + encodeURIComponent(name) + frag;
   }
 
@@ -92,7 +92,7 @@
    */
   function resolveImageSrc(src) {
     if (src == null) return src;
-    var raw = String(src).trim();
+    const raw = String(src).trim();
     if (raw === "") return src;
     if (raw.charAt(0) === "/") return raw;
     if (hasScheme(raw)) return raw;
@@ -106,10 +106,10 @@
 
   // Read ?p=PageName from a query/search string. Falls back to DEFAULT_PAGE.
   function pageNameFromQuery(search) {
-    var s = String(search || "");
-    var m = s.match(/[?&]p=([^&#]*)/);
+    const s = String(search || "");
+    const m = s.match(/[?&]p=([^&#]*)/);
     if (!m) return DEFAULT_PAGE;
-    var val = "";
+    let val = "";
     try {
       val = decodeURIComponent(m[1].replace(/\+/g, " "));
     } catch (e) {
@@ -133,7 +133,7 @@
       if (typeof marked === "function") return marked(md);
     }
     // Fallback: escape and wrap in <pre> so nothing breaks.
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.textContent = md;
     return "<pre>" + div.innerHTML + "</pre>";
   }
@@ -141,16 +141,16 @@
   // Convert <pre><code class="language-mermaid">…</code></pre> into
   // <div class="diagram"><div class="mermaid">…</div></div>.
   function extractMermaid(container) {
-    var count = 0;
-    var codes = container.querySelectorAll("pre > code");
+    let count = 0;
+    const codes = container.querySelectorAll("pre > code");
     Array.prototype.forEach.call(codes, function (code) {
       if (!isMermaidCodeClass(code.className)) return;
-      var pre = code.parentNode;
-      var source = code.textContent;
+      const pre = code.parentNode;
+      const source = code.textContent;
 
-      var wrapper = document.createElement("div");
+      const wrapper = document.createElement("div");
       wrapper.className = "diagram";
-      var target = document.createElement("div");
+      const target = document.createElement("div");
       target.className = "mermaid";
       target.textContent = source;
       wrapper.appendChild(target);
@@ -199,7 +199,7 @@
       actorBorder: "#89b4fa",
       actorTextColor: "#cdd6f4",
       fontFamily:
-        'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
     };
   }
 
@@ -210,12 +210,12 @@
         startOnLoad: false,
         securityLevel: "loose",
         theme: "dark",
-        themeVariables: mermaidThemeVariables(),
+        themeVariables: mermaidThemeVariables()
       });
     } catch (e) {
       /* initialize is idempotent-ish; ignore */
     }
-    var nodes = document.querySelectorAll("#docs-content .mermaid");
+    const nodes = document.querySelectorAll("#docs-content .mermaid");
     if (!nodes.length) return;
     try {
       if (typeof mermaid.run === "function") {
@@ -225,9 +225,8 @@
       }
     } catch (e) {
       // A single bad diagram should not blank the page.
-      /* eslint-disable no-console */
+
       if (typeof console !== "undefined") console.warn("mermaid render failed", e);
-      /* eslint-enable no-console */
     }
   }
 
@@ -246,11 +245,11 @@
    */
   function buildSidebar(nav, sidebarMd, currentPage) {
     nav.innerHTML = "";
-    var lines = String(sidebarMd).split(/\r?\n/);
-    var currentList = null;
+    const lines = String(sidebarMd).split(/\r?\n/);
+    let currentList = null;
 
     function linkFor(text, target) {
-      var a = document.createElement("a");
+      const a = document.createElement("a");
       a.href = "docs.html?p=" + encodeURIComponent(target);
       a.textContent = text;
       if (decodeURIComponent(target) === currentPage || target === currentPage) {
@@ -261,13 +260,13 @@
     }
 
     lines.forEach(function (line) {
-      var t = line.trim();
+      const t = line.trim();
       if (t === "" || t === "---") return;
 
       // Top home link: "### [Home](Home)"
-      var head = t.match(/^#{1,6}\s*\[([^\]]+)\]\(([^)]+)\)\s*$/);
+      const head = t.match(/^#{1,6}\s*\[([^\]]+)\]\(([^)]+)\)\s*$/);
       if (head) {
-        var homeLink = linkFor(head[1], head[2].trim());
+        const homeLink = linkFor(head[1], head[2].trim());
         homeLink.className =
           "docs-sidebar-home" + (homeLink.className === "is-active" ? " is-active" : "");
         nav.appendChild(homeLink);
@@ -276,9 +275,9 @@
       }
 
       // Section heading: "**User Guide**" (or a bare heading line)
-      var bold = t.match(/^\*\*(.+?)\*\*$/);
+      const bold = t.match(/^\*\*(.+?)\*\*$/);
       if (bold) {
-        var h = document.createElement("p");
+        const h = document.createElement("p");
         h.className = "docs-sidebar-section";
         h.textContent = bold[1];
         nav.appendChild(h);
@@ -288,13 +287,13 @@
       }
 
       // List item link: "- [Installation](Installation)"
-      var item = t.match(/^[-*]\s*\[([^\]]+)\]\(([^)]+)\)\s*$/);
+      const item = t.match(/^[-*]\s*\[([^\]]+)\]\(([^)]+)\)\s*$/);
       if (item) {
         if (!currentList) {
           currentList = document.createElement("ul");
           nav.appendChild(currentList);
         }
-        var li = document.createElement("li");
+        const li = document.createElement("li");
         li.appendChild(linkFor(item[1], item[2].trim()));
         currentList.appendChild(li);
         return;
@@ -304,15 +303,9 @@
 
   // ---- Orchestration --------------------------------------------------------
 
-  function docFetch(url) {
-    return fetch(url, { cache: "no-cache" }).then(function (res) {
-      return { ok: res.ok, status: res.status, text: res.ok ? res.text() : Promise.resolve("") };
-    });
-  }
-
   function showError(content, page) {
     content.innerHTML = "";
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "docs-error";
     div.innerHTML =
       "<strong>Page not found.</strong> The documentation page <code>" +
@@ -330,7 +323,7 @@
 
   function renderFooter(content, footerMd) {
     if (!footerMd || !String(footerMd).trim()) return;
-    var footer = document.createElement("div");
+    const footer = document.createElement("div");
     footer.className = "docs-footer";
     footer.innerHTML = renderMarkdown(footerMd);
     rewriteLinks(footer);
@@ -338,7 +331,7 @@
   }
 
   function renderPage(page) {
-    var content = document.getElementById("docs-content");
+    const content = document.getElementById("docs-content");
     if (!content) return;
 
     fetch("docs/" + page + ".md", { cache: "no-cache" })
@@ -348,7 +341,7 @@
       })
       .then(function (md) {
         content.innerHTML = renderMarkdown(md);
-        var mermaidCount = extractMermaid(content);
+        const mermaidCount = extractMermaid(content);
         rewriteLinks(content);
         document.title = deriveTitle(md, page);
         return mermaidCount;
@@ -371,13 +364,13 @@
   }
 
   function deriveTitle(md, page) {
-    var m = String(md).match(/^#\s+(.+?)\s*$/m);
-    var name = m ? m[1] : page.replace(/-/g, " ");
+    const m = String(md).match(/^#\s+(.+?)\s*$/m);
+    const name = m ? m[1] : page.replace(/-/g, " ");
     return name + " — Autonomous Reports Engine";
   }
 
   function loadSidebar(currentPage) {
-    var nav = document.getElementById("docs-sidebar");
+    const nav = document.getElementById("docs-sidebar");
     if (!nav) return;
     fetch("docs/_Sidebar.md", { cache: "no-cache" })
       .then(function (res) {
@@ -396,9 +389,7 @@
   }
 
   function init() {
-    var page = pageNameFromQuery(
-      typeof location !== "undefined" ? location.search : "",
-    );
+    const page = pageNameFromQuery(typeof location !== "undefined" ? location.search : "");
     loadSidebar(page);
     renderPage(page);
   }
@@ -416,6 +407,6 @@
     buildSidebar: buildSidebar,
     extractMermaid: extractMermaid,
     rewriteLinks: rewriteLinks,
-    DEFAULT_PAGE: DEFAULT_PAGE,
+    DEFAULT_PAGE: DEFAULT_PAGE
   };
 });

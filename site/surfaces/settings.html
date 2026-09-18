@@ -20,14 +20,13 @@
       <section class="surface-intro">
         <h1 class="section-title">Settings</h1>
         <p class="section-sub">
-          A static recreation of the extension's Settings page — where you set the
-          ServiceNow instance, the queues and team members every pull is scoped to,
-          pull parameters, classification behaviour, the MSR option lists and
-          classifier keywords, and backup/transfer. In the real extension these
-          values live in <code>chrome.storage.local</code> and the chips are
-          injected by JavaScript. Everything below is a sample and inert. Hover
-          or focus a card on the right for a guided tour, or read the
-          <a href="../docs.html?p=Configuration">Configuration</a> and
+          A static recreation of the extension's Settings page — where you set the ServiceNow
+          instance, the queues and team members every pull is scoped to, pull parameters,
+          classification behaviour, the MSR option lists and classifier keywords, and
+          backup/transfer. In the real extension these values live in
+          <code>chrome.storage.local</code> and the chips are injected by JavaScript. Everything
+          below is a sample and inert. Hover or focus a card on the right for a guided tour, or read
+          the <a href="../docs.html?p=Configuration">Configuration</a> and
           <a href="../docs.html?p=Classification">Classification</a> docs.
         </p>
       </section>
@@ -37,503 +36,898 @@
           <div class="surface-stage" style="--anno-scale: 0.6">
             <p class="surface-stage-label">Live sample · Settings</p>
             <div class="surface-scale">
-      <!-- ORIGINAL settings body classes carried on this wrapper so the
+              <!-- ORIGINAL settings body classes carried on this wrapper so the
            component CSS (.cards, .card-settings, .cpill, .chip, etc.) applies. -->
-      <div class="font-sans text-[13px] bg-bg text-text">
-        <h1 class="text-lg text-accent m-0 mb-1">Plugin Settings</h1>
-        <div class="text-dim text-xs mb-4">
-          Stored locally in the extension (chrome.storage.local) — sample values shown
-        </div>
-
-        <div class="cards">
-          <!-- ── General ───────────────────────────────────────────────── -->
-          <div class="card-settings msrCard" style="grid-column: 1/-1">
-            <h2 class="cardTitle">General</h2>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Instance URL</label
-            >
-            <input
-              id="instanceUrl"
-              type="url"
-              placeholder="https://devXXXXX.service-now.com"
-              class="input"
-              value="https://acme.service-now.com"
-            />
-
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Default ticket type</label
-            >
-            <select id="ticketType" class="select">
-              <option value="incident">Incident</option>
-              <option value="change_request">Change Request</option>
-              <option value="problem">Problem</option>
-              <option value="sc_req_item">Requested Item (RITM)</option>
-              <option value="sc_task">Catalog Task (SCTASK)</option>
-            </select>
-
-            <h3 class="secTitle">Queues</h3>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Queues (one assignment group name per chip)</label
-            >
-            <div id="queuesChips" class="flex flex-col gap-1.5">
-              <div class="chipList flex flex-wrap gap-[5px]">
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Network Operations</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
+              <div class="font-sans text-[13px] bg-bg text-text">
+                <h1 class="text-lg text-accent m-0 mb-1">Plugin Settings</h1>
+                <div class="text-dim text-xs mb-4">
+                  Stored locally in the extension (chrome.storage.local) — sample values shown
                 </div>
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Service Desk</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
+
+                <div class="cards">
+                  <!-- ── General ───────────────────────────────────────────────── -->
+                  <div class="card-settings msrCard" style="grid-column: 1/-1">
+                    <h2 class="cardTitle">General</h2>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Instance URL</label
+                    >
+                    <input
+                      id="instanceUrl"
+                      type="url"
+                      placeholder="https://devXXXXX.service-now.com"
+                      class="input"
+                      value="https://acme.service-now.com"
+                    />
+
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Default ticket type</label
+                    >
+                    <select id="ticketType" class="select">
+                      <option value="incident">Incident</option>
+                      <option value="change_request">Change Request</option>
+                      <option value="problem">Problem</option>
+                      <option value="sc_req_item">Requested Item (RITM)</option>
+                      <option value="sc_task">Catalog Task (SCTASK)</option>
+                    </select>
+
+                    <h3 class="secTitle">Queues</h3>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Queues (one assignment group name per chip)</label
+                    >
+                    <div id="queuesChips" class="flex flex-col gap-1.5">
+                      <div class="chipList flex flex-wrap gap-[5px]">
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Network Operations</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Service Desk</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Cloud Platform</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        class="chipInput flex-1 min-w-[180px] border border-line bg-card2 text-text rounded px-2.5 py-1.5 text-[13px] font-sans"
+                        placeholder="Type a value and press Enter"
+                        disabled
+                      />
+                    </div>
+                    <div class="hint mt-1">
+                      Every pull is scoped to these assignment groups by name. Names must match the
+                      group's display name in ServiceNow. Type a name and press Enter — paste
+                      several separated by commas or new lines.
+                    </div>
+
+                    <h3 class="secTitle">Team members</h3>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Team members (one full name per chip)</label
+                    >
+                    <div id="teamMembersChips" class="flex flex-col gap-1.5">
+                      <div class="chipList flex flex-wrap gap-[5px]">
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Alex Morgan</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Priya Nair</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Sam Okafor</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        class="chipInput flex-1 min-w-[180px] border border-line bg-card2 text-text rounded px-2.5 py-1.5 text-[13px] font-sans"
+                        placeholder="Type a value and press Enter"
+                        disabled
+                      />
+                    </div>
+                    <div class="hint mt-1">
+                      Used ONLY to detect acknowledgement dates (when a ticket gets assigned to one
+                      of these people). Names must match how ServiceNow displays the user. Type a
+                      name and press Enter — paste several separated by commas or new lines. Leave
+                      empty to skip acknowledgement detection.
+                    </div>
+
+                    <h3 class="secTitle">Configuration items</h3>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Configuration items (one CI name per chip)</label
+                    >
+                    <div id="configItemsChips" class="flex flex-col gap-1.5">
+                      <div class="chipList flex flex-wrap gap-[5px]">
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Payment Gateway</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                        <div
+                          class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                        >
+                          <span class="truncate">Core Banking API</span
+                          ><button
+                            type="button"
+                            class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        class="chipInput flex-1 min-w-[180px] border border-line bg-card2 text-text rounded px-2.5 py-1.5 text-[13px] font-sans"
+                        placeholder="Type a value and press Enter"
+                        disabled
+                      />
+                    </div>
+                    <div class="hint mt-1">
+                      Optional list of Configuration Items used for CI grouping and export. Use each
+                      queue's
+                      <em>resolve CIs</em> button to pull the CIs supported by that group (their
+                      ServiceNow <code>support_group</code>), or type names manually.
+                    </div>
+
+                    <div class="flex items-center gap-2 mt-3">
+                      <button id="resolveScopeBtn" type="button" class="btn py-1.5 px-3 text-xs">
+                        Resolve queues
+                      </button>
+                      <span id="resolveScopeStatus" class="text-dim text-[11px]"></span>
+                    </div>
+                    <div class="hint mt-1">
+                      Optional: fill the Queues list from your ServiceNow assignment-group
+                      memberships (your logged-in session). Then use each queue's
+                      <em>resolve members</em> button to pick that group's members into Team
+                      members. Requires an open, logged-in ServiceNow tab. If your account cannot
+                      read the group tables, add names manually.
+                    </div>
+                  </div>
+
+                  <div id="memberPicker"></div>
+
+                  <!-- ── Pull parameters ───────────────────────────────────────── -->
+                  <div class="card-settings paramsCard">
+                    <h2 class="cardTitle">Pull parameters</h2>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Table page size</label
+                    >
+                    <input
+                      id="tablePageSize"
+                      type="number"
+                      min="100"
+                      max="5000"
+                      class="input"
+                      value="1000"
+                    />
+                    <div class="hint mt-1">
+                      Rows per Table API page during pulls (100–5000, default 1000).
+                    </div>
+
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
+                      >Query cache TTL (minutes)</label
+                    >
+                    <input
+                      id="cacheTtlMinutes"
+                      type="number"
+                      min="0"
+                      max="10080"
+                      class="input"
+                      value="15"
+                    />
+                    <div class="hint mt-1">
+                      How long a pulled ticket list is reused without re-fetching (0–10080, default
+                      15). A pull re-uses cached results only if the same query ran within this
+                      window; 0 disables caching so every pull hits the API. Timeline cache is
+                      unaffected.
+                    </div>
+
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
+                      >Max tickets per filter set</label
+                    >
+                    <input
+                      id="maxTicketsPerPull"
+                      type="number"
+                      min="0"
+                      max="100000"
+                      class="input"
+                      value="500"
+                    />
+                    <div class="hint mt-1">
+                      Safety cap: if a filter matches MORE tickets than this, the set is skipped and
+                      you are warned instead of pulling (0–100000, default 500; 0 = unlimited).
+                      Preview shows the same warning before you run.
+                    </div>
+
+                    <label class="flex items-center gap-1.5 mt-2">
+                      <input id="debugResponses" type="checkbox" class="w-auto" />
+                      Log response data in panel log (debug)
+                    </label>
+                    <div class="hint mt-1">
+                      Adds a truncated body preview and row count for every API call to the log.
+                      Verbose — enable only while troubleshooting.
+                    </div>
+
+                    <div class="flex gap-2 flex-wrap mt-2.5 items-center">
+                      <button id="clearCacheBtn" class="btn">Clear pull cache</button>
+                      <span class="hint"
+                        >Query results are reused for 15 min; timelines until the ticket changes
+                        (max 7 days).</span
+                      >
+                    </div>
+                  </div>
+
+                  <!-- ── Classification ────────────────────────────────────────── -->
+                  <div class="card-settings">
+                    <h2 class="cardTitle">Classification</h2>
+                    <div class="hint mt-1">
+                      How the MSR Root cause and Solution type columns are filled from the
+                      resolution notes. The built-in offline scorer always runs; the
+                      machine-learning model (downloaded once and cached locally, used offline in
+                      the Data View) is only used when the mode asks for it.
+                    </div>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
+                      >Classification mode</label
+                    >
+                    <select id="mlMode" class="select">
+                      <option value="hybrid" selected>
+                        Hybrid — offline scorer first, then ML when it finds a better answer
+                      </option>
+                      <option value="ml">ML only — machine learning for every ticket</option>
+                      <option value="heuristic">
+                        Heuristic only — built-in offline scorer (no ML)
+                      </option>
+                    </select>
+                    <label
+                      class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                      >Model</label
+                    >
+                    <select id="mlModel" class="select">
+                      <option value="mobilebert" selected>MobileBERT (25.7 MB)</option>
+                      <option value="distilbert">DistilBERT (64.5 MB)</option>
+                      <option value="nli-deberta-v3">NLI DeBERTa v3 (233 MB)</option>
+                    </select>
+                    <div class="hint mt-1">
+                      Choose which classifier to download. Larger models are more accurate but take
+                      longer to download.
+                    </div>
+                    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+                      <button id="mlDownloadBtn" class="btn">Download model</button>
+                      <span id="mlStatus" class="text-dim text-xs"
+                        >Downloaded · Xenova/mobilebert-uncased-mnli</span
+                      >
+                    </div>
+                    <label class="flex items-center gap-1.5 mt-3">
+                      <input id="mlCacheEnabled" type="checkbox" class="w-auto" checked />
+                      Cache classification results
+                    </label>
+                    <div class="hint mt-1">
+                      Stores each classified note's outcome in a local cache, so an unchanged note
+                      is never re-inferred on reload or across datasets. Turn off to always
+                      re-classify. This only affects future runs; existing rows are already
+                      classified.
+                    </div>
+                    <div class="flex gap-2 flex-wrap mt-2 items-center">
+                      <button id="mlCacheClearBtn" class="btn">Clear classification cache</button>
+                    </div>
+                  </div>
+
+                  <!-- ── MSR option lists ──────────────────────────────────────── -->
+                  <div class="card-settings msrCard" style="grid-column: 1/-1">
+                    <h2 class="cardTitle">MSR option lists</h2>
+                    <div class="hint mt-1">
+                      Allowed values for the MSR report dropdown columns (BA AO sheet). The data
+                      view restricts these columns to the lists below, and exports/copy-for-MSR use
+                      exactly these labels. One value per chip — type and press Enter, or paste
+                      several separated by commas/new lines. Emptying a list falls back to nothing —
+                      use "Restore defaults" for the original msr.xlsx values.
+                    </div>
+                    <div class="hscroll">
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Op Co</label
+                        >
+                        <div id="msrOpCo" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">ACME</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">ACME Retail</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Domain</label
+                        >
+                        <div id="msrDomain" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Infrastructure</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Applications</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Type</label
+                        >
+                        <div id="msrType" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Incident</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">RFS</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Status</label
+                        >
+                        <div id="msrStatus" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Open</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Resolved</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Closed</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Resolution type</label
+                        >
+                        <div id="msrResolution" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Permanent</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Workaround</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Duplicate incident</label
+                        >
+                        <div id="msrDuplicate" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Yes</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">No</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Queue names</label
+                        >
+                        <div id="msrQueue" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Network Operations</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Service Desk</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Sub category</label
+                        >
+                        <div id="msrSubCategory" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Email</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Network</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Root cause category — Incident</label
+                        >
+                        <div id="msrRcIncident" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Hardware</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Software</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Human Error</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Third Party</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Root cause category — RFS</label
+                        >
+                        <div id="msrRcRfs" class="chipList flex flex-wrap gap-[5px]">
+                          <span class="hint italic">None — empty in source msr.xlsx</span>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
+                          >Root cause category — P Ticket</label
+                        >
+                        <div id="msrRcPTicket" class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Problem</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">Known Error</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+                      <button id="msrResetBtn" class="btn">Restore MSR defaults</button>
+                      <span class="hint"
+                        >The RFS root-cause list is empty in the source msr.xlsx — add values here
+                        if you raise RFS tickets.</span
+                      >
+                    </div>
+                  </div>
+
+                  <!-- ── Classifier keywords ───────────────────────────────────── -->
+                  <div class="card-settings" style="grid-column: 1/-1">
+                    <h2 class="cardTitle">Classifier keywords</h2>
+                    <div class="hint mt-1">
+                      Word and phrase hints the built-in offline scorer uses to match MSR labels
+                      while classifying the resolution notes (regex phrase, keyword hints, then
+                      vocabulary similarity). Each label shows its built-in default keywords; add
+                      chips to extend them, or clear them to remove a match. Matching is
+                      case-insensitive and tolerates small misspellings. Editing a label's keywords
+                      re-runs classification in the data view and bumps the keyword fingerprint.
+                    </div>
+                    <div class="hscroll" id="kwStack">
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5"
+                          >Software Bug</label
+                        >
+                        <div class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">exception</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">stack trace</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">null pointer</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5"
+                          >Hardware</label
+                        >
+                        <div class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">disk failure</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">replaced</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">firmware</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="msrTile">
+                        <label
+                          class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5"
+                          >Human Error</label
+                        >
+                        <div class="chipList flex flex-wrap gap-[5px]">
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">misconfiguration</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">wrong value</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                          <div
+                            class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
+                          >
+                            <span class="truncate">manual</span
+                            ><button
+                              type="button"
+                              class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
+                            >
+                              &#10005;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+                      <button id="kwResetBtn" class="btn">Restore default keywords</button>
+                      <span class="hint"
+                        >Keywords are shown for the labels in the MSR option lists above.</span
+                      >
+                    </div>
+                  </div>
+
+                  <!-- ── Backup / transfer ─────────────────────────────────────── -->
+                  <div class="card-settings backupCard">
+                    <h2 class="cardTitle">Backup / transfer</h2>
+                    <div class="hint mt-1">
+                      Exports one JSON file with instance URL, queues, team members, pull params,
+                      saved filters, column mapping, CI split groups, hidden view columns, MSR
+                      option lists and the cached Excel template. Import replaces all of those with
+                      the file's values.
+                    </div>
+                    <div class="flex gap-2 flex-wrap mt-3.5 items-center">
+                      <button id="exportCfgBtn" class="btn">Export settings (.json)</button>
+                      <button id="importCfgBtn" class="btn">Import settings</button>
+                      <input
+                        type="file"
+                        id="cfgFile"
+                        accept=".json,application/json"
+                        style="display: none"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Cloud Platform</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
+                <!-- /cards -->
+
+                <div class="flex gap-2 flex-wrap mt-4.5 items-center justify-end">
+                  <span id="saveStatus" class="text-xs mr-auto" aria-live="polite"></span>
+                  <button id="resetBtn" class="btn-danger">Reset all to defaults</button>
                 </div>
               </div>
-              <input
-                class="chipInput flex-1 min-w-[180px] border border-line bg-card2 text-text rounded px-2.5 py-1.5 text-[13px] font-sans"
-                placeholder="Type a value and press Enter"
-                disabled
-              />
+              <!-- /settings body -->
             </div>
-            <div class="hint mt-1">
-              Every pull is scoped to these assignment groups by name. Names must match the group's
-              display name in ServiceNow. Type a name and press Enter — paste several separated by
-              commas or new lines.
-            </div>
-
-            <h3 class="secTitle">Team members</h3>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Team members (one full name per chip)</label
-            >
-            <div id="teamMembersChips" class="flex flex-col gap-1.5">
-              <div class="chipList flex flex-wrap gap-[5px]">
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Alex Morgan</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Priya Nair</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Sam Okafor</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-              </div>
-              <input
-                class="chipInput flex-1 min-w-[180px] border border-line bg-card2 text-text rounded px-2.5 py-1.5 text-[13px] font-sans"
-                placeholder="Type a value and press Enter"
-                disabled
-              />
-            </div>
-            <div class="hint mt-1">
-              Used ONLY to detect acknowledgement dates (when a ticket gets assigned to one of these
-              people). Names must match how ServiceNow displays the user. Type a name and press Enter —
-              paste several separated by commas or new lines. Leave empty to skip acknowledgement
-              detection.
-            </div>
-
-            <h3 class="secTitle">Configuration items</h3>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Configuration items (one CI name per chip)</label
-            >
-            <div id="configItemsChips" class="flex flex-col gap-1.5">
-              <div class="chipList flex flex-wrap gap-[5px]">
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Payment Gateway</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-                <div
-                  class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"
-                >
-                  <span class="truncate">Core Banking API</span
-                  ><button
-                    type="button"
-                    class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text"
-                  >
-                    &#10005;
-                  </button>
-                </div>
-              </div>
-              <input
-                class="chipInput flex-1 min-w-[180px] border border-line bg-card2 text-text rounded px-2.5 py-1.5 text-[13px] font-sans"
-                placeholder="Type a value and press Enter"
-                disabled
-              />
-            </div>
-            <div class="hint mt-1">
-              Optional list of Configuration Items used for CI grouping and export. Use each queue's
-              <em>resolve CIs</em> button to pull the CIs supported by that group (their ServiceNow
-              <code>support_group</code>), or type names manually.
-            </div>
-
-            <div class="flex items-center gap-2 mt-3">
-              <button id="resolveScopeBtn" type="button" class="btn py-1.5 px-3 text-xs">
-                Resolve queues
-              </button>
-              <span id="resolveScopeStatus" class="text-dim text-[11px]"></span>
-            </div>
-            <div class="hint mt-1">
-              Optional: fill the Queues list from your ServiceNow assignment-group memberships (your
-              logged-in session). Then use each queue's <em>resolve members</em> button to pick that
-              group's members into Team members. Requires an open, logged-in ServiceNow tab. If your
-              account cannot read the group tables, add names manually.
-            </div>
+            <!-- /.surface-scale -->
           </div>
-
-          <div id="memberPicker"></div>
-
-          <!-- ── Pull parameters ───────────────────────────────────────── -->
-          <div class="card-settings paramsCard">
-            <h2 class="cardTitle">Pull parameters</h2>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Table page size</label
-            >
-            <input id="tablePageSize" type="number" min="100" max="5000" class="input" value="1000" />
-            <div class="hint mt-1">Rows per Table API page during pulls (100–5000, default 1000).</div>
-
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
-              >Query cache TTL (minutes)</label
-            >
-            <input id="cacheTtlMinutes" type="number" min="0" max="10080" class="input" value="15" />
-            <div class="hint mt-1">
-              How long a pulled ticket list is reused without re-fetching (0–10080, default 15). A pull
-              re-uses cached results only if the same query ran within this window; 0 disables caching
-              so every pull hits the API. Timeline cache is unaffected.
-            </div>
-
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
-              >Max tickets per filter set</label
-            >
-            <input id="maxTicketsPerPull" type="number" min="0" max="100000" class="input" value="500" />
-            <div class="hint mt-1">
-              Safety cap: if a filter matches MORE tickets than this, the set is skipped and you are
-              warned instead of pulling (0–100000, default 500; 0 = unlimited). Preview shows the same
-              warning before you run.
-            </div>
-
-            <label class="flex items-center gap-1.5 mt-2">
-              <input id="debugResponses" type="checkbox" class="w-auto" />
-              Log response data in panel log (debug)
-            </label>
-            <div class="hint mt-1">
-              Adds a truncated body preview and row count for every API call to the log. Verbose —
-              enable only while troubleshooting.
-            </div>
-
-            <div class="flex gap-2 flex-wrap mt-2.5 items-center">
-              <button id="clearCacheBtn" class="btn">Clear pull cache</button>
-              <span class="hint"
-                >Query results are reused for 15 min; timelines until the ticket changes (max 7
-                days).</span
-              >
-            </div>
-          </div>
-
-          <!-- ── Classification ────────────────────────────────────────── -->
-          <div class="card-settings">
-            <h2 class="cardTitle">Classification</h2>
-            <div class="hint mt-1">
-              How the MSR Root cause and Solution type columns are filled from the resolution notes. The
-              built-in offline scorer always runs; the machine-learning model (downloaded once and
-              cached locally, used offline in the Data View) is only used when the mode asks for it.
-            </div>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.25"
-              >Classification mode</label
-            >
-            <select id="mlMode" class="select">
-              <option value="hybrid" selected>
-                Hybrid — offline scorer first, then ML when it finds a better answer
-              </option>
-              <option value="ml">ML only — machine learning for every ticket</option>
-              <option value="heuristic">Heuristic only — built-in offline scorer (no ML)</option>
-            </select>
-            <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-              >Model</label
-            >
-            <select id="mlModel" class="select">
-              <option value="mobilebert" selected>MobileBERT (25.7 MB)</option>
-              <option value="distilbert">DistilBERT (64.5 MB)</option>
-              <option value="nli-deberta-v3">NLI DeBERTa v3 (233 MB)</option>
-            </select>
-            <div class="hint mt-1">
-              Choose which classifier to download. Larger models are more accurate but take longer to
-              download.
-            </div>
-            <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-              <button id="mlDownloadBtn" class="btn">Download model</button>
-              <span id="mlStatus" class="text-dim text-xs">Downloaded · Xenova/mobilebert-uncased-mnli</span>
-            </div>
-            <label class="flex items-center gap-1.5 mt-3">
-              <input id="mlCacheEnabled" type="checkbox" class="w-auto" checked />
-              Cache classification results
-            </label>
-            <div class="hint mt-1">
-              Stores each classified note's outcome in a local cache, so an unchanged note is never
-              re-inferred on reload or across datasets. Turn off to always re-classify. This only
-              affects future runs; existing rows are already classified.
-            </div>
-            <div class="flex gap-2 flex-wrap mt-2 items-center">
-              <button id="mlCacheClearBtn" class="btn">Clear classification cache</button>
-            </div>
-          </div>
-
-          <!-- ── MSR option lists ──────────────────────────────────────── -->
-          <div class="card-settings msrCard" style="grid-column: 1/-1">
-            <h2 class="cardTitle">MSR option lists</h2>
-            <div class="hint mt-1">
-              Allowed values for the MSR report dropdown columns (BA AO sheet). The data view restricts
-              these columns to the lists below, and exports/copy-for-MSR use exactly these labels. One
-              value per chip — type and press Enter, or paste several separated by commas/new lines.
-              Emptying a list falls back to nothing — use "Restore defaults" for the original msr.xlsx
-              values.
-            </div>
-            <div class="hscroll">
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Op Co</label
-                >
-                <div id="msrOpCo" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">ACME</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">ACME Retail</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Domain</label
-                >
-                <div id="msrDomain" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Infrastructure</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Applications</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Type</label
-                >
-                <div id="msrType" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Incident</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">RFS</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Status</label
-                >
-                <div id="msrStatus" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Open</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Resolved</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Closed</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Resolution type</label
-                >
-                <div id="msrResolution" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Permanent</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Workaround</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Duplicate incident</label
-                >
-                <div id="msrDuplicate" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Yes</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">No</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Queue names</label
-                >
-                <div id="msrQueue" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Network Operations</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Service Desk</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Sub category</label
-                >
-                <div id="msrSubCategory" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Email</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Network</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Root cause category — Incident</label
-                >
-                <div id="msrRcIncident" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Hardware</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Software</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Human Error</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Third Party</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Root cause category — RFS</label
-                >
-                <div id="msrRcRfs" class="chipList flex flex-wrap gap-[5px]">
-                  <span class="hint italic">None — empty in source msr.xlsx</span>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-3 mb-1.25"
-                  >Root cause category — P Ticket</label
-                >
-                <div id="msrRcPTicket" class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Problem</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">Known Error</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-            </div>
-            <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-              <button id="msrResetBtn" class="btn">Restore MSR defaults</button>
-              <span class="hint"
-                >The RFS root-cause list is empty in the source msr.xlsx — add values here if you raise
-                RFS tickets.</span
-              >
-            </div>
-          </div>
-
-          <!-- ── Classifier keywords ───────────────────────────────────── -->
-          <div class="card-settings" style="grid-column: 1/-1">
-            <h2 class="cardTitle">Classifier keywords</h2>
-            <div class="hint mt-1">
-              Word and phrase hints the built-in offline scorer uses to match MSR labels while
-              classifying the resolution notes (regex phrase, keyword hints, then vocabulary
-              similarity). Each label shows its built-in default keywords; add chips to extend them, or
-              clear them to remove a match. Matching is case-insensitive and tolerates small
-              misspellings. Editing a label's keywords re-runs classification in the data view and bumps
-              the keyword fingerprint.
-            </div>
-            <div class="hscroll" id="kwStack">
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5">Software Bug</label>
-                <div class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">exception</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">stack trace</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">null pointer</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5">Hardware</label>
-                <div class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">disk failure</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">replaced</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">firmware</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-              <div class="msrTile">
-                <label class="block text-[11.5px] uppercase tracking-wider text-muted mt-2 mb-1.5">Human Error</label>
-                <div class="chipList flex flex-wrap gap-[5px]">
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">misconfiguration</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">wrong value</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                  <div class="chip flex items-center gap-1.5 bg-line border border-line rounded px-[7px] py-0.5 text-xs text-text max-w-full"><span class="truncate">manual</span><button type="button" class="rm bg-transparent text-dim text-[11px] px-1 cursor-pointer hover:text-text">&#10005;</button></div>
-                </div>
-              </div>
-            </div>
-            <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-              <button id="kwResetBtn" class="btn">Restore default keywords</button>
-              <span class="hint">Keywords are shown for the labels in the MSR option lists above.</span>
-            </div>
-          </div>
-
-          <!-- ── Backup / transfer ─────────────────────────────────────── -->
-          <div class="card-settings backupCard">
-            <h2 class="cardTitle">Backup / transfer</h2>
-            <div class="hint mt-1">
-              Exports one JSON file with instance URL, queues, team members, pull params, saved filters,
-              column mapping, CI split groups, hidden view columns, MSR option lists and the cached
-              Excel template. Import replaces all of those with the file's values.
-            </div>
-            <div class="flex gap-2 flex-wrap mt-3.5 items-center">
-              <button id="exportCfgBtn" class="btn">Export settings (.json)</button>
-              <button id="importCfgBtn" class="btn">Import settings</button>
-              <input type="file" id="cfgFile" accept=".json,application/json" style="display: none" />
-            </div>
-          </div>
-        </div>
-        <!-- /cards -->
-
-        <div class="flex gap-2 flex-wrap mt-4.5 items-center justify-end">
-          <span id="saveStatus" class="text-xs mr-auto" aria-live="polite"></span>
-          <button id="resetBtn" class="btn-danger">Reset all to defaults</button>
-        </div>
-      </div>
-      <!-- /settings body -->
-            </div><!-- /.surface-scale -->
-          </div><!-- /.surface-stage -->
+          <!-- /.surface-stage -->
           <p class="surface-hint">
-            Hover or focus a card on the right — the arrow points to that control.
-            Use <kbd>Tab</kbd> to move between cards.
+            Hover or focus a card on the right — the arrow points to that control. Use
+            <kbd>Tab</kbd> to move between cards.
           </p>
-        </div><!-- /.surface-rail -->
+        </div>
+        <!-- /.surface-rail -->
 
         <div class="surface-notes">
           <section id="feature-reference" class="feature-reference">
             <h2 class="section-title">Every control, explained</h2>
             <p class="section-sub">
-              A tour of every setting. These descriptions mirror the real
-              extension; the page on the left is a static sample.
+              A tour of every setting. These descriptions mirror the real extension; the page on the
+              left is a static sample.
             </p>
           </section>
-        </div><!-- /.surface-notes -->
-      </div><!-- /.surface-split -->
+        </div>
+        <!-- /.surface-notes -->
+      </div>
+      <!-- /.surface-split -->
     </main>
 
     <div id="site-footer"></div>
@@ -549,116 +943,97 @@
             {
               sel: "#instanceUrl",
               title: "Instance URL",
-              body:
-                "Your ServiceNow instance, e.g. <code>https://acme.service-now.com</code>. Always validated as <code>https://</code>. Every pull, timeline fetch and export uses this host, reusing your logged-in browser session. <em>Sample value only.</em>"
+              body: "Your ServiceNow instance, e.g. <code>https://acme.service-now.com</code>. Always validated as <code>https://</code>. Every pull, timeline fetch and export uses this host, reusing your logged-in browser session. <em>Sample value only.</em>"
             },
             {
               sel: "#ticketType",
               title: "Default ticket type",
-              body:
-                "The record type new pulls target: Incident, Change Request, Problem, Requested Item (RITM) or Catalog Task (SCTASK). See <a href='../docs.html?p=Configuration'>Configuration</a>."
+              body: "The record type new pulls target: Incident, Change Request, Problem, Requested Item (RITM) or Catalog Task (SCTASK). See <a href='../docs.html?p=Configuration'>Configuration</a>."
             },
             {
               sel: "#queuesChips",
               title: "Queues",
-              body:
-                "One assignment-group <strong>name</strong> per chip. Every pull is scoped to these groups by name (must match the group's display name; matching is case-insensitive). Each queue row also gets a <em>resolve members</em> button — it lists that group's active members so you can add them to Team members — and a <em>resolve CIs</em> button that lists the Configuration Items the group supports (<code>cmdb_ci.support_group</code>) to save into the Configuration items list."
+              body: "One assignment-group <strong>name</strong> per chip. Every pull is scoped to these groups by name (must match the group's display name; matching is case-insensitive). Each queue row also gets a <em>resolve members</em> button — it lists that group's active members so you can add them to Team members — and a <em>resolve CIs</em> button that lists the Configuration Items the group supports (<code>cmdb_ci.support_group</code>) to save into the Configuration items list."
             },
             {
               sel: "#teamMembersChips",
               title: "Team members",
-              body:
-                "One full <strong>name</strong> per chip. Used <strong>only</strong> to detect acknowledgement dates — when a ticket is first assigned to one of these people. Names must match how ServiceNow displays the user. Leave empty to skip acknowledgement detection entirely."
+              body: "One full <strong>name</strong> per chip. Used <strong>only</strong> to detect acknowledgement dates — when a ticket is first assigned to one of these people. Names must match how ServiceNow displays the user. Leave empty to skip acknowledgement detection entirely."
             },
             {
               sel: "#configItemsChips",
               title: "Configuration items",
-              body:
-                "Optional list of CI <strong>names</strong>, one per chip. Used for CI grouping and reused as suggestions in the Data View's CI split and export. Type names manually, or fill it with a queue's <em>resolve CIs</em> button."
+              body: "Optional list of CI <strong>names</strong>, one per chip. Used for CI grouping and reused as suggestions in the Data View's CI split and export. Type names manually, or fill it with a queue's <em>resolve CIs</em> button."
             },
             {
               sel: "#resolveScopeBtn",
               title: "Resolve queues",
-              body:
-                "Optional convenience: fills the Queues list from your ServiceNow assignment-group memberships using your logged-in session. Requires an open, logged-in ServiceNow tab; this and <em>resolve members</em>/<em>resolve CIs</em> are the only features that read the group tables, and they run only on demand. If your account cannot read them, add names manually."
+              body: "Optional convenience: fills the Queues list from your ServiceNow assignment-group memberships using your logged-in session. Requires an open, logged-in ServiceNow tab; this and <em>resolve members</em>/<em>resolve CIs</em> are the only features that read the group tables, and they run only on demand. If your account cannot read them, add names manually."
             },
             {
               sel: "#tablePageSize",
               title: "Table page size",
-              body:
-                "Rows per Table API page during pulls (100–5000, default 1000). Larger pages mean fewer requests; the tool paginates until the result set is complete."
+              body: "Rows per Table API page during pulls (100–5000, default 1000). Larger pages mean fewer requests; the tool paginates until the result set is complete."
             },
             {
               sel: "#cacheTtlMinutes",
               title: "Query cache TTL (minutes)",
-              body:
-                "How long a pulled ticket list is reused without re-fetching (0–10080, default 15). A pull reuses cached results only if the same query ran within this window; <code>0</code> disables caching so every pull hits the API. The timeline cache is unaffected. See <a href='../docs.html?p=Caching'>Caching</a>."
+              body: "How long a pulled ticket list is reused without re-fetching (0–10080, default 15). A pull reuses cached results only if the same query ran within this window; <code>0</code> disables caching so every pull hits the API. The timeline cache is unaffected. See <a href='../docs.html?p=Caching'>Caching</a>."
             },
             {
               sel: "#maxTicketsPerPull",
               title: "Max tickets per filter set",
-              body:
-                "Safety cap: if a filter matches more tickets than this, the set is skipped and you are warned instead of pulling (0–100000, default 500; <code>0</code> = unlimited). Preview shows the same warning before you run."
+              body: "Safety cap: if a filter matches more tickets than this, the set is skipped and you are warned instead of pulling (0–100000, default 500; <code>0</code> = unlimited). Preview shows the same warning before you run."
             },
             {
               sel: "#debugResponses",
               title: "Log response data (debug)",
-              body:
-                "Adds a truncated body preview and row count for every API call to the panel log. Verbose — enable only while troubleshooting."
+              body: "Adds a truncated body preview and row count for every API call to the panel log. Verbose — enable only while troubleshooting."
             },
             {
               sel: "#clearCacheBtn",
               title: "Clear pull cache",
-              body:
-                "Clears cached query results and timelines. Query results are reused for the TTL above; timelines are cached until the ticket changes (max 7 days). Does <strong>not</strong> touch the classification cache or the ML model."
+              body: "Clears cached query results and timelines. Query results are reused for the TTL above; timelines are cached until the ticket changes (max 7 days). Does <strong>not</strong> touch the classification cache or the ML model."
             },
             {
               sel: "#mlMode",
               title: "Classification mode",
-              body:
-                "<strong>Hybrid</strong>: the offline scorer is authoritative and runs first; the ML model then fills only cells the scorer left blank and never overrides a value. <strong>ML only</strong>: the ML model is authoritative for every eligible ticket. <strong>Heuristic only</strong>: the built-in offline scorer with no ML. See <a href='../docs.html?p=Classification'>Classification</a>."
+              body: "<strong>Hybrid</strong>: the offline scorer is authoritative and runs first; the ML model then fills only cells the scorer left blank and never overrides a value. <strong>ML only</strong>: the ML model is authoritative for every eligible ticket. <strong>Heuristic only</strong>: the built-in offline scorer with no ML. See <a href='../docs.html?p=Classification'>Classification</a>."
             },
             {
               sel: "#mlModel",
               title: "Model, download & classification cache",
-              body:
-                "Pick which classifier to download — MobileBERT (25.7 MB), DistilBERT (64.5 MB) or NLI DeBERTa v3 (233 MB); larger is more accurate but slower to fetch. <strong>Download model</strong> caches the files locally for offline use. <strong>Cache classification results</strong> stores each note's outcome so an unchanged note is never re-inferred; <strong>Clear classification cache</strong> empties that per-note cache."
+              body: "Pick which classifier to download — MobileBERT (25.7 MB), DistilBERT (64.5 MB) or NLI DeBERTa v3 (233 MB); larger is more accurate but slower to fetch. <strong>Download model</strong> caches the files locally for offline use. <strong>Cache classification results</strong> stores each note's outcome so an unchanged note is never re-inferred; <strong>Clear classification cache</strong> empties that per-note cache."
             },
             {
               sel: "#msrOpCo",
               title: "MSR option lists",
-              body:
-                "The allowed values for the MSR report dropdown columns (BA AO sheet): Op Co, Domain, Type, Status, Resolution type, Duplicate incident, Queue names, Sub category and Root cause category for Incident/RFS/P Ticket. The Data View restricts these columns to the lists here, and both the export and Copy-for-MSR use exactly these labels."
+              body: "The allowed values for the MSR report dropdown columns (BA AO sheet): Op Co, Domain, Type, Status, Resolution type, Duplicate incident, Queue names, Sub category and Root cause category for Incident/RFS/P Ticket. The Data View restricts these columns to the lists here, and both the export and Copy-for-MSR use exactly these labels."
             },
             {
               sel: "#msrResetBtn",
               title: "Restore MSR defaults",
-              body:
-                "Resets every MSR option list to the original <code>msr.xlsx</code> values. Note the RFS root-cause list is empty in the source — add values here if you raise RFS tickets."
+              body: "Resets every MSR option list to the original <code>msr.xlsx</code> values. Note the RFS root-cause list is empty in the source — add values here if you raise RFS tickets."
             },
             {
               sel: "#kwStack",
               title: "Classifier keywords",
-              body:
-                "Word and phrase hints the offline scorer uses to match MSR labels while classifying resolution notes — it runs a regex phrase match, then these keyword hints, then vocabulary similarity. Each label shows its built-in defaults; add chips to extend them or clear to remove a match. Matching is case-insensitive and tolerates small misspellings. See <a href='../docs.html?p=Classification'>Classification</a>."
+              body: "Word and phrase hints the offline scorer uses to match MSR labels while classifying resolution notes — it runs a regex phrase match, then these keyword hints, then vocabulary similarity. Each label shows its built-in defaults; add chips to extend them or clear to remove a match. Matching is case-insensitive and tolerates small misspellings. See <a href='../docs.html?p=Classification'>Classification</a>."
             },
             {
               sel: "#kwResetBtn",
               title: "Restore default keywords",
-              body:
-                "Resets every label's keyword hints back to the built-in defaults. Editing keywords re-runs classification in the Data View and bumps the keyword fingerprint."
+              body: "Resets every label's keyword hints back to the built-in defaults. Editing keywords re-runs classification in the Data View and bumps the keyword fingerprint."
             },
             {
               sel: "#exportCfgBtn",
               title: "Backup: export / import",
-              body:
-                "<strong>Export</strong> writes one JSON file with the instance URL, queues, team members, configuration items, pull params, saved filters, column mapping, CI split groups, hidden view columns, MSR option lists and the cached Excel template. <strong>Import</strong> replaces all of those with the file's values."
+              body: "<strong>Export</strong> writes one JSON file with the instance URL, queues, team members, configuration items, pull params, saved filters, column mapping, CI split groups, hidden view columns, MSR option lists and the cached Excel template. <strong>Import</strong> replaces all of those with the file's values."
             },
             {
               sel: "#resetBtn",
               title: "Reset all to defaults",
-              body:
-                "Restores every setting to its default — queues, team members, pull parameters, classification options, MSR option lists and classifier keywords. Pulled data and saved filters are not affected."
+              body: "Restores every setting to its default — queues, team members, pull parameters, classification options, MSR option lists and classifier keywords. Pulled data and saved filters are not affected."
             }
           ]
         });

@@ -78,7 +78,7 @@
 (function (global) {
   "use strict";
 
-  var idSeq = 0;
+  let idSeq = 0;
 
   function resolveEl(ref) {
     if (!ref) return null;
@@ -93,20 +93,20 @@
     // reliable signal across engines. An ancestor chain that is display:none
     // also collapses the element's own rendered box, which offsetParent detects.
     if (typeof window.getComputedStyle === "function") {
-      var cs = window.getComputedStyle(el);
+      const cs = window.getComputedStyle(el);
       if (cs && (cs.display === "none" || cs.visibility === "hidden")) return false;
     }
     // offsetParent is null for display:none subtrees in a real layout engine.
     // (Some engines report undefined; treat only an explicit null as hidden.)
     if (el.offsetParent === null) {
-      var rect = el.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
       return rect.width > 0 || rect.height > 0;
     }
     return true;
   }
 
   function create(tag, className, attrs) {
-    var el = document.createElement(tag);
+    const el = document.createElement(tag);
     if (className) el.className = className;
     if (attrs) {
       Object.keys(attrs).forEach(function (k) {
@@ -124,8 +124,8 @@
   }
 
   function Controller(options) {
-    var opts = options || {};
-    var items = Array.isArray(opts.items) ? opts.items : [];
+    const opts = options || {};
+    const items = Array.isArray(opts.items) ? opts.items : [];
 
     this._items = items;
     this._entries = []; // { item, index, num, target, marker, refItem }
@@ -152,24 +152,24 @@
   }
 
   Controller.prototype._build = function (opts) {
-    var self = this;
+    const self = this;
 
     this._items.forEach(function (item, index) {
-      var num = typeof item.n === "number" ? item.n : index + 1;
-      var target = null;
+      const num = typeof item.n === "number" ? item.n : index + 1;
+      let target = null;
       try {
         target = item.sel ? document.querySelector(item.sel) : null;
       } catch (e) {
         target = null; // invalid selector — skip gracefully
       }
 
-      var entry = {
+      const entry = {
         item: item,
         index: index,
         num: num,
         target: target,
         marker: null,
-        refItem: null,
+        refItem: null
       };
 
       // Floating numbered markers are only used in the default "markers"
@@ -202,13 +202,13 @@
   };
 
   Controller.prototype._makeMarker = function (entry) {
-    var self = this;
-    var title = entry.item.title || "Annotation " + entry.num;
-    var marker = create("button", "anno-marker", {
+    const self = this;
+    const title = entry.item.title || "Annotation " + entry.num;
+    const marker = create("button", "anno-marker", {
       type: "button",
       "aria-label": "Annotation " + entry.num + ": " + title,
       "aria-expanded": "false",
-      "data-anno-index": String(entry.index),
+      "data-anno-index": String(entry.index)
     });
     marker.textContent = String(entry.num);
 
@@ -226,27 +226,27 @@
   };
 
   Controller.prototype._buildReference = function (mountRef) {
-    var self = this;
-    var mount = resolveEl(mountRef);
+    const self = this;
+    const mount = resolveEl(mountRef);
     if (!mount) return;
 
-    var list = create("ol", "anno-reference");
+    const list = create("ol", "anno-reference");
     list.setAttribute("aria-label", "Feature reference");
 
     this._entries.forEach(function (entry) {
-      var li = create("li", "anno-reference-item", {
-        "data-anno-index": String(entry.index),
+      const li = create("li", "anno-reference-item", {
+        "data-anno-index": String(entry.index)
       });
 
-      var btn = create("button", "anno-reference-btn", { type: "button" });
+      const btn = create("button", "anno-reference-btn", { type: "button" });
 
-      var chip = create("span", "anno-reference-chip", { "aria-hidden": "true" });
+      const chip = create("span", "anno-reference-chip", { "aria-hidden": "true" });
       chip.textContent = String(entry.num);
 
-      var textWrap = create("span", "anno-reference-text");
-      var titleEl = create("span", "anno-reference-title");
+      const textWrap = create("span", "anno-reference-text");
+      const titleEl = create("span", "anno-reference-title");
       titleEl.textContent = entry.item.title || "Annotation " + entry.num;
-      var bodyEl = create("span", "anno-reference-body");
+      const bodyEl = create("span", "anno-reference-body");
       bodyEl.innerHTML = entry.item.body || "";
 
       textWrap.appendChild(titleEl);
@@ -263,7 +263,7 @@
       if (self._layout === "beside") {
         // Point the arrow whenever the card is hovered or focused, so both
         // pointer and keyboard users get the connector.
-        var activate = function () {
+        const activate = function () {
           self._activate(entry);
         };
         btn.addEventListener("mouseenter", activate);
@@ -280,8 +280,8 @@
     // In beside mode, point at the first control by default so the arrow is
     // visible on load rather than only after interaction.
     if (this._layout === "beside" && this._entries.length) {
-      var first = this._entries[0];
-      var self2 = this;
+      const first = this._entries[0];
+      const self2 = this;
       // Defer until layout settles (fonts, scaling) for an accurate first draw.
       (window.requestAnimationFrame || window.setTimeout)(function () {
         self2._activate(first);
@@ -290,9 +290,9 @@
   };
 
   Controller.prototype._buildToggle = function (toggleRef) {
-    var self = this;
-    var existing = resolveEl(toggleRef) || document.getElementById("toggle-callouts");
-    var btn;
+    const self = this;
+    const existing = resolveEl(toggleRef) || document.getElementById("toggle-callouts");
+    let btn;
 
     if (existing && existing.tagName === "BUTTON") {
       btn = existing;
@@ -326,13 +326,13 @@
   // card to the control it describes on the (scaled) mockup. The arrow is
   // recomputed on activate, resize, and scroll so it tracks both ends.
   Controller.prototype._buildArrowLayer = function () {
-    var NS = "http://www.w3.org/2000/svg";
-    var svg = document.createElementNS(NS, "svg");
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
     svg.setAttribute("class", "anno-arrow-layer");
     svg.setAttribute("aria-hidden", "true");
 
-    var defs = document.createElementNS(NS, "defs");
-    var marker = document.createElementNS(NS, "marker");
+    const defs = document.createElementNS(NS, "defs");
+    const marker = document.createElementNS(NS, "marker");
     marker.setAttribute("id", "anno-arrowhead-" + this._instanceId);
     marker.setAttribute("markerWidth", "10");
     marker.setAttribute("markerHeight", "10");
@@ -340,21 +340,21 @@
     marker.setAttribute("refY", "3");
     marker.setAttribute("orient", "auto");
     marker.setAttribute("markerUnits", "strokeWidth");
-    var head = document.createElementNS(NS, "path");
+    const head = document.createElementNS(NS, "path");
     head.setAttribute("d", "M0,0 L7,3 L0,6 Z");
     head.setAttribute("class", "anno-arrowhead");
     marker.appendChild(head);
     defs.appendChild(marker);
     svg.appendChild(defs);
 
-    var path = document.createElementNS(NS, "path");
+    const path = document.createElementNS(NS, "path");
     path.setAttribute("class", "anno-arrow-path");
     path.setAttribute("fill", "none");
     path.setAttribute("marker-end", "url(#anno-arrowhead-" + this._instanceId + ")");
     svg.appendChild(path);
 
     // A small ring drawn over the target control.
-    var ring = document.createElementNS(NS, "rect");
+    const ring = document.createElementNS(NS, "rect");
     ring.setAttribute("class", "anno-arrow-ring");
     ring.setAttribute("rx", "6");
     svg.appendChild(ring);
@@ -366,7 +366,7 @@
 
     // Redraw as the mockup scrolls inside the stage (or any inner scroller),
     // so the arrow tracks the target. Capture-phase catches inner scrollers.
-    var self = this;
+    const self = this;
     this._boundStageScroll = function () {
       if (self._activeEntry) self._drawArrow(self._activeEntry);
     };
@@ -393,7 +393,7 @@
     // stage), so pointing at a control lower in the mockup does not leave it
     // hidden. Then draw the arrow (and apply zoom) once the scroll settles.
     this._scrollTargetIntoStage(entry);
-    var self = this;
+    const self = this;
     (window.requestAnimationFrame || window.setTimeout)(function () {
       self._applyZoom(entry);
       self._drawArrow(entry);
@@ -409,7 +409,7 @@
   // symmetrically and stays clear of the stage edges (the target is centred in
   // the stage first, in _scrollTargetIntoStage).
   Controller.prototype._applyZoom = function (entry) {
-    var target = entry && entry.target;
+    const target = entry && entry.target;
     if (!target || !isVisible(target)) return;
     // Restart the pop animation by toggling the class off then on.
     target.classList.remove("anno-zoom");
@@ -424,19 +424,19 @@
   // like the viewer grid) so the target is centred, giving a zoomed control
   // room on all sides instead of being clipped at an edge.
   Controller.prototype._scrollTargetIntoStage = function (entry) {
-    var target = entry && entry.target;
+    const target = entry && entry.target;
     if (!target || !isVisible(target)) return;
-    var container = this._scrollParent(target);
+    const container = this._scrollParent(target);
     if (!container) return;
 
-    var cRect = container.getBoundingClientRect();
-    var tRect = target.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const tRect = target.getBoundingClientRect();
     // Desired: target centre aligned with the container centre.
-    var targetCenter = tRect.top + tRect.height / 2;
-    var containerCenter = cRect.top + cRect.height / 2;
-    var delta = targetCenter - containerCenter;
+    const targetCenter = tRect.top + tRect.height / 2;
+    const containerCenter = cRect.top + cRect.height / 2;
+    const delta = targetCenter - containerCenter;
     if (Math.abs(delta) > 4) {
-      var behavior = prefersReducedMotion() ? "auto" : "smooth";
+      const behavior = prefersReducedMotion() ? "auto" : "smooth";
       try {
         container.scrollBy({ top: delta, behavior: behavior });
       } catch (e) {
@@ -446,10 +446,10 @@
   };
 
   Controller.prototype._scrollParent = function (el) {
-    var node = el.parentElement;
+    let node = el.parentElement;
     while (node && node !== document.body) {
-      var cs = window.getComputedStyle(node);
-      var oy = cs.overflowY;
+      const cs = window.getComputedStyle(node);
+      const oy = cs.overflowY;
       if ((oy === "auto" || oy === "scroll") && node.scrollHeight > node.clientHeight + 1) {
         return node;
       }
@@ -460,33 +460,33 @@
 
   Controller.prototype._drawArrow = function (entry) {
     if (!this._arrowSvg || !entry) return;
-    var card = entry.refItem;
-    var target = entry.target;
+    const card = entry.refItem;
+    const target = entry.target;
     if (!card || !target || !isVisible(target)) {
       this._arrowSvg.classList.remove("is-visible");
       return;
     }
 
-    var doc = document.documentElement;
-    var vw = doc.clientWidth;
-    var vh = doc.clientHeight;
+    const doc = document.documentElement;
+    const vw = doc.clientWidth;
+    const vh = doc.clientHeight;
     // Size the overlay to the viewport; it is position:fixed.
     this._arrowSvg.setAttribute("width", String(vw));
     this._arrowSvg.setAttribute("height", String(vh));
     this._arrowSvg.setAttribute("viewBox", "0 0 " + vw + " " + vh);
 
-    var cr = card.getBoundingClientRect();
-    var tr = target.getBoundingClientRect();
+    const cr = card.getBoundingClientRect();
+    const tr = target.getBoundingClientRect();
 
     // Start at the card edge nearest the mockup. The mockup sits to the LEFT of
     // the cards in the split, so arrows start at the card's left-middle and end
     // at the target's right-middle. If the target is actually to the right of
     // the card (narrow screens stack), fall back to the card's top.
-    var targetIsLeft = tr.left + tr.width / 2 < cr.left + cr.width / 2;
+    const targetIsLeft = tr.left + tr.width / 2 < cr.left + cr.width / 2;
 
-    var startX, startY, endX, endY;
-    endX = targetIsLeft ? tr.right : tr.left;
-    endY = tr.top + tr.height / 2;
+    let startX, startY;
+    const endX = targetIsLeft ? tr.right : tr.left;
+    const endY = tr.top + tr.height / 2;
 
     if (targetIsLeft) {
       startX = cr.left;
@@ -497,18 +497,32 @@
     }
 
     // A gentle cubic curve between the two ends.
-    var dx = endX - startX;
-    var c1x = startX + dx * 0.45;
-    var c1y = startY;
-    var c2x = endX - dx * 0.45;
-    var c2y = endY;
-    var d =
-      "M" + startX + "," + startY +
-      " C" + c1x + "," + c1y + " " + c2x + "," + c2y + " " + endX + "," + endY;
+    const dx = endX - startX;
+    const c1x = startX + dx * 0.45;
+    const c1y = startY;
+    const c2x = endX - dx * 0.45;
+    const c2y = endY;
+    const d =
+      "M" +
+      startX +
+      "," +
+      startY +
+      " C" +
+      c1x +
+      "," +
+      c1y +
+      " " +
+      c2x +
+      "," +
+      c2y +
+      " " +
+      endX +
+      "," +
+      endY;
     this._arrowPath.setAttribute("d", d);
 
     // Ring around the target control.
-    var pad = 3;
+    const pad = 3;
     this._arrowRing.setAttribute("x", String(tr.left - pad));
     this._arrowRing.setAttribute("y", String(tr.top - pad));
     this._arrowRing.setAttribute("width", String(tr.width + pad * 2));
@@ -524,18 +538,18 @@
       if (this._activeEntry) this._drawArrow(this._activeEntry);
       return;
     }
-    var self = this;
+    const self = this;
     this._entries.forEach(function (entry) {
       if (!entry.marker) return;
-      var target = entry.target;
+      const target = entry.target;
       if (!target || !isVisible(target)) {
         entry.marker.style.display = "none";
         return;
       }
       if (self._visible) entry.marker.style.display = "";
-      var rect = target.getBoundingClientRect();
-      var x = rect.right + window.pageXOffset;
-      var y = rect.top + window.pageYOffset;
+      const rect = target.getBoundingClientRect();
+      const x = rect.right + window.pageXOffset;
+      const y = rect.top + window.pageYOffset;
       // Pin to the top-right corner of the target, nudged so the badge overlaps.
       entry.marker.style.left = x - 11 + "px";
       entry.marker.style.top = y - 11 + "px";
@@ -556,29 +570,29 @@
   };
 
   Controller.prototype.open = function (index) {
-    var entry = this._entries[index];
+    const entry = this._entries[index];
     if (!entry || !entry.marker) return;
 
     this.close();
 
-    var titleText = entry.item.title || "Annotation " + entry.num;
-    var pop = create("div", "anno-popover", {
+    const titleText = entry.item.title || "Annotation " + entry.num;
+    const pop = create("div", "anno-popover", {
       role: "dialog",
       "aria-label": titleText,
-      tabindex: "-1",
+      tabindex: "-1"
     });
 
-    var head = create("div", "anno-popover-head");
-    var titleEl = create("h2", "anno-popover-title");
+    const head = create("div", "anno-popover-head");
+    const titleEl = create("h2", "anno-popover-title");
     titleEl.textContent = titleText;
 
-    var close = create("button", "anno-popover-close", {
+    const close = create("button", "anno-popover-close", {
       type: "button",
-      "aria-label": "Close annotation",
+      "aria-label": "Close annotation"
     });
     close.innerHTML = "&times;";
 
-    var self = this;
+    const self = this;
     close.addEventListener("click", function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
@@ -588,7 +602,7 @@
     head.appendChild(titleEl);
     head.appendChild(close);
 
-    var body = create("div", "anno-popover-body");
+    const body = create("div", "anno-popover-body");
     body.innerHTML = entry.item.body || "";
 
     pop.appendChild(head);
@@ -607,9 +621,9 @@
 
   Controller.prototype._positionPopover = function (entry) {
     if (!this._popover || !entry) return;
-    var pop = this._popover;
-    var target = entry.target;
-    var anchorRect =
+    const pop = this._popover;
+    const target = entry.target;
+    const anchorRect =
       target && isVisible(target)
         ? target.getBoundingClientRect()
         : entry.marker
@@ -620,16 +634,16 @@
     // Ensure the popover is measurable before reading its size.
     pop.style.visibility = "hidden";
     pop.style.display = "block";
-    var pw = pop.offsetWidth || 320;
-    var ph = pop.offsetHeight || 120;
+    const pw = pop.offsetWidth || 320;
+    const ph = pop.offsetHeight || 120;
     pop.style.visibility = "";
 
-    var vw = document.documentElement.clientWidth;
-    var vh = document.documentElement.clientHeight;
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
 
-    var left = anchorRect.left;
+    let left = anchorRect.left;
     // Prefer below the target; flip above when there's not enough room.
-    var top = anchorRect.bottom + 10;
+    let top = anchorRect.bottom + 10;
     if (top + ph > vh && anchorRect.top - ph - 10 > 0) {
       top = anchorRect.top - ph - 10;
     }
@@ -643,7 +657,7 @@
 
   Controller.prototype.close = function () {
     if (!this._popover) return;
-    var marker = this._activeMarker;
+    const marker = this._activeMarker;
     if (this._popover.parentNode) this._popover.parentNode.removeChild(this._popover);
     this._popover = null;
     this._openIndex = -1;
@@ -659,14 +673,14 @@
   // ── Reference highlight / scroll-to ────────────────────────────────────────
   Controller.prototype._highlight = function (entry) {
     if (entry.marker && this._visible) {
-      var behavior = prefersReducedMotion() ? "auto" : "smooth";
+      const behavior = prefersReducedMotion() ? "auto" : "smooth";
       try {
         entry.marker.scrollIntoView({ behavior: behavior, block: "center", inline: "nearest" });
       } catch (e) {
         entry.marker.scrollIntoView();
       }
       entry.marker.classList.add("is-flash");
-      var m = entry.marker;
+      const m = entry.marker;
       window.setTimeout(function () {
         m.classList.remove("is-flash");
       }, 1200);
@@ -714,7 +728,7 @@
 
   Controller.prototype._onDocClick = function (ev) {
     if (!this._popover) return;
-    var t = ev.target;
+    const t = ev.target;
     if (this._popover.contains(t)) return;
     if (this._activeMarker && this._activeMarker.contains(t)) return;
     this.close();
@@ -755,10 +769,10 @@
     this._entries = [];
   };
 
-  var Annotations = {
+  const Annotations = {
     init: function (options) {
       return new Controller(options);
-    },
+    }
   };
 
   global.Annotations = Annotations;

@@ -21,13 +21,11 @@
         <span class="info-card-kicker">Surface 1</span>
         <h1>Side Panel</h1>
         <p class="lead">
-          The side panel is where every pull begins: connect to your instance,
-          build filters and presets, preview how many tickets match, and run the
-          two-phase pull. Below is a static, sample-data recreation of the real
-          panel — the callouts explain what each control does. Nothing here is
-          live; see the
-          <a href="../docs.html?p=Running-a-Pull">Running a Pull</a> guide for
-          the full workflow.
+          The side panel is where every pull begins: connect to your instance, build filters and
+          presets, preview how many tickets match, and run the two-phase pull. Below is a static,
+          sample-data recreation of the real panel — the callouts explain what each control does.
+          Nothing here is live; see the
+          <a href="../docs.html?p=Running-a-Pull">Running a Pull</a> guide for the full workflow.
         </p>
       </section>
 
@@ -36,287 +34,313 @@
           <div class="surface-stage" style="--anno-scale: 0.82">
             <p class="surface-stage-label">Live sample · Side panel</p>
             <div class="surface-scale">
-        <!-- BEGIN copied panel markup (from panel/panel.html), adapted to a static mockup -->
-        <div
-          class="panel m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]"
-        >
-          <header class="flex items-center justify-between mb-4">
-            <h1 class="text-[15px] m-0 text-accent font-semibold">Autonomous Reports Engine</h1>
-            <div class="flex items-center gap-2">
-              <span id="connState" class="badge on">Connected</span>
-              <button
-                id="settingsBtn"
-                type="button"
-                class="iconBtn"
-                data-tip="Open settings"
-                aria-label="Settings"
+              <!-- BEGIN copied panel markup (from panel/panel.html), adapted to a static mockup -->
+              <div
+                class="panel m-0 p-3 text-[13px] leading-normal font-sans bg-bg text-text min-w-[320px]"
               >
-                &#9881;
-              </button>
-            </div>
-          </header>
-
-          <section class="pnSection">
-            <h2 class="secTitle">Instance</h2>
-            <label class="pnLabel" for="instance">Instance URL</label>
-            <div class="flex gap-2">
-              <input
-                id="instance"
-                type="url"
-                placeholder="https://yourcompany.service-now.com"
-                value="https://acme.service-now.com"
-                class="input flex-1 min-w-0"
-              />
-              <button id="connectBtn" class="btn">Connect</button>
-            </div>
-          </section>
-
-          <section class="pnSection">
-            <h2 class="secTitle">Filters</h2>
-
-            <div id="filterListCard" class="bg-card2 rounded-lg px-2.5 pt-2.5 pb-1.5 mb-3">
-              <div class="flex items-center justify-between mb-2">
-                <label class="pnLabel m-0">Saved filter sets · Run pulls all</label>
-                <div class="relative">
-                  <button
-                    id="filterMenuBtn"
-                    type="button"
-                    class="linklike px-1"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                    data-tip="Preset options"
-                  >
-                    &#8942;
-                  </button>
-                  <div
-                    id="filterMenu"
-                    class="hidden absolute right-0 z-10 mt-1 min-w-[180px] bg-card border border-line rounded-lg p-1.5 shadow-[0_8px_24px_rgba(17,17,27,.55)]"
-                  >
+                <header class="flex items-center justify-between mb-4">
+                  <h1 class="text-[15px] m-0 text-accent font-semibold">
+                    Autonomous Reports Engine
+                  </h1>
+                  <div class="flex items-center gap-2">
+                    <span id="connState" class="badge on">Connected</span>
                     <button
-                      id="savePresetBtn"
+                      id="settingsBtn"
                       type="button"
-                      class="linklike block w-full text-left px-1 py-1"
+                      class="iconBtn"
+                      data-tip="Open settings"
+                      aria-label="Settings"
                     >
-                      Save preset&hellip;
+                      &#9881;
                     </button>
-                    <div id="presetMenuList" class="mt-1 border-t border-line pt-1"></div>
+                  </div>
+                </header>
+
+                <section class="pnSection">
+                  <h2 class="secTitle">Instance</h2>
+                  <label class="pnLabel" for="instance">Instance URL</label>
+                  <div class="flex gap-2">
+                    <input
+                      id="instance"
+                      type="url"
+                      placeholder="https://yourcompany.service-now.com"
+                      value="https://acme.service-now.com"
+                      class="input flex-1 min-w-0"
+                    />
+                    <button id="connectBtn" class="btn">Connect</button>
+                  </div>
+                </section>
+
+                <section class="pnSection">
+                  <h2 class="secTitle">Filters</h2>
+
+                  <div id="filterListCard" class="bg-card2 rounded-lg px-2.5 pt-2.5 pb-1.5 mb-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <label class="pnLabel m-0">Saved filter sets · Run pulls all</label>
+                      <div class="relative">
+                        <button
+                          id="filterMenuBtn"
+                          type="button"
+                          class="linklike px-1"
+                          aria-haspopup="true"
+                          aria-expanded="false"
+                          data-tip="Preset options"
+                        >
+                          &#8942;
+                        </button>
+                        <div
+                          id="filterMenu"
+                          class="hidden absolute right-0 z-10 mt-1 min-w-[180px] bg-card border border-line rounded-lg p-1.5 shadow-[0_8px_24px_rgba(17,17,27,.55)]"
+                        >
+                          <button
+                            id="savePresetBtn"
+                            type="button"
+                            class="linklike block w-full text-left px-1 py-1"
+                          >
+                            Save preset&hellip;
+                          </button>
+                          <div id="presetMenuList" class="mt-1 border-t border-line pt-1"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="filterListBox">
+                      <div class="crow">
+                        <span class="cpill cfield">Incident</span>
+                        <span class="cpill cpill-join">where</span>
+                        <span class="cpill cval">Priority is 1 - Critical · last 7 days</span>
+                      </div>
+                      <div class="crow">
+                        <span class="cpill cfield">Change Request</span>
+                        <span class="cpill cpill-join">where</span>
+                        <span class="cpill cval">Closed at last week</span>
+                      </div>
+                    </div>
+                    <button id="clearFilterListBtn" type="button" class="linklike">
+                      Clear all — run uses the live filters only
+                    </button>
+                  </div>
+
+                  <label class="pnLabel" for="ticketType">Ticket type</label>
+                  <select id="ticketType" class="select">
+                    <option value="incident" selected>Incident</option>
+                    <option value="change_request">Change Request</option>
+                    <option value="problem">Problem</option>
+                    <option value="sc_req_item">Requested Item (RITM)</option>
+                    <option value="sc_task">Catalog Task (SCTASK)</option>
+                  </select>
+
+                  <label class="pnLabel">Conditions</label>
+                  <div id="summaryWindowTabs" class="hidden flex gap-1 mb-2">
+                    <button
+                      type="button"
+                      id="summaryTabLast"
+                      class="btn-ghost text-[11px] px-2 py-1"
+                    >
+                      Last week (implemented)
+                    </button>
+                    <button
+                      type="button"
+                      id="summaryTabNext"
+                      class="btn-ghost text-[11px] px-2 py-1"
+                    >
+                      Next week (planned)
+                    </button>
+                  </div>
+                  <div id="condRows">
+                    <div class="crow">
+                      <span class="cpill cfield">Priority</span>
+                      <span class="cpill cpill-join">is</span>
+                      <span class="cpill cval">1 - Critical</span>
+                      <span class="cpill cdel" data-tip="Remove condition">&times;</span>
+                    </div>
+                    <div class="crow">
+                      <span class="cpill cpill-join">and</span>
+                      <span class="cpill cfield">State</span>
+                      <span class="cpill cpill-join">is not</span>
+                      <span class="cpill cval">Resolved</span>
+                      <span class="cpill cdel" data-tip="Remove condition">&times;</span>
+                    </div>
+                  </div>
+                  <button id="addCondBtn" type="button" class="linklike">+ Add condition</button>
+
+                  <button id="addFilterBtn" type="button" class="btn-ghost w-full mt-2.5">
+                    + Add to filter list
+                  </button>
+
+                  <label class="pnLabel" for="presetSelect">Load preset</label>
+                  <select
+                    id="presetSelect"
+                    class="select"
+                    data-tip="Load a filter preset — replaces the filter list. WSR is the built-in Weekly Status Report preset."
+                  >
+                    <option value="">Load preset&hellip;</option>
+                    <option value="__wsr__">WSR — Weekly Status Report</option>
+                    <option value="p1p2">P1/P2 open incidents</option>
+                  </select>
+
+                  <label
+                    class="flex items-center gap-2 mt-3 text-[12px] text-muted cursor-pointer select-none"
+                    data-tip="Also pull this week's change requests to fill the Weekly Summary sheet (last week implemented/failed, next week planned) plus P1/P2 incidents from last week"
+                  >
+                    <input id="includeSummary" type="checkbox" class="accent-accent" checked />
+                    <span>Pull change requests for Weekly Summary</span>
+                  </label>
+
+                  <div id="summaryFilterBox" class="mt-1.5 ml-6 text-[11.5px] text-dim">
+                    <div id="summaryFilterText" class="leading-relaxed">
+                      Last week (implemented): changes with end_date 2026-09-08 → 2026-09-14 · Next
+                      week (planned): changes with start_date 2026-09-15 → 2026-09-21 · plus P1/P2
+                      incidents resolved last week.
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                      <button id="editSummaryBtn" type="button" class="linklike px-0">Edit</button>
+                      <button id="resetSummaryBtn" type="button" class="linklike px-0 hidden">
+                        Reset to this week&rsquo;s dates
+                      </button>
+                    </div>
+                  </div>
+
+                  <details id="advancedBox" class="mt-2.5" open>
+                    <summary class="text-[12px] text-dim cursor-pointer">
+                      Advanced — raw query override / generated query
+                    </summary>
+                    <textarea
+                      id="rawQuery"
+                      placeholder="Optional: extra encoded query conditions, e.g. priority=1^category=network"
+                      class="textarea mt-2"
+                    >
+category=network</textarea
+                    >
+                    <label class="pnLabel">Generated query</label>
+                    <pre id="generatedQuery" class="mono">
+priority=1^state!=6^category=network^assignment_groupIN{Network,Cloud Ops}</pre
+                    >
+                  </details>
+                </section>
+
+                <div class="pnDivider"></div>
+
+                <section class="flex gap-2 mb-2.5">
+                  <button id="previewBtn" class="btn-ghost flex-1 py-2.5">Preview</button>
+                  <button id="runBtn" class="btn-primary flex-1 py-2.5">Run</button>
+                </section>
+                <section class="flex gap-2 mb-2.5">
+                  <button id="viewBtn" class="btn-ghost w-full py-2.5">Open data view</button>
+                </section>
+
+                <section id="progressWrap" class="hidden">
+                  <div class="h-[7px] bg-card2 rounded overflow-hidden">
+                    <div
+                      id="fill"
+                      class="h-full w-0 bg-peach transition-[width] duration-300"
+                    ></div>
+                  </div>
+                  <div id="stageLabel" class="text-[11.5px] text-dim mt-1.5 min-h-4"></div>
+                  <div
+                    id="pullCounter"
+                    class="hidden text-[12.5px] text-accent mt-1 font-semibold"
+                  ></div>
+                </section>
+
+                <section class="card log-card hidden" id="logCard">
+                  <h2
+                    id="logHead"
+                    class="text-xs m-0 mb-1 text-muted uppercase tracking-wider cursor-pointer select-none hover:text-accent"
+                    data-tip="Click to open full log"
+                  >
+                    Log
+                    <span
+                      id="logErrBadge"
+                      class="hidden bg-bad/20 text-[#f5e0dc] rounded-lg px-1.5 text-[10px] ml-1"
+                    ></span>
+                  </h2>
+                  <div
+                    id="log"
+                    class="max-h-40 overflow-y-auto text-[11px] leading-relaxed text-muted font-mono break-words"
+                  ></div>
+                </section>
+
+                <div
+                  id="logModal"
+                  class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
+                >
+                  <div
+                    class="log-box w-[min(720px,94vw)] max-h-[78vh] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] flex flex-col overflow-hidden"
+                  >
+                    <div
+                      class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-line font-semibold text-muted text-[12.5px]"
+                    >
+                      <span>Request &amp; activity log</span>
+                      <button id="logCopy" type="button" class="linklike ml-auto">Copy all</button>
+                      <button
+                        id="logClose"
+                        type="button"
+                        class="ml-1 bg-transparent border-0 text-dim cursor-pointer text-sm px-1.5 py-0.5 hover:text-bad"
+                        data-tip="Close"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                    <div
+                      id="logMirror"
+                      class="overflow-y-auto font-mono text-[11.5px] leading-relaxed text-muted px-3.5 py-2.5 break-words whitespace-pre-wrap"
+                    ></div>
                   </div>
                 </div>
-              </div>
-              <div id="filterListBox">
-                <div class="crow">
-                  <span class="cpill cfield">Incident</span>
-                  <span class="cpill cpill-join">where</span>
-                  <span class="cpill cval">Priority is 1 - Critical · last 7 days</span>
-                </div>
-                <div class="crow">
-                  <span class="cpill cfield">Change Request</span>
-                  <span class="cpill cpill-join">where</span>
-                  <span class="cpill cval">Closed at last week</span>
-                </div>
-              </div>
-              <button id="clearFilterListBtn" type="button" class="linklike">
-                Clear all — run uses the live filters only
-              </button>
-            </div>
 
-            <label class="pnLabel" for="ticketType">Ticket type</label>
-            <select id="ticketType" class="select">
-              <option value="incident" selected>Incident</option>
-              <option value="change_request">Change Request</option>
-              <option value="problem">Problem</option>
-              <option value="sc_req_item">Requested Item (RITM)</option>
-              <option value="sc_task">Catalog Task (SCTASK)</option>
-            </select>
-
-            <label class="pnLabel">Conditions</label>
-            <div id="summaryWindowTabs" class="hidden flex gap-1 mb-2">
-              <button type="button" id="summaryTabLast" class="btn-ghost text-[11px] px-2 py-1">
-                Last week (implemented)
-              </button>
-              <button type="button" id="summaryTabNext" class="btn-ghost text-[11px] px-2 py-1">
-                Next week (planned)
-              </button>
-            </div>
-            <div id="condRows">
-              <div class="crow">
-                <span class="cpill cfield">Priority</span>
-                <span class="cpill cpill-join">is</span>
-                <span class="cpill cval">1 - Critical</span>
-                <span class="cpill cdel" data-tip="Remove condition">&times;</span>
-              </div>
-              <div class="crow">
-                <span class="cpill cpill-join">and</span>
-                <span class="cpill cfield">State</span>
-                <span class="cpill cpill-join">is not</span>
-                <span class="cpill cval">Resolved</span>
-                <span class="cpill cdel" data-tip="Remove condition">&times;</span>
-              </div>
-            </div>
-            <button id="addCondBtn" type="button" class="linklike">+ Add condition</button>
-
-            <button id="addFilterBtn" type="button" class="btn-ghost w-full mt-2.5">
-              + Add to filter list
-            </button>
-
-            <label class="pnLabel" for="presetSelect">Load preset</label>
-            <select
-              id="presetSelect"
-              class="select"
-              data-tip="Load a filter preset — replaces the filter list. WSR is the built-in Weekly Status Report preset."
-            >
-              <option value="">Load preset&hellip;</option>
-              <option value="__wsr__">WSR — Weekly Status Report</option>
-              <option value="p1p2">P1/P2 open incidents</option>
-            </select>
-
-            <label
-              class="flex items-center gap-2 mt-3 text-[12px] text-muted cursor-pointer select-none"
-              data-tip="Also pull this week's change requests to fill the Weekly Summary sheet (last week implemented/failed, next week planned) plus P1/P2 incidents from last week"
-            >
-              <input id="includeSummary" type="checkbox" class="accent-accent" checked />
-              <span>Pull change requests for Weekly Summary</span>
-            </label>
-
-            <div id="summaryFilterBox" class="mt-1.5 ml-6 text-[11.5px] text-dim">
-              <div id="summaryFilterText" class="leading-relaxed">
-                Last week (implemented): changes with end_date 2026-09-08 → 2026-09-14 ·
-                Next week (planned): changes with start_date 2026-09-15 → 2026-09-21 ·
-                plus P1/P2 incidents resolved last week.
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <button id="editSummaryBtn" type="button" class="linklike px-0">Edit</button>
-                <button id="resetSummaryBtn" type="button" class="linklike px-0 hidden">
-                  Reset to this week&rsquo;s dates
-                </button>
-              </div>
-            </div>
-
-            <details id="advancedBox" class="mt-2.5" open>
-              <summary class="text-[12px] text-dim cursor-pointer">
-                Advanced — raw query override / generated query
-              </summary>
-              <textarea
-                id="rawQuery"
-                placeholder="Optional: extra encoded query conditions, e.g. priority=1^category=network"
-                class="textarea mt-2"
-              >category=network</textarea>
-              <label class="pnLabel">Generated query</label>
-              <pre id="generatedQuery" class="mono">priority=1^state!=6^category=network^assignment_groupIN{Network,Cloud Ops}</pre>
-            </details>
-          </section>
-
-          <div class="pnDivider"></div>
-
-          <section class="flex gap-2 mb-2.5">
-            <button id="previewBtn" class="btn-ghost flex-1 py-2.5">Preview</button>
-            <button id="runBtn" class="btn-primary flex-1 py-2.5">Run</button>
-          </section>
-          <section class="flex gap-2 mb-2.5">
-            <button id="viewBtn" class="btn-ghost w-full py-2.5">Open data view</button>
-          </section>
-
-          <section id="progressWrap" class="hidden">
-            <div class="h-[7px] bg-card2 rounded overflow-hidden">
-              <div id="fill" class="h-full w-0 bg-peach transition-[width] duration-300"></div>
-            </div>
-            <div id="stageLabel" class="text-[11.5px] text-dim mt-1.5 min-h-4"></div>
-            <div id="pullCounter" class="hidden text-[12.5px] text-accent mt-1 font-semibold"></div>
-          </section>
-
-          <section class="card log-card hidden" id="logCard">
-            <h2
-              id="logHead"
-              class="text-xs m-0 mb-1 text-muted uppercase tracking-wider cursor-pointer select-none hover:text-accent"
-              data-tip="Click to open full log"
-            >
-              Log
-              <span
-                id="logErrBadge"
-                class="hidden bg-bad/20 text-[#f5e0dc] rounded-lg px-1.5 text-[10px] ml-1"
-              ></span>
-            </h2>
-            <div
-              id="log"
-              class="max-h-40 overflow-y-auto text-[11px] leading-relaxed text-muted font-mono break-words"
-            ></div>
-          </section>
-
-          <div
-            id="logModal"
-            class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
-          >
-            <div
-              class="log-box w-[min(720px,94vw)] max-h-[78vh] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] flex flex-col overflow-hidden"
-            >
-              <div
-                class="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-line font-semibold text-muted text-[12.5px]"
-              >
-                <span>Request &amp; activity log</span>
-                <button id="logCopy" type="button" class="linklike ml-auto">Copy all</button>
-                <button
-                  id="logClose"
-                  type="button"
-                  class="ml-1 bg-transparent border-0 text-dim cursor-pointer text-sm px-1.5 py-0.5 hover:text-bad"
-                  data-tip="Close"
+                <div
+                  id="presetNameModal"
+                  class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
                 >
-                  &#10005;
-                </button>
-              </div>
-              <div
-                id="logMirror"
-                class="overflow-y-auto font-mono text-[11.5px] leading-relaxed text-muted px-3.5 py-2.5 break-words whitespace-pre-wrap"
-              ></div>
-            </div>
-          </div>
+                  <div
+                    class="w-[min(360px,92vw)] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] p-4"
+                  >
+                    <div class="font-semibold text-muted text-[12.5px] mb-2">
+                      Save filter preset
+                    </div>
+                    <input
+                      id="presetNameInput"
+                      type="text"
+                      placeholder="Preset name"
+                      class="input w-full"
+                      maxlength="60"
+                    />
+                    <div id="presetNameError" class="hidden text-[11px] text-bad mt-1.5"></div>
+                    <div class="flex gap-2 justify-end mt-3">
+                      <button id="presetNameCancel" type="button" class="linklike">Cancel</button>
+                      <button id="presetNameSave" type="button" class="btn-primary">Save</button>
+                    </div>
+                  </div>
+                </div>
 
-          <div
-            id="presetNameModal"
-            class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
-          >
-            <div
-              class="w-[min(360px,92vw)] bg-card border border-line rounded-xl shadow-[0_18px_60px_rgba(0,0,0,.55)] p-4"
-            >
-              <div class="font-semibold text-muted text-[12.5px] mb-2">Save filter preset</div>
-              <input
-                id="presetNameInput"
-                type="text"
-                placeholder="Preset name"
-                class="input w-full"
-                maxlength="60"
-              />
-              <div id="presetNameError" class="hidden text-[11px] text-bad mt-1.5"></div>
-              <div class="flex gap-2 justify-end mt-3">
-                <button id="presetNameCancel" type="button" class="linklike">Cancel</button>
-                <button id="presetNameSave" type="button" class="btn-primary">Save</button>
+                <footer id="lastRun" class="text-[10.5px] text-faint mt-2">
+                  Last run: today 09:14 · 128 tickets
+                </footer>
               </div>
+              <!-- END copied panel markup -->
             </div>
+            <!-- /.surface-scale -->
           </div>
-
-          <footer id="lastRun" class="text-[10.5px] text-faint mt-2">
-            Last run: today 09:14 · 128 tickets
-          </footer>
-        </div>
-        <!-- END copied panel markup -->
-            </div><!-- /.surface-scale -->
-          </div><!-- /.surface-stage -->
+          <!-- /.surface-stage -->
           <p class="surface-hint">
-            Hover or focus a card on the right — the arrow points to that control.
-            Use <kbd>Tab</kbd> to move between cards.
+            Hover or focus a card on the right — the arrow points to that control. Use
+            <kbd>Tab</kbd> to move between cards.
           </p>
-        </div><!-- /.surface-rail -->
+        </div>
+        <!-- /.surface-rail -->
 
         <div class="surface-notes">
           <section id="feature-reference" class="feature-reference">
             <h2 class="section-title">Every control, explained</h2>
             <p class="section-sub">
-              A numbered tour of every interactive control on the side panel.
-              These descriptions mirror the real extension behaviour; the panel
-              on the left is a static sample.
+              A numbered tour of every interactive control on the side panel. These descriptions
+              mirror the real extension behaviour; the panel on the left is a static sample.
             </p>
           </section>
-        </div><!-- /.surface-notes -->
-      </div><!-- /.surface-split -->
+        </div>
+        <!-- /.surface-notes -->
+      </div>
+      <!-- /.surface-split -->
     </main>
 
     <div id="site-footer"></div>
@@ -335,152 +359,141 @@
               body:
                 "Shows whether the panel considers itself ready: <em>Not connected</em> (red) or <em>Connected</em> (green). " +
                 "Connecting is a <strong>local-only</strong> check of the instance URL — the badge turning green does not mean a server call was made. " +
-                'Actual authentication happens on the first request through your logged-in ServiceNow tab. See <a href="../docs.html?p=Running-a-Pull">Running a Pull</a>.',
+                'Actual authentication happens on the first request through your logged-in ServiceNow tab. See <a href="../docs.html?p=Running-a-Pull">Running a Pull</a>.'
             },
             {
               sel: "#connectBtn",
               title: "Connect button",
               body:
                 "Validates the Instance URL shape and readiness locally, then flips the badge to <em>Connected</em>. " +
-                "It does <strong>not</strong> call ServiceNow or prompt for credentials — the extension reuses your existing browser session on the first real request.",
+                "It does <strong>not</strong> call ServiceNow or prompt for credentials — the extension reuses your existing browser session on the first real request."
             },
             {
               sel: "#instance",
               title: "Instance URL",
               body:
                 "Your ServiceNow instance, e.g. <code>https://acme.service-now.com</code>. Every pull is scoped to this instance and reuses the session in your logged-in tab there. " +
-                "Keep that tab open while pulling and exporting.",
+                "Keep that tab open while pulling and exporting."
             },
             {
               sel: "#ticketType",
               title: "Ticket type",
               body:
                 "The table a pull targets: Incident, Change Request, Problem, Requested Item (RITM), or Catalog Task (SCTASK). " +
-                "It drives which fields and states are available in the condition builder.",
+                "It drives which fields and states are available in the condition builder."
             },
             {
               sel: "#filterListCard",
               title: "Saved filter sets — “Run pulls all”",
               body:
                 "The list of saved filter sets. A single <strong>Run</strong> pulls <strong>all</strong> of them; per-table results are unioned by <code>sys_id</code> so a ticket matched by two sets is not duplicated. " +
-                'Each set is capped by <em>Max tickets per filter set</em> and skipped with a warning if it is over the cap. See <a href="../docs.html?p=Filters-and-Presets">Filters and Presets</a>.',
+                'Each set is capped by <em>Max tickets per filter set</em> and skipped with a warning if it is over the cap. See <a href="../docs.html?p=Filters-and-Presets">Filters and Presets</a>.'
             },
             {
               sel: "#filterMenuBtn",
               title: "Preset menu (⋮)",
               body:
                 "Opens the preset options for the filter list: <em>Save preset…</em> stores the current list under a name, and saved presets appear below it. " +
-                "Loading a preset replaces the whole filter list.",
+                "Loading a preset replaces the whole filter list."
             },
             {
               sel: "#clearFilterListBtn",
               title: "Clear all filter sets",
-              body:
-                "Empties the saved filter list so the next <strong>Run</strong> uses only the live filters currently shown in the panel.",
+              body: "Empties the saved filter list so the next <strong>Run</strong> uses only the live filters currently shown in the panel."
             },
             {
               sel: "#condRows",
               title: "Conditions",
               body:
                 "The condition rows for the current ticket type. Each row targets a field with an operator and value (e.g. <em>Priority is 1 - Critical</em>). " +
-                "The configured queue scope is always applied automatically — you do not add it here.",
+                "The configured queue scope is always applied automatically — you do not add it here."
             },
             {
               sel: "#addCondBtn",
               title: "+ Add condition",
-              body:
-                "Adds another condition row to the current filter, ANDed with the others. Build up the query field-by-field without writing encoded-query syntax.",
+              body: "Adds another condition row to the current filter, ANDed with the others. Build up the query field-by-field without writing encoded-query syntax."
             },
             {
               sel: "#addFilterBtn",
               title: "+ Add to filter list",
               body:
                 "Saves the current ticket type plus conditions as a <strong>filter set</strong> and appends it to the list above. " +
-                "Build several sets targeting different tables, then Run pulls every one of them.",
+                "Build several sets targeting different tables, then Run pulls every one of them."
             },
             {
               sel: "#presetSelect",
               title: "Load preset",
-              body:
-                "Replaces the filter list with a saved preset. <strong>WSR</strong> is the built-in Weekly Status Report preset — one filter set per (table, state), with closed states scoped to last week by <code>closed_at</code>.",
+              body: "Replaces the filter list with a saved preset. <strong>WSR</strong> is the built-in Weekly Status Report preset — one filter set per (table, state), with closed states scoped to last week by <code>closed_at</code>."
             },
             {
               sel: "#includeSummary",
               title: "Pull change requests for Weekly Summary",
               body:
                 "Also pulls change data for the WSR workbook’s Summary sheet: changes that <em>ended last week</em> (implemented/failed, by <code>end_date</code>) and changes <em>planned to start this week</em> (by <code>start_date</code>, labelled “next week” in the UI), plus P1/P2 incidents resolved last week. " +
-                'Weeks run Monday–Sunday. See <a href="../docs.html?p=Filters-and-Presets">Filters and Presets</a>.',
+                'Weeks run Monday–Sunday. See <a href="../docs.html?p=Filters-and-Presets">Filters and Presets</a>.'
             },
             {
               sel: "#summaryFilterBox",
               title: "Weekly Summary window & Edit",
               body:
                 "Shows the exact change-request windows that will be pulled. <em>Edit</em> opens the condition builder pre-loaded with a Last-week / Next-week switcher; each window must keep its date range. " +
-                "<em>Reset to this week’s dates</em> clears any override and returns to the auto-computed weeks.",
+                "<em>Reset to this week’s dates</em> clears any override and returns to the auto-computed weeks."
             },
             {
               sel: "#advancedBox",
               title: "Advanced — raw query override & generated query",
-              body:
-                "Reveals an optional <strong>raw encoded-query override</strong> for conditions the builder does not expose (e.g. <code>priority=1^category=network</code>) and a live preview of the <em>generated query</em> that will be sent.",
+              body: "Reveals an optional <strong>raw encoded-query override</strong> for conditions the builder does not expose (e.g. <code>priority=1^category=network</code>) and a live preview of the <em>generated query</em> that will be sent."
             },
             {
               sel: "#rawQuery",
               title: "Raw encoded-query override",
-              body:
-                "Extra encoded-query conditions appended to whatever the builder produces. Useful for advanced fields, ORs, or operators not surfaced as condition rows.",
+              body: "Extra encoded-query conditions appended to whatever the builder produces. Useful for advanced fields, ORs, or operators not surfaced as condition rows."
             },
             {
               sel: "#generatedQuery",
               title: "Generated query",
-              body:
-                "A read-only preview of the final ServiceNow encoded query — the builder conditions, the always-applied queue scope, and any raw override combined. Use it to sanity-check exactly what will be queried.",
+              body: "A read-only preview of the final ServiceNow encoded query — the builder conditions, the always-applied queue scope, and any raw override combined. Use it to sanity-check exactly what will be queried."
             },
             {
               sel: "#previewBtn",
               title: "Preview",
               body:
                 "Runs a <strong>COUNT</strong> per filter set and shows how many tickets match, including any max-tickets-limit warnings. " +
-                "Preview is <strong>always live</strong> — it never uses the query cache and never pulls timelines.",
+                "Preview is <strong>always live</strong> — it never uses the query cache and never pulls timelines."
             },
             {
               sel: "#runBtn",
               title: "Run",
               body:
                 "Performs the two-phase pull for every filter set: <strong>Phase 1</strong> is the paginated ticket list from the Table API; <strong>Phase 2</strong> is the per-ticket activity feed (<code>list_history.do</code>), replayed to compute the timeline and SLA values. " +
-                'Cache layers may reuse recent results. See <a href="../docs.html?p=Running-a-Pull">Running a Pull</a>.',
+                'Cache layers may reuse recent results. See <a href="../docs.html?p=Running-a-Pull">Running a Pull</a>.'
             },
             {
               sel: "#viewBtn",
               title: "Open data view",
-              body:
-                "Opens the Data Viewer to search, edit columns, classify resolution notes, inspect with Calclens, and export the filled Excel report from the pulled tickets.",
+              body: "Opens the Data Viewer to search, edit columns, classify resolution notes, inspect with Calclens, and export the filled Excel report from the pulled tickets."
             },
             {
               sel: "#settingsBtn",
               title: "Settings (gear)",
-              body:
-                "Opens the options page: instance, queue scope, team members, classification, MSR lists, cache TTLs, and backup. Configuration set there feeds every pull.",
+              body: "Opens the options page: instance, queue scope, team members, classification, MSR lists, cache TTLs, and backup. Configuration set there feeds every pull."
             },
             {
               sel: "#progressWrap",
               title: "Progress bar & stage label",
-              body:
-                "During a run this reveals a <strong>progress bar</strong>, a <strong>stage label</strong> (list vs. timelines), and a <strong>pull counter</strong> tracking tickets processed. Hidden in this sample because no pull is running.",
+              body: "During a run this reveals a <strong>progress bar</strong>, a <strong>stage label</strong> (list vs. timelines), and a <strong>pull counter</strong> tracking tickets processed. Hidden in this sample because no pull is running."
             },
             {
               sel: "#logCard",
               title: "Log",
-              body:
-                "During and after a run, mirrors requests and activity — including <code>CACHE HIT</code> messages when recent results are reused. Click its header to open the full request &amp; activity log modal with <em>Copy all</em>. Hidden until a run starts.",
+              body: "During and after a run, mirrors requests and activity — including <code>CACHE HIT</code> messages when recent results are reused. Click its header to open the full request &amp; activity log modal with <em>Copy all</em>. Hidden until a run starts."
             },
             {
               sel: "#lastRun",
               title: "Last run summary",
-              body:
-                "The footer shows a short summary of your most recent pull — when it ran and how many tickets it produced.",
-            },
-          ],
+              body: "The footer shows a short summary of your most recent pull — when it ran and how many tickets it produced."
+            }
+          ]
         });
       });
     </script>

@@ -60,18 +60,17 @@
     <main class="site-main wide">
       <h1>Data Viewer</h1>
       <p class="lead">
-        The Data Viewer is where you inspect, search, edit, classify, and export a
-        pulled ServiceNow dataset. It reads its rows from the extension's local
-        storage, shows the pulled tickets plus derived timeline columns (assign,
-        acknowledge, suspend, resume and the durations derived from them), and lets
-        you refine them before they land in the exported report. Times follow the
+        The Data Viewer is where you inspect, search, edit, classify, and export a pulled ServiceNow
+        dataset. It reads its rows from the extension's local storage, shows the pulled tickets plus
+        derived timeline columns (assign, acknowledge, suspend, resume and the durations derived
+        from them), and lets you refine them before they land in the exported report. Times follow
+        the
         <strong>instance clock</strong>, not your browser.
       </p>
       <p class="viewer-note">
-        Below is a faithful, static recreation of the viewer with a realistic
-        sample dataset, scaled to fit. Every control is explained on the right —
-        hover or focus a card and the arrow points to that control. Nothing here
-        is live.
+        Below is a faithful, static recreation of the viewer with a realistic sample dataset, scaled
+        to fit. Every control is explained on the right — hover or focus a card and the arrow points
+        to that control. Nothing here is live.
       </p>
 
       <div class="surface-split surface-split--wide">
@@ -79,600 +78,669 @@
           <div class="surface-stage" style="--anno-scale: 0.62">
             <p class="surface-stage-label">Live sample · Data viewer</p>
             <div class="surface-scale">
-      <!-- ============================ VIEWER FRAME ============================ -->
-      <div class="viewer-frame">
-        <div id="slaBar">
-          <div class="legend">
-            <span class="slaDot r"></span> Resolution SLA breached
-            <span class="slaDot m"></span> Response (MTTA) SLA breached
-            <span class="slaDot rm"></span> Both breached
-          </div>
-          <div class="cls">
-            <span class="stat"><span>Classified</span> <b>112</b>/128</span>
-            <span class="stat rc"><span>Root cause set</span> <b>98</b></span>
-            <span class="stat nap"><span>Needs attention</span> <b>7</b></span>
-          </div>
-        </div>
-        <div id="clsProgress" class="hidden">
-          <div id="clsFill"></div>
-        </div>
-        <div class="toolbar">
-          <div class="tbLeft">
-            <select
-              id="searchColumn"
-              class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none"
-              data-tip="Choose which column to search"
-            >
-              <option value="__all">All columns</option>
-              <option value="number">Number</option>
-              <option value="state">State</option>
-              <option value="assignment_group">Assignment group</option>
-              <option value="short_description">Short description</option>
-              <option value="root_cause_category">Root cause category</option>
-            </select>
-            <input
-              id="search"
-              class="w-[240px] max-w-[30vw] bg-card2 text-text border border-line rounded-md px-2.5 py-1.5 text-[13px] focus:border-accent focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-accent"
-              placeholder="Search…"
-            />
-            <select
-              id="searchMode"
-              class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none"
-              data-tip="How to match the search text"
-            >
-              <option value="contains">Contains</option>
-              <option value="equals">Equals</option>
-              <option value="notContains">Does not contain</option>
-              <option value="notEquals">Does not equal</option>
-            </select>
-            <span id="searchCase" class="searchCase">
-              <button id="searchCaseInsensitive" class="btn active" data-tip="Case-insensitive">
-                aa
-              </button>
-              <button id="searchCaseSensitive" class="btn" data-tip="Case-sensitive">Aa</button>
-            </span>
-            <span id="count">Showing 12 of 128</span>
-          </div>
-          <div class="tbRight">
-            <span id="status"></span>
-          </div>
-          <input type="file" id="tplFile" accept=".xlsx" class="hidden" />
-        </div>
-        <div id="actionRail">
-          <div id="railHead">
-            <button
-              id="railGrip"
-              class="icon-btn"
-              data-tip="Drag to move"
-              aria-label="Drag to move"
-            >⠿</button>
-            <button id="railFold" class="icon-btn" data-tip="Collapse" aria-label="Collapse">‹</button>
-          </div>
-          <div id="railBody">
-            <button
-              id="calclensBtn"
-              class="btn"
-              data-tip="Calclens — inspect how each value was derived and edit the derivation columns"
-              aria-label="Calclens"
-            >Calclens</button>
-            <button
-              id="editModeBtn"
-              class="btn"
-              data-tip="Edit mode — click a cell to bulk-edit that column across the current view"
-              aria-label="Edit column"
-            >
-              Edit column
-            </button>
-            <button
-              id="copyMsrBtn"
-              class="btn"
-              data-tip="Copy the current view as MSR 'BA AO' input columns (A–U) — paste onto rows whose formulas in V–AJ stay intact"
-              aria-label="Copy for MSR"
-            >Copy for MSR</button>
-            <button
-              id="colsBtn"
-              class="btn"
-              data-tip="Choose which columns are shown"
-              aria-label="Columns"
-            >Columns</button>
-            <div id="colMenu" class="hidden">
-              <div class="menuHead">
-                <span>Visible columns</span><button id="showAllCols" class="btn">Show all</button>
-              </div>
-              <div class="menuHead sub">
-                <button id="resetColWidthsBtn" class="btn">Reset widths</button
-                ><button id="resetColOrderBtn" class="btn">Reset order</button>
-              </div>
-              <input id="colSearch" placeholder="Search columns…" />
-              <div id="colList"></div>
-            </div>
-            <button id="clearBtn" class="btn" data-tip="Clear pulled data" aria-label="Clear">Clear</button>
-            <button
-              id="splitPreviewBtn"
-              class="btn"
-              data-tip="Preview how the current view splits by CI group"
-              aria-label="Preview export split"
-            >
-              Split preview
-            </button>
-            <div id="exportCluster">
-              <button
-                id="exportBtn"
-                class="btn-primary exportBtn"
-                data-tip="Configure export settings and export the current view"
-                aria-label="Export"
-              >Export</button>
-            </div>
-          </div>
-        </div>
-        <div id="tabs" role="tablist">
-          <button id="tabTickets" class="tab on" role="tab" aria-selected="true">
-            <span class="g">☰</span> Tickets
-          </button>
-          <button id="tabSummary" class="tab" role="tab" aria-selected="false">
-            <span class="g">Σ</span> Summary SLA
-          </button>
-          <button id="tabSummaryDetails" class="tab" role="tab" aria-selected="false">
-            <span class="g">◫</span> Weekly Summary
-          </button>
-          <div id="calclensMenuWrap" class="hidden" style="position: relative">
-            <button
-              id="calclensMenuBtn"
-              class="btn"
-              data-tip="Choose which Calclens highlights are shown"
-              aria-label="Calclens highlights"
-            ></button>
-            <div id="calclensMenu" class="hidden">
-              <div class="menuHead">
-                <span>Highlights</span><button id="calclensShowAll" class="btn">Show all</button>
-              </div>
-              <div class="menuHead sub"><button id="calclensHideAll" class="btn">Hide all</button></div>
-              <div id="calclensHlList"></div>
-            </div>
-          </div>
-          <button
-            id="calclensFilterBtn"
-            class="btn hidden"
-            data-tip="Show only tickets with attention flags"
-            aria-label="Show flagged tickets only"
-          ></button>
-          <span id="splitChip" class="splitChip hidden ml-auto"
-            ><span class="splitChipLabel"></span
-            ><button
-              id="splitChipClear"
-              class="splitChipClear"
-              data-tip="Clear split filter"
-              aria-label="Clear split filter"
-            >
-              ✕
-            </button></span
-          >
-          <span id="attentionChip" class="splitChip hidden"
-            ><span id="attentionChipLabel" class="splitChipLabel"></span
-            ><button
-              id="attentionChipClear"
-              class="splitChipClear"
-              data-tip="Clear attention filter"
-              aria-label="Clear attention filter"
-            >
-              ✕
-            </button></span
-          >
-          <button
-            id="ticketStatsBtn"
-            class="btn icon-btn ml-auto"
-            data-tip="Ticket stats — state breakdown and SLA met/breached for the current view"
-            aria-label="Ticket stats"
-          >📊</button>
-        </div>
-        <div id="wrap">
-          <table id="tbl">
-            <thead>
-              <tr>
-                <th class="sorted">Number</th>
-                <th>Opened</th>
-                <th>Priority</th>
-                <th>State</th>
-                <th>Assignment group</th>
-                <th>Short description</th>
-                <th>Acknowledged</th>
-                <th>Resolved</th>
-                <th>SLA</th>
-                <th>Root cause category</th>
-                <th>Solution type</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="num">INC0012845</td>
-                <td class="time">2026-09-08 07:14</td>
-                <td>1 - Critical</td>
-                <td>Resolved</td>
-                <td>Payment Gateway PRD</td>
-                <td>Checkout timeouts on card authorisation</td>
-                <td class="time">2026-09-08 07:22</td>
-                <td class="time">2026-09-08 11:48</td>
-                <td class="dur sla-breach-r">4h 34m</td>
-                <td>Software - defect</td>
-                <td>Fix deployed</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012846</td>
-                <td class="time">2026-09-08 09:02</td>
-                <td>2 - High</td>
-                <td>Resolved</td>
-                <td>Identity &amp; Access</td>
-                <td>SSO login failures for external users</td>
-                <td class="time sla-breach-m">2026-09-08 09:41</td>
-                <td class="time">2026-09-08 10:57</td>
-                <td class="dur">1h 55m</td>
-                <td>Configuration</td>
-                <td>Config change</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012847</td>
-                <td class="time">2026-09-09 11:33</td>
-                <td>3 - Moderate</td>
-                <td>Closed</td>
-                <td>Network Core</td>
-                <td>Intermittent packet loss on WAN link 4</td>
-                <td class="time">2026-09-09 11:39</td>
-                <td class="time">2026-09-09 15:20</td>
-                <td class="dur">3h 47m</td>
-                <td>Hardware</td>
-                <td>Vendor replacement</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012851</td>
-                <td class="time">2026-09-09 14:08</td>
-                <td>1 - Critical</td>
-                <td>Resolved</td>
-                <td>Payment Gateway PRD</td>
-                <td>Settlement batch stuck in queue</td>
-                <td class="time sla-breach-m">2026-09-09 15:02</td>
-                <td class="time">2026-09-09 20:31</td>
-                <td class="dur sla-breach-rm">6h 23m</td>
-                <td>Software - defect</td>
-                <td>Restart / reprocess</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012858</td>
-                <td class="time">2026-09-10 06:47</td>
-                <td>4 - Low</td>
-                <td>Closed</td>
-                <td>Service Desk</td>
-                <td>Password reset request for shared mailbox</td>
-                <td class="time">2026-09-10 06:52</td>
-                <td class="time">2026-09-10 07:15</td>
-                <td class="dur">28m</td>
-                <td>Request fulfilment</td>
-                <td>Standard request</td>
-              </tr>
-              <tr>
-                <td class="num">RFS0004412</td>
-                <td class="time">2026-09-10 08:20</td>
-                <td>3 - Moderate</td>
-                <td>In Progress</td>
-                <td>Cloud Platform</td>
-                <td>Provision new S3 bucket for reporting exports</td>
-                <td class="time">2026-09-10 08:31</td>
-                <td class="empty-time">—</td>
-                <td class="dur">—</td>
-                <td>Request fulfilment</td>
-                <td>—</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012863</td>
-                <td class="time">2026-09-11 13:55</td>
-                <td>2 - High</td>
-                <td>Resolved</td>
-                <td>Database Services</td>
-                <td>Replication lag on reporting replica</td>
-                <td class="time">2026-09-11 14:04</td>
-                <td class="time">2026-09-11 16:39</td>
-                <td class="dur">2h 44m</td>
-                <td>Capacity</td>
-                <td>Tuning</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012871</td>
-                <td class="time">2026-09-12 02:11</td>
-                <td>1 - Critical</td>
-                <td>Resolved</td>
-                <td>Network Core</td>
-                <td>Data centre edge router failover event</td>
-                <td class="time">2026-09-12 02:15</td>
-                <td class="time">2026-09-12 03:02</td>
-                <td class="dur">51m</td>
-                <td>Hardware</td>
-                <td>Failover / HA</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012879</td>
-                <td class="time">2026-09-12 10:44</td>
-                <td>3 - Moderate</td>
-                <td>New</td>
-                <td>Identity &amp; Access</td>
-                <td>MFA prompts not delivered to some devices</td>
-                <td class="empty-time">—</td>
-                <td class="empty-time">—</td>
-                <td class="dur">—</td>
-                <td>Under investigation</td>
-                <td>—</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012884</td>
-                <td class="time">2026-09-13 16:29</td>
-                <td>2 - High</td>
-                <td>In Progress</td>
-                <td>Cloud Platform</td>
-                <td>Autoscaling not triggering on API tier</td>
-                <td class="time sla-breach-m">2026-09-13 17:36</td>
-                <td class="empty-time">—</td>
-                <td class="dur">—</td>
-                <td>Configuration</td>
-                <td>—</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012890</td>
-                <td class="time">2026-09-14 08:03</td>
-                <td>4 - Low</td>
-                <td>Resolved</td>
-                <td>Service Desk</td>
-                <td>Printer offline in Finance department</td>
-                <td class="time">2026-09-14 08:19</td>
-                <td class="time">2026-09-14 09:05</td>
-                <td class="dur">1h 02m</td>
-                <td>Hardware</td>
-                <td>On-site fix</td>
-              </tr>
-              <tr>
-                <td class="num">INC0012902</td>
-                <td class="time">2026-09-15 22:47</td>
-                <td>1 - Critical</td>
-                <td>Resolved</td>
-                <td>Payment Gateway PRD</td>
-                <td>3-D Secure callback errors during peak</td>
-                <td class="time">2026-09-15 22:53</td>
-                <td class="time">2026-09-16 01:12</td>
-                <td class="dur sla-breach-r">2h 25m</td>
-                <td>Software - defect</td>
-                <td>Hotfix</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div id="summaryWrap" class="hidden">
-          <div id="sumMeta"></div>
-          <div class="table-wrapper">
-            <table id="sumIncTbl" class="sum-table incident-table">
-              <colgroup>
-                <col /><col /><col /><col /><col /><col /><col /><col /><col />
-              </colgroup>
-              <thead></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div class="table-wrapper">
-            <table id="sumProbTbl" class="sum-table problem-table">
-              <colgroup>
-                <col /><col /><col /><col /><col /><col /><col /><col /><col />
-              </colgroup>
-              <thead></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div id="summaryDetailsWrap" class="hidden">
-          <div id="sdMeta" class="text-[12px] text-dim my-2"></div>
-          <div id="sdNarrative" class="my-3"></div>
-          <h3 class="text-[13px] text-accent mt-4 mb-1">Key Incidents (P1/P2, last week)</h3>
-          <div class="table-wrapper">
-            <table id="sdKeyIncTbl" class="sum-table">
-              <thead></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Implemented (last week)</h3>
-          <div class="table-wrapper">
-            <table id="sdImplTbl" class="sum-table">
-              <thead></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Planned (next week)</h3>
-          <div class="table-wrapper">
-            <table id="sdPlannedTbl" class="sum-table">
-              <thead></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Failed (last week)</h3>
-          <div class="table-wrapper">
-            <table id="sdFailedTbl" class="sum-table">
-              <thead></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div id="ticketStatsModal" class="hidden">
-          <div id="ticketStatsCard">
-            <div class="mapHead">
-              <span>Ticket stats</span
-              ><button id="ticketStatsClose" class="btn" data-tip="Close">✕</button>
-            </div>
-            <div id="ticketStatsBody"></div>
-          </div>
-        </div>
-        <div id="splitPreviewModal" class="hidden">
-          <div id="splitPreviewCard">
-            <div class="mapHead">
-              <span>Export split preview</span
-              ><button id="splitPreviewClose" class="btn" data-tip="Close">✕</button>
-            </div>
-            <p class="mapHint">
-              How the current view splits by CI group. Choose a group to view just its tickets in the
-              grid (session only).
-            </p>
-            <div id="splitPreviewBody"></div>
-          </div>
-        </div>
-        <div id="columnEditorModal" class="hidden"></div>
-        <div id="empty" class="hidden">No pulled data yet — run a pull from the side panel first.</div>
-        <div id="calclensPanel"></div>
-        <div id="mapModal" class="hidden">
-          <div id="letterPop" class="hidden">
-            <input id="letterSearch" placeholder="Search A–AN…" />
-            <div id="letterList"></div>
-          </div>
-          <div id="mapCard">
-            <div class="mapHead">
-              <span>Export column mapping</span
-              ><button id="mapClose" class="btn" data-tip="Close">✕</button>
-            </div>
-            <p class="mapHint">
-              Pick the Excel column (A–AN) each field is written to. A field exports to one column;
-              unmapped fields are skipped and unmapped columns stay as the template has them.
-            </p>
-            <input id="mapSearch" placeholder="Search fields…" />
-            <div id="mapList"></div>
-            <div class="mapFoot">
-              <button id="mapReset" class="btn">Reset to template default</button>
-              <span class="spacer"></span>
-              <button id="mapSave" class="btn-primary mapSave">Save mapping</button>
-            </div>
-          </div>
-        </div>
-        <div id="ciModal" class="hidden">
-          <div id="ciCard">
-            <div class="mapHead">
-              <span>Split export by configuration item</span
-              ><button id="ciClose" class="btn" data-tip="Close">✕</button>
-            </div>
-            <label class="ciToggle"
-              ><input type="checkbox" id="ciEnabled" /> Split each export into separate files</label
-            >
-            <p class="mapHint">
-              Groups become the file names. Drag configuration items between groups. An item matches
-              every configuration item that contains it (anywhere in the name) — e.g. "Payment Gateway"
-              also matches "Payment Gateway PRD / PreLive / DEV / TEST" and "Web Payment Gateway".
-              Longest match wins; the rest go to Others. Add one item per box, or paste/type several
-              separated by commas or new lines.
-            </p>
-            <div id="groupBoard"></div>
-            <button id="addGroupBtn" class="btn">Add group</button>
-            <div class="mapFoot">
-              <span class="spacer"></span>
-              <button id="ciSave" class="btn-primary ciSave">Save</button>
-            </div>
-          </div>
-        </div>
-        <div id="configModal" class="hidden">
-          <div id="configCard">
-            <div class="mapHead">
-              <span>Export configuration</span
-              ><button id="configClose" class="btn" data-tip="Close">✕</button>
-            </div>
-            <p class="mapHint">
-              Exports use exactly what the data view shows — same rows, same order (search filter +
-              sort), including your edits.
-            </p>
-            <div class="cfgRows">
-              <div class="cfgRow cfgRowSplit">
-                <span class="cfgHalf cfgHalfOpCo">
-                  <span class="cfgLabel cfgLabelHalf">Op co</span>
-                  <span class="cfgActions cfgActionsHalf">
-                    <span class="cfgCombo cfgComboNarrow">
-                      <input
-                        id="cfgOpCo"
-                        type="text"
-                        class="ce-input"
-                        maxlength="8"
-                        spellcheck="false"
-                        autocomplete="off"
-                        placeholder="Op co"
-                        aria-label="Op co"
-                      />
-                      <div id="cfgOpCoMenu" class="ce-ac-menu hidden"></div>
+              <!-- ============================ VIEWER FRAME ============================ -->
+              <div class="viewer-frame">
+                <div id="slaBar">
+                  <div class="legend">
+                    <span class="slaDot r"></span> Resolution SLA breached
+                    <span class="slaDot m"></span> Response (MTTA) SLA breached
+                    <span class="slaDot rm"></span> Both breached
+                  </div>
+                  <div class="cls">
+                    <span class="stat"><span>Classified</span> <b>112</b>/128</span>
+                    <span class="stat rc"><span>Root cause set</span> <b>98</b></span>
+                    <span class="stat nap"><span>Needs attention</span> <b>7</b></span>
+                  </div>
+                </div>
+                <div id="clsProgress" class="hidden">
+                  <div id="clsFill"></div>
+                </div>
+                <div class="toolbar">
+                  <div class="tbLeft">
+                    <select
+                      id="searchColumn"
+                      class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none"
+                      data-tip="Choose which column to search"
+                    >
+                      <option value="__all">All columns</option>
+                      <option value="number">Number</option>
+                      <option value="state">State</option>
+                      <option value="assignment_group">Assignment group</option>
+                      <option value="short_description">Short description</option>
+                      <option value="root_cause_category">Root cause category</option>
+                    </select>
+                    <input
+                      id="search"
+                      class="w-[240px] max-w-[30vw] bg-card2 text-text border border-line rounded-md px-2.5 py-1.5 text-[13px] focus:border-accent focus:outline focus:outline-2 focus:outline-offset-0 focus:outline-accent"
+                      placeholder="Search…"
+                    />
+                    <select
+                      id="searchMode"
+                      class="bg-card2 text-text border border-line rounded-md px-2 py-1.5 text-[13px] focus:border-accent focus:outline-none"
+                      data-tip="How to match the search text"
+                    >
+                      <option value="contains">Contains</option>
+                      <option value="equals">Equals</option>
+                      <option value="notContains">Does not contain</option>
+                      <option value="notEquals">Does not equal</option>
+                    </select>
+                    <span id="searchCase" class="searchCase">
+                      <button
+                        id="searchCaseInsensitive"
+                        class="btn active"
+                        data-tip="Case-insensitive"
+                      >
+                        aa
+                      </button>
+                      <button id="searchCaseSensitive" class="btn" data-tip="Case-sensitive">
+                        Aa
+                      </button>
                     </span>
-                  </span>
-                </span>
-                <span class="cfgHalf">
-                  <span class="cfgLabel cfgLabelHalf">Domain</span>
-                  <span class="cfgActions cfgActionsHalf">
-                    <span class="cfgCombo">
-                      <input
-                        id="cfgDomain"
-                        type="text"
-                        class="ce-input"
-                        spellcheck="false"
-                        autocomplete="off"
-                        placeholder="Domain"
-                        aria-label="Domain"
-                      />
-                      <div id="cfgDomainMenu" class="ce-ac-menu hidden"></div>
-                    </span>
-                  </span>
-                </span>
+                    <span id="count">Showing 12 of 128</span>
+                  </div>
+                  <div class="tbRight">
+                    <span id="status"></span>
+                  </div>
+                  <input type="file" id="tplFile" accept=".xlsx" class="hidden" />
+                </div>
+                <div id="actionRail">
+                  <div id="railHead">
+                    <button
+                      id="railGrip"
+                      class="icon-btn"
+                      data-tip="Drag to move"
+                      aria-label="Drag to move"
+                    >
+                      ⠿
+                    </button>
+                    <button
+                      id="railFold"
+                      class="icon-btn"
+                      data-tip="Collapse"
+                      aria-label="Collapse"
+                    >
+                      ‹
+                    </button>
+                  </div>
+                  <div id="railBody">
+                    <button
+                      id="calclensBtn"
+                      class="btn"
+                      data-tip="Calclens — inspect how each value was derived and edit the derivation columns"
+                      aria-label="Calclens"
+                    >
+                      Calclens
+                    </button>
+                    <button
+                      id="editModeBtn"
+                      class="btn"
+                      data-tip="Edit mode — click a cell to bulk-edit that column across the current view"
+                      aria-label="Edit column"
+                    >
+                      Edit column
+                    </button>
+                    <button
+                      id="copyMsrBtn"
+                      class="btn"
+                      data-tip="Copy the current view as MSR 'BA AO' input columns (A–U) — paste onto rows whose formulas in V–AJ stay intact"
+                      aria-label="Copy for MSR"
+                    >
+                      Copy for MSR
+                    </button>
+                    <button
+                      id="colsBtn"
+                      class="btn"
+                      data-tip="Choose which columns are shown"
+                      aria-label="Columns"
+                    >
+                      Columns
+                    </button>
+                    <div id="colMenu" class="hidden">
+                      <div class="menuHead">
+                        <span>Visible columns</span
+                        ><button id="showAllCols" class="btn">Show all</button>
+                      </div>
+                      <div class="menuHead sub">
+                        <button id="resetColWidthsBtn" class="btn">Reset widths</button
+                        ><button id="resetColOrderBtn" class="btn">Reset order</button>
+                      </div>
+                      <input id="colSearch" placeholder="Search columns…" />
+                      <div id="colList"></div>
+                    </div>
+                    <button
+                      id="clearBtn"
+                      class="btn"
+                      data-tip="Clear pulled data"
+                      aria-label="Clear"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      id="splitPreviewBtn"
+                      class="btn"
+                      data-tip="Preview how the current view splits by CI group"
+                      aria-label="Preview export split"
+                    >
+                      Split preview
+                    </button>
+                    <div id="exportCluster">
+                      <button
+                        id="exportBtn"
+                        class="btn-primary exportBtn"
+                        data-tip="Configure export settings and export the current view"
+                        aria-label="Export"
+                      >
+                        Export
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div id="tabs" role="tablist">
+                  <button id="tabTickets" class="tab on" role="tab" aria-selected="true">
+                    <span class="g">☰</span> Tickets
+                  </button>
+                  <button id="tabSummary" class="tab" role="tab" aria-selected="false">
+                    <span class="g">Σ</span> Summary SLA
+                  </button>
+                  <button id="tabSummaryDetails" class="tab" role="tab" aria-selected="false">
+                    <span class="g">◫</span> Weekly Summary
+                  </button>
+                  <div id="calclensMenuWrap" class="hidden" style="position: relative">
+                    <button
+                      id="calclensMenuBtn"
+                      class="btn"
+                      data-tip="Choose which Calclens highlights are shown"
+                      aria-label="Calclens highlights"
+                    ></button>
+                    <div id="calclensMenu" class="hidden">
+                      <div class="menuHead">
+                        <span>Highlights</span
+                        ><button id="calclensShowAll" class="btn">Show all</button>
+                      </div>
+                      <div class="menuHead sub">
+                        <button id="calclensHideAll" class="btn">Hide all</button>
+                      </div>
+                      <div id="calclensHlList"></div>
+                    </div>
+                  </div>
+                  <button
+                    id="calclensFilterBtn"
+                    class="btn hidden"
+                    data-tip="Show only tickets with attention flags"
+                    aria-label="Show flagged tickets only"
+                  ></button>
+                  <span id="splitChip" class="splitChip hidden ml-auto"
+                    ><span class="splitChipLabel"></span
+                    ><button
+                      id="splitChipClear"
+                      class="splitChipClear"
+                      data-tip="Clear split filter"
+                      aria-label="Clear split filter"
+                    >
+                      ✕
+                    </button></span
+                  >
+                  <span id="attentionChip" class="splitChip hidden"
+                    ><span id="attentionChipLabel" class="splitChipLabel"></span
+                    ><button
+                      id="attentionChipClear"
+                      class="splitChipClear"
+                      data-tip="Clear attention filter"
+                      aria-label="Clear attention filter"
+                    >
+                      ✕
+                    </button></span
+                  >
+                  <button
+                    id="ticketStatsBtn"
+                    class="btn icon-btn ml-auto"
+                    data-tip="Ticket stats — state breakdown and SLA met/breached for the current view"
+                    aria-label="Ticket stats"
+                  >
+                    📊
+                  </button>
+                </div>
+                <div id="wrap">
+                  <table id="tbl">
+                    <thead>
+                      <tr>
+                        <th class="sorted">Number</th>
+                        <th>Opened</th>
+                        <th>Priority</th>
+                        <th>State</th>
+                        <th>Assignment group</th>
+                        <th>Short description</th>
+                        <th>Acknowledged</th>
+                        <th>Resolved</th>
+                        <th>SLA</th>
+                        <th>Root cause category</th>
+                        <th>Solution type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="num">INC0012845</td>
+                        <td class="time">2026-09-08 07:14</td>
+                        <td>1 - Critical</td>
+                        <td>Resolved</td>
+                        <td>Payment Gateway PRD</td>
+                        <td>Checkout timeouts on card authorisation</td>
+                        <td class="time">2026-09-08 07:22</td>
+                        <td class="time">2026-09-08 11:48</td>
+                        <td class="dur sla-breach-r">4h 34m</td>
+                        <td>Software - defect</td>
+                        <td>Fix deployed</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012846</td>
+                        <td class="time">2026-09-08 09:02</td>
+                        <td>2 - High</td>
+                        <td>Resolved</td>
+                        <td>Identity &amp; Access</td>
+                        <td>SSO login failures for external users</td>
+                        <td class="time sla-breach-m">2026-09-08 09:41</td>
+                        <td class="time">2026-09-08 10:57</td>
+                        <td class="dur">1h 55m</td>
+                        <td>Configuration</td>
+                        <td>Config change</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012847</td>
+                        <td class="time">2026-09-09 11:33</td>
+                        <td>3 - Moderate</td>
+                        <td>Closed</td>
+                        <td>Network Core</td>
+                        <td>Intermittent packet loss on WAN link 4</td>
+                        <td class="time">2026-09-09 11:39</td>
+                        <td class="time">2026-09-09 15:20</td>
+                        <td class="dur">3h 47m</td>
+                        <td>Hardware</td>
+                        <td>Vendor replacement</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012851</td>
+                        <td class="time">2026-09-09 14:08</td>
+                        <td>1 - Critical</td>
+                        <td>Resolved</td>
+                        <td>Payment Gateway PRD</td>
+                        <td>Settlement batch stuck in queue</td>
+                        <td class="time sla-breach-m">2026-09-09 15:02</td>
+                        <td class="time">2026-09-09 20:31</td>
+                        <td class="dur sla-breach-rm">6h 23m</td>
+                        <td>Software - defect</td>
+                        <td>Restart / reprocess</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012858</td>
+                        <td class="time">2026-09-10 06:47</td>
+                        <td>4 - Low</td>
+                        <td>Closed</td>
+                        <td>Service Desk</td>
+                        <td>Password reset request for shared mailbox</td>
+                        <td class="time">2026-09-10 06:52</td>
+                        <td class="time">2026-09-10 07:15</td>
+                        <td class="dur">28m</td>
+                        <td>Request fulfilment</td>
+                        <td>Standard request</td>
+                      </tr>
+                      <tr>
+                        <td class="num">RFS0004412</td>
+                        <td class="time">2026-09-10 08:20</td>
+                        <td>3 - Moderate</td>
+                        <td>In Progress</td>
+                        <td>Cloud Platform</td>
+                        <td>Provision new S3 bucket for reporting exports</td>
+                        <td class="time">2026-09-10 08:31</td>
+                        <td class="empty-time">—</td>
+                        <td class="dur">—</td>
+                        <td>Request fulfilment</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012863</td>
+                        <td class="time">2026-09-11 13:55</td>
+                        <td>2 - High</td>
+                        <td>Resolved</td>
+                        <td>Database Services</td>
+                        <td>Replication lag on reporting replica</td>
+                        <td class="time">2026-09-11 14:04</td>
+                        <td class="time">2026-09-11 16:39</td>
+                        <td class="dur">2h 44m</td>
+                        <td>Capacity</td>
+                        <td>Tuning</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012871</td>
+                        <td class="time">2026-09-12 02:11</td>
+                        <td>1 - Critical</td>
+                        <td>Resolved</td>
+                        <td>Network Core</td>
+                        <td>Data centre edge router failover event</td>
+                        <td class="time">2026-09-12 02:15</td>
+                        <td class="time">2026-09-12 03:02</td>
+                        <td class="dur">51m</td>
+                        <td>Hardware</td>
+                        <td>Failover / HA</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012879</td>
+                        <td class="time">2026-09-12 10:44</td>
+                        <td>3 - Moderate</td>
+                        <td>New</td>
+                        <td>Identity &amp; Access</td>
+                        <td>MFA prompts not delivered to some devices</td>
+                        <td class="empty-time">—</td>
+                        <td class="empty-time">—</td>
+                        <td class="dur">—</td>
+                        <td>Under investigation</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012884</td>
+                        <td class="time">2026-09-13 16:29</td>
+                        <td>2 - High</td>
+                        <td>In Progress</td>
+                        <td>Cloud Platform</td>
+                        <td>Autoscaling not triggering on API tier</td>
+                        <td class="time sla-breach-m">2026-09-13 17:36</td>
+                        <td class="empty-time">—</td>
+                        <td class="dur">—</td>
+                        <td>Configuration</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012890</td>
+                        <td class="time">2026-09-14 08:03</td>
+                        <td>4 - Low</td>
+                        <td>Resolved</td>
+                        <td>Service Desk</td>
+                        <td>Printer offline in Finance department</td>
+                        <td class="time">2026-09-14 08:19</td>
+                        <td class="time">2026-09-14 09:05</td>
+                        <td class="dur">1h 02m</td>
+                        <td>Hardware</td>
+                        <td>On-site fix</td>
+                      </tr>
+                      <tr>
+                        <td class="num">INC0012902</td>
+                        <td class="time">2026-09-15 22:47</td>
+                        <td>1 - Critical</td>
+                        <td>Resolved</td>
+                        <td>Payment Gateway PRD</td>
+                        <td>3-D Secure callback errors during peak</td>
+                        <td class="time">2026-09-15 22:53</td>
+                        <td class="time">2026-09-16 01:12</td>
+                        <td class="dur sla-breach-r">2h 25m</td>
+                        <td>Software - defect</td>
+                        <td>Hotfix</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="summaryWrap" class="hidden">
+                  <div id="sumMeta"></div>
+                  <div class="table-wrapper">
+                    <table id="sumIncTbl" class="sum-table incident-table">
+                      <colgroup>
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                      </colgroup>
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <div class="table-wrapper">
+                    <table id="sumProbTbl" class="sum-table problem-table">
+                      <colgroup>
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                      </colgroup>
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="summaryDetailsWrap" class="hidden">
+                  <div id="sdMeta" class="text-[12px] text-dim my-2"></div>
+                  <div id="sdNarrative" class="my-3"></div>
+                  <h3 class="text-[13px] text-accent mt-4 mb-1">
+                    Key Incidents (P1/P2, last week)
+                  </h3>
+                  <div class="table-wrapper">
+                    <table id="sdKeyIncTbl" class="sum-table">
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Implemented (last week)</h3>
+                  <div class="table-wrapper">
+                    <table id="sdImplTbl" class="sum-table">
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Planned (next week)</h3>
+                  <div class="table-wrapper">
+                    <table id="sdPlannedTbl" class="sum-table">
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <h3 class="text-[13px] text-accent mt-4 mb-1">Changes Failed (last week)</h3>
+                  <div class="table-wrapper">
+                    <table id="sdFailedTbl" class="sum-table">
+                      <thead></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="ticketStatsModal" class="hidden">
+                  <div id="ticketStatsCard">
+                    <div class="mapHead">
+                      <span>Ticket stats</span
+                      ><button id="ticketStatsClose" class="btn" data-tip="Close">✕</button>
+                    </div>
+                    <div id="ticketStatsBody"></div>
+                  </div>
+                </div>
+                <div id="splitPreviewModal" class="hidden">
+                  <div id="splitPreviewCard">
+                    <div class="mapHead">
+                      <span>Export split preview</span
+                      ><button id="splitPreviewClose" class="btn" data-tip="Close">✕</button>
+                    </div>
+                    <p class="mapHint">
+                      How the current view splits by CI group. Choose a group to view just its
+                      tickets in the grid (session only).
+                    </p>
+                    <div id="splitPreviewBody"></div>
+                  </div>
+                </div>
+                <div id="columnEditorModal" class="hidden"></div>
+                <div id="empty" class="hidden">
+                  No pulled data yet — run a pull from the side panel first.
+                </div>
+                <div id="calclensPanel"></div>
+                <div id="mapModal" class="hidden">
+                  <div id="letterPop" class="hidden">
+                    <input id="letterSearch" placeholder="Search A–AN…" />
+                    <div id="letterList"></div>
+                  </div>
+                  <div id="mapCard">
+                    <div class="mapHead">
+                      <span>Export column mapping</span
+                      ><button id="mapClose" class="btn" data-tip="Close">✕</button>
+                    </div>
+                    <p class="mapHint">
+                      Pick the Excel column (A–AN) each field is written to. A field exports to one
+                      column; unmapped fields are skipped and unmapped columns stay as the template
+                      has them.
+                    </p>
+                    <input id="mapSearch" placeholder="Search fields…" />
+                    <div id="mapList"></div>
+                    <div class="mapFoot">
+                      <button id="mapReset" class="btn">Reset to template default</button>
+                      <span class="spacer"></span>
+                      <button id="mapSave" class="btn-primary mapSave">Save mapping</button>
+                    </div>
+                  </div>
+                </div>
+                <div id="ciModal" class="hidden">
+                  <div id="ciCard">
+                    <div class="mapHead">
+                      <span>Split export by configuration item</span
+                      ><button id="ciClose" class="btn" data-tip="Close">✕</button>
+                    </div>
+                    <label class="ciToggle"
+                      ><input type="checkbox" id="ciEnabled" /> Split each export into separate
+                      files</label
+                    >
+                    <p class="mapHint">
+                      Groups become the file names. Drag configuration items between groups. An item
+                      matches every configuration item that contains it (anywhere in the name) —
+                      e.g. "Payment Gateway" also matches "Payment Gateway PRD / PreLive / DEV /
+                      TEST" and "Web Payment Gateway". Longest match wins; the rest go to Others.
+                      Add one item per box, or paste/type several separated by commas or new lines.
+                    </p>
+                    <div id="groupBoard"></div>
+                    <button id="addGroupBtn" class="btn">Add group</button>
+                    <div class="mapFoot">
+                      <span class="spacer"></span>
+                      <button id="ciSave" class="btn-primary ciSave">Save</button>
+                    </div>
+                  </div>
+                </div>
+                <div id="configModal" class="hidden">
+                  <div id="configCard">
+                    <div class="mapHead">
+                      <span>Export configuration</span
+                      ><button id="configClose" class="btn" data-tip="Close">✕</button>
+                    </div>
+                    <p class="mapHint">
+                      Exports use exactly what the data view shows — same rows, same order (search
+                      filter + sort), including your edits.
+                    </p>
+                    <div class="cfgRows">
+                      <div class="cfgRow cfgRowSplit">
+                        <span class="cfgHalf cfgHalfOpCo">
+                          <span class="cfgLabel cfgLabelHalf">Op co</span>
+                          <span class="cfgActions cfgActionsHalf">
+                            <span class="cfgCombo cfgComboNarrow">
+                              <input
+                                id="cfgOpCo"
+                                type="text"
+                                class="ce-input"
+                                maxlength="8"
+                                spellcheck="false"
+                                autocomplete="off"
+                                placeholder="Op co"
+                                aria-label="Op co"
+                              />
+                              <div id="cfgOpCoMenu" class="ce-ac-menu hidden"></div>
+                            </span>
+                          </span>
+                        </span>
+                        <span class="cfgHalf">
+                          <span class="cfgLabel cfgLabelHalf">Domain</span>
+                          <span class="cfgActions cfgActionsHalf">
+                            <span class="cfgCombo">
+                              <input
+                                id="cfgDomain"
+                                type="text"
+                                class="ce-input"
+                                spellcheck="false"
+                                autocomplete="off"
+                                placeholder="Domain"
+                                aria-label="Domain"
+                              />
+                              <div id="cfgDomainMenu" class="ce-ac-menu hidden"></div>
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="cfgRow">
+                        <span class="cfgLabel">Template</span>
+                        <span class="cfgValue" id="cfgTplLabel">No template</span>
+                        <span class="cfgActions">
+                          <button id="cfgTplBtn" class="btn cfgEdit cfgTplBtn">
+                            Choose template…
+                          </button>
+                          <button id="cfgTplClear" class="btn cfgEdit cfgTplClear">Clear</button>
+                        </span>
+                      </div>
+                      <div class="cfgRow">
+                        <span class="cfgLabel">Files</span>
+                        <span class="cfgValue" id="cfgSplitLabel">Single file</span>
+                        <span class="cfgActions">
+                          <button id="cfgCiBtn" class="btn cfgEdit cfgCiBtn">Edit groups…</button>
+                        </span>
+                      </div>
+                      <div class="cfgRow">
+                        <span class="cfgLabel">Column mapping</span>
+                        <span class="cfgValue" id="cfgMapLabel">Defaults</span>
+                        <span class="cfgActions">
+                          <button id="cfgMapBtn" class="btn cfgEdit cfgMapBtn">
+                            Edit mapping…
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="radioRow" id="splitRadios">
+                      <label
+                        ><input type="radio" name="splitMode" id="radSingle" checked /> Single
+                        file</label
+                      >
+                      <label
+                        ><input type="radio" name="splitMode" id="radSplit" /> Separate files per CI
+                        group</label
+                      >
+                    </div>
+                    <div id="cfgSplitPreview" class="hidden"></div>
+                    <div class="mapFoot">
+                      <span class="spacer"></span>
+                      <button id="configExport" class="btn-primary configExport">Export</button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="cfgRow">
-                <span class="cfgLabel">Template</span>
-                <span class="cfgValue" id="cfgTplLabel">No template</span>
-                <span class="cfgActions">
-                  <button id="cfgTplBtn" class="btn cfgEdit cfgTplBtn">Choose template…</button>
-                  <button id="cfgTplClear" class="btn cfgEdit cfgTplClear">Clear</button>
-                </span>
-              </div>
-              <div class="cfgRow">
-                <span class="cfgLabel">Files</span>
-                <span class="cfgValue" id="cfgSplitLabel">Single file</span>
-                <span class="cfgActions">
-                  <button id="cfgCiBtn" class="btn cfgEdit cfgCiBtn">Edit groups…</button>
-                </span>
-              </div>
-              <div class="cfgRow">
-                <span class="cfgLabel">Column mapping</span>
-                <span class="cfgValue" id="cfgMapLabel">Defaults</span>
-                <span class="cfgActions">
-                  <button id="cfgMapBtn" class="btn cfgEdit cfgMapBtn">Edit mapping…</button>
-                </span>
-              </div>
+              <!-- ========================== /VIEWER FRAME =========================== -->
             </div>
-            <div class="radioRow" id="splitRadios">
-              <label><input type="radio" name="splitMode" id="radSingle" checked /> Single file</label>
-              <label
-                ><input type="radio" name="splitMode" id="radSplit" /> Separate files per CI
-                group</label
-              >
-            </div>
-            <div id="cfgSplitPreview" class="hidden"></div>
-            <div class="mapFoot">
-              <span class="spacer"></span>
-              <button id="configExport" class="btn-primary configExport">Export</button>
-            </div>
+            <!-- /.surface-scale -->
           </div>
-        </div>
-      </div>
-      <!-- ========================== /VIEWER FRAME =========================== -->
-            </div><!-- /.surface-scale -->
-          </div><!-- /.surface-stage -->
+          <!-- /.surface-stage -->
           <p class="surface-hint">
-            Hover or focus a card on the right — the arrow points to that control.
-            Use <kbd>Tab</kbd> to move between cards.
+            Hover or focus a card on the right — the arrow points to that control. Use
+            <kbd>Tab</kbd> to move between cards.
           </p>
-        </div><!-- /.surface-rail -->
+        </div>
+        <!-- /.surface-rail -->
 
         <div class="surface-notes">
           <section id="feature-reference" class="feature-reference">
             <h2 class="section-title">Every control, explained</h2>
             <p class="section-sub">
-              A tour of every feature in the data viewer. These descriptions
-              mirror the real extension; the viewer on the left is a static
-              sample.
+              A tour of every feature in the data viewer. These descriptions mirror the real
+              extension; the viewer on the left is a static sample.
             </p>
           </section>
-        </div><!-- /.surface-notes -->
-      </div><!-- /.surface-split -->
+        </div>
+        <!-- /.surface-notes -->
+      </div>
+      <!-- /.surface-split -->
     </main>
 
     <div id="site-footer"></div>
@@ -691,72 +759,72 @@
               body:
                 "Scope the search to a single column, or search <em>All columns</em> at once. " +
                 "Search matches the <strong>displayed</strong> value, so what you see is what you search. " +
-                'Read more in the <a href="../docs.html?p=Data-Viewer">Data Viewer docs</a>.',
+                'Read more in the <a href="../docs.html?p=Data-Viewer">Data Viewer docs</a>.'
             },
             {
               sel: "#search",
               title: "Search box",
               body:
                 "Type to filter the grid live. The filter is the first layer of the row " +
-                "pipeline (search → CI-split → attention filter), so it composes with the other filters.",
+                "pipeline (search → CI-split → attention filter), so it composes with the other filters."
             },
             {
               sel: "#searchMode",
               title: "Match mode",
               body:
                 "Choose how the text matches: <em>Contains</em>, <em>Equals</em>, " +
-                "<em>Does not contain</em>, or <em>Does not equal</em> — for including or excluding rows.",
+                "<em>Does not contain</em>, or <em>Does not equal</em> — for including or excluding rows."
             },
             {
               sel: "#searchCase",
               title: "Case sensitivity",
               body:
                 "Toggle between case-insensitive (<code>aa</code>) and case-sensitive " +
-                "(<code>Aa</code>) matching. Case-insensitive is the default.",
+                "(<code>Aa</code>) matching. Case-insensitive is the default."
             },
             {
               sel: "#count",
               title: "Result count",
               body:
                 "Shows how many rows the current filters match out of the full pulled dataset " +
-                "(here <em>Showing 12 of 128</em>). Exports use exactly these filtered, sorted rows.",
+                "(here <em>Showing 12 of 128</em>). Exports use exactly these filtered, sorted rows."
             },
             {
               sel: "#slaBar",
               title: "SLA & classification bar",
               body:
-                "The legend explains the breach colours used in the grid: <span style=\"color:#f38ba8\">resolution</span> " +
-                "SLA breach, <span style=\"color:#fab387\">response (MTTA)</span> breach, and both. " +
+                'The legend explains the breach colours used in the grid: <span style="color:#f38ba8">resolution</span> ' +
+                'SLA breach, <span style="color:#fab387">response (MTTA)</span> breach, and both. ' +
                 "On the right, a live classification tally shows how many tickets are classified, have a " +
-                'root cause set, and need attention. See <a href="../docs.html?p=Classification">Classification</a>.',
+                'root cause set, and need attention. See <a href="../docs.html?p=Classification">Classification</a>.'
             },
             {
               sel: "#tabTickets",
               title: "Tickets tab",
               body:
                 "The default view: the sortable, scrollable grid of pulled tickets plus derived " +
-                "timeline columns (assign, acknowledge, suspend, resume and derived durations).",
+                "timeline columns (assign, acknowledge, suspend, resume and derived durations)."
             },
             {
               sel: "#tabSummary",
               title: "Summary SLA tab",
               body:
                 "A rolled-up SLA summary split into incident and problem tables — the aggregate view " +
-                "that feeds the weekly report's SLA section.",
+                "that feeds the weekly report's SLA section."
             },
             {
               sel: "#tabSummaryDetails",
               title: "Weekly Summary tab",
               body:
                 "The narrative weekly view: key P1/P2 incidents, changes implemented and planned, and " +
-                "any failed changes for the reporting window.",
+                "any failed changes for the reporting window."
             },
             {
               sel: "#ticketStatsBtn",
               title: "Ticket stats",
               body:
                 "Opens a summary of the current view — state breakdown and SLA met/breached counts — " +
-                "to sanity-check a pull before you export.",
+                "to sanity-check a pull before you export."
             },
             {
               sel: "#calclensBtn",
@@ -764,8 +832,8 @@
               body:
                 "Explains <strong>how each derived value was computed</strong> for a ticket — the assign, " +
                 "acknowledge, suspend and resume moments and the durations from them — and flags rows that " +
-                'need attention. When ON, a per-rule highlight toggle and a <em>Flagged only</em> filter appear. ' +
-                'See <a href="../docs.html?p=Calclens">Calclens</a>.',
+                "need attention. When ON, a per-rule highlight toggle and a <em>Flagged only</em> filter appear. " +
+                'See <a href="../docs.html?p=Calclens">Calclens</a>.'
             },
             {
               sel: "#editModeBtn",
@@ -773,7 +841,7 @@
               body:
                 "Opens the column editor for fast bulk edits to a <strong>single column</strong> across the " +
                 "current view. It is type-aware: MSR dropdown columns (Root cause category, Solution type…) are " +
-                "restricted to their configured option lists, so edits always validate against export.",
+                "restricted to their configured option lists, so edits always validate against export."
             },
             {
               sel: "#copyMsrBtn",
@@ -781,28 +849,28 @@
               body:
                 "Copies the current view's rows — formatted and in MSR column order — to the clipboard so you " +
                 "<strong>paste</strong> them into your Monthly Status Report. Pasting rows in (rather than " +
-                'overwriting the file) keeps the MSR\'s history and formulas intact. See <a href="../docs.html?p=Export">Export</a>.',
+                'overwriting the file) keeps the MSR\'s history and formulas intact. See <a href="../docs.html?p=Export">Export</a>.'
             },
             {
               sel: "#colsBtn",
               title: "Columns",
               body:
                 "Choose which columns are shown, reset column widths or order, and search the column list. " +
-                "Column visibility, order and widths are remembered.",
+                "Column visibility, order and widths are remembered."
             },
             {
               sel: "#clearBtn",
               title: "Clear",
               body:
                 "Clears the pulled dataset from the viewer, returning it to the empty state until the next pull " +
-                "from the side panel.",
+                "from the side panel."
             },
             {
               sel: "#splitPreviewBtn",
               title: "Split preview",
               body:
                 "Previews how the current view splits by CI group before export. You can pick a group to view " +
-                "just its tickets in the grid (session only) — useful for multi-CI tickets.",
+                "just its tickets in the grid (session only) — useful for multi-CI tickets."
             },
             {
               sel: "#exportBtn",
@@ -810,25 +878,25 @@
               body:
                 "Opens the <em>Export configuration</em> dialog, then fills and downloads the WSR (Weekly Status " +
                 "Report) workbook — patching only the target sheet's cells so the template's formatting and " +
-                'formulas are preserved. See <a href="../docs.html?p=Export">Export</a>.',
+                'formulas are preserved. See <a href="../docs.html?p=Export">Export</a>.'
             },
             {
               sel: "#tbl thead th.sorted",
               title: "Sortable, resizable headers",
               body:
                 "Click a header to sort (click again to reverse — the ▾/▴ arrow shows direction). Drag a " +
-                "header's right edge to resize, or use its ⋮ menu to sort and pin. Column order and widths persist.",
+                "header's right edge to resize, or use its ⋮ menu to sort and pin. Column order and widths persist."
             },
             {
               sel: "#tbl tbody tr:first-child td.num",
               title: "Typed & editable cells",
               body:
-                "Cells are typed and colour-coded: <span style=\"color:#89b4fa\">numbers</span>, " +
-                "<span style=\"color:#94e2d5\">instance-clock times</span>, and " +
-                "<span style=\"color:#cba6f7\">durations</span>. SLA-breach cells are tinted red/peach. " +
-                "In edit mode, clicking a cell bulk-edits that column across the current view.",
-            },
-          ],
+                'Cells are typed and colour-coded: <span style="color:#89b4fa">numbers</span>, ' +
+                '<span style="color:#94e2d5">instance-clock times</span>, and ' +
+                '<span style="color:#cba6f7">durations</span>. SLA-breach cells are tinted red/peach. ' +
+                "In edit mode, clicking a cell bulk-edits that column across the current view."
+            }
+          ]
         });
       });
     </script>

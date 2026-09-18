@@ -11,26 +11,26 @@
   "use strict";
 
   function rootPrefix() {
-    var root = document.body.getAttribute("data-site-root");
+    const root = document.body.getAttribute("data-site-root");
     return root && root.length ? root.replace(/\/$/, "") : ".";
   }
 
-  var NAV = [
+  const NAV = [
     { key: "home", label: "Overview", href: "index.html" },
     { key: "panel", label: "Side Panel", href: "surfaces/panel.html" },
     { key: "viewer", label: "Data Viewer", href: "surfaces/viewer.html" },
     { key: "settings", label: "Settings", href: "surfaces/settings.html" },
-    { key: "docs", label: "Docs", href: "docs.html?p=Home" },
+    { key: "docs", label: "Docs", href: "docs.html?p=Home" }
   ];
 
   function buildHeader(active, root) {
-    var header = document.createElement("header");
+    const header = document.createElement("header");
     header.className = "site-header";
 
-    var inner = document.createElement("div");
+    const inner = document.createElement("div");
     inner.className = "site-header-inner";
 
-    var brand = document.createElement("a");
+    const brand = document.createElement("a");
     brand.className = "site-brand";
     brand.href = root + "/index.html";
     brand.innerHTML =
@@ -39,12 +39,12 @@
       '<span class="site-brand-tag">docs &amp; UI guide</span>';
     inner.appendChild(brand);
 
-    var nav = document.createElement("nav");
+    const nav = document.createElement("nav");
     nav.className = "site-nav";
     nav.setAttribute("aria-label", "Primary");
 
     NAV.forEach(function (item) {
-      var a = document.createElement("a");
+      const a = document.createElement("a");
       a.className = "site-nav-link" + (item.key === active ? " is-active" : "");
       a.href = root + "/" + item.href;
       a.textContent = item.label;
@@ -58,7 +58,7 @@
   }
 
   function buildFooter(root) {
-    var footer = document.createElement("footer");
+    const footer = document.createElement("footer");
     footer.className = "site-footer";
     footer.innerHTML =
       '<div class="site-footer-inner">' +
@@ -71,13 +71,13 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    var active = document.body.getAttribute("data-site-page") || "";
-    var root = rootPrefix();
+    const active = document.body.getAttribute("data-site-page") || "";
+    const root = rootPrefix();
 
-    var headerMount = document.getElementById("site-header");
+    const headerMount = document.getElementById("site-header");
     if (headerMount) headerMount.replaceWith(buildHeader(active, root));
 
-    var footerMount = document.getElementById("site-footer");
+    const footerMount = document.getElementById("site-footer");
     if (footerMount) footerMount.replaceWith(buildFooter(root));
   });
 })();

@@ -25,7 +25,7 @@ const output = resolve(__dirname, "assets/css/app.css");
 
 for (const [label, p] of [
   ["Tailwind CLI", tailwindBin],
-  ["input CSS", input],
+  ["input CSS", input]
 ]) {
   if (!existsSync(p)) {
     console.error(`build-css: ${label} not found at ${p}`);
@@ -36,11 +36,10 @@ for (const [label, p] of [
 console.log("build-css: compiling", input);
 console.log("build-css:   ->", output);
 
-const result = spawnSync(
-  tailwindBin,
-  ["-i", input, "-o", output, "--minify"],
-  { cwd: repoRoot, stdio: "inherit" },
-);
+const result = spawnSync(tailwindBin, ["-i", input, "-o", output, "--minify"], {
+  cwd: repoRoot,
+  stdio: "inherit"
+});
 
 if (result.error) {
   console.error("build-css: failed to run Tailwind CLI:", result.error.message);

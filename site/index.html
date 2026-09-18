@@ -20,16 +20,14 @@
       <!-- ───────────────────────── Hero ───────────────────────── -->
       <section class="hero">
         <h1>
-          The <span class="accent">Autonomous Reports Engine</span>, explained
-          screen by screen.
+          The <span class="accent">Autonomous Reports Engine</span>, explained screen by screen.
         </h1>
         <p class="lead">
-          A Chrome (Manifest V3) side-panel extension that pulls ServiceNow
-          ticket timelines, analyzes SLA performance, classifies resolution
-          notes, and exports a filled Excel report — running entirely offline
-          and reusing your existing logged-in ServiceNow session, so it needs no
-          API keys. This site recreates each interface with annotated callouts
-          and hosts the full documentation.
+          A Chrome (Manifest V3) side-panel extension that pulls ServiceNow ticket timelines,
+          analyzes SLA performance, classifies resolution notes, and exports a filled Excel report —
+          running entirely offline and reusing your existing logged-in ServiceNow session, so it
+          needs no API keys. This site recreates each interface with annotated callouts and hosts
+          the full documentation.
         </p>
         <div class="hero-cta">
           <a class="site-btn primary" href="surfaces/panel.html">Explore the interface</a>
@@ -41,55 +39,51 @@
       <!-- ───────────────────── What it does ───────────────────── -->
       <h2 class="section-title">What it does</h2>
       <p class="section-sub">
-        A pull reuses your open ServiceNow tab's session, reconstructs each
-        ticket's timeline and SLA metrics, classifies the closure notes, and
-        writes the results to local storage — which the Data Viewer reads for
-        search, editing, and export.
+        A pull reuses your open ServiceNow tab's session, reconstructs each ticket's timeline and
+        SLA metrics, classifies the closure notes, and writes the results to local storage — which
+        the Data Viewer reads for search, editing, and export.
       </p>
       <div class="diagram">
         <div class="mermaid">
-flowchart LR
-    SN[(ServiceNow<br/>instance)] -->|session auth via open tab| PULL[Pull pipeline<br/>Phase 1 + Phase 2]
-    PULL -->|write dataset| LOC[[chrome.storage.local<br/>dataset + settings]]
-    LOC -->|read dataset| VIEW[Data Viewer<br/>search / edit / classify]
-    VIEW -->|write edits| LOC
-    VIEW --> EXPORT[Export Excel workbook<br/>+ Copy for MSR]
-    PULL <-->|query + timeline cache| DB[(IndexedDB caches)]
-    VIEW <-->|classification + ML model| DB
+          flowchart LR SN[(ServiceNow<br />instance)] -->|session auth via open tab| PULL[Pull
+          pipeline<br />Phase 1 + Phase 2] PULL -->|write dataset| LOC[[chrome.storage.local<br />dataset
+          + settings]] LOC -->|read dataset| VIEW[Data Viewer<br />search / edit / classify] VIEW
+          -->|write edits| LOC VIEW --> EXPORT[Export Excel workbook<br />+ Copy for MSR] PULL
+          <-->|query + timeline cache| DB[(IndexedDB caches)] VIEW <-->|classification + ML model|
+          DB
         </div>
       </div>
 
       <!-- ───────────────── The three surfaces ─────────────────── -->
       <h2 class="section-title">The three surfaces</h2>
       <p class="section-sub">
-        Each page is a faithful, static recreation of the real extension UI —
-        built from the same markup and stylesheet — with numbered callouts
-        explaining every control. The mockups use sample data and are inert (no
-        live connection).
+        Each page is a faithful, static recreation of the real extension UI — built from the same
+        markup and stylesheet — with numbered callouts explaining every control. The mockups use
+        sample data and are inert (no live connection).
       </p>
       <div class="card-grid">
         <a class="info-card" href="surfaces/panel.html">
           <span class="info-card-kicker">Surface 1 · Side panel</span>
           <h3>Side Panel</h3>
           <p>
-            Connect to your instance, build filters and presets, preview the
-            match count, and run a pull. The command center of the extension.
+            Connect to your instance, build filters and presets, preview the match count, and run a
+            pull. The command center of the extension.
           </p>
         </a>
         <a class="info-card" href="surfaces/viewer.html">
           <span class="info-card-kicker">Surface 2 · Full tab</span>
           <h3>Data Viewer</h3>
           <p>
-            Search and sort, bulk-edit a column, classify, inspect derivations
-            with Calclens, review the SLA summary, and export the workbook.
+            Search and sort, bulk-edit a column, classify, inspect derivations with Calclens, review
+            the SLA summary, and export the workbook.
           </p>
         </a>
         <a class="info-card" href="surfaces/settings.html">
           <span class="info-card-kicker">Surface 3 · Options</span>
           <h3>Settings</h3>
           <p>
-            Instance and scope, queues and team members, classification mode and
-            model, MSR option lists and keywords, and settings backup.
+            Instance and scope, queues and team members, classification mode and model, MSR option
+            lists and keywords, and settings backup.
           </p>
         </a>
       </div>
@@ -101,62 +95,60 @@ flowchart LR
         <li>
           <strong>Session-based pull</strong>
           <span
-            >Reads incident / RFS / problem / task tickets through your
-            logged-in ServiceNow tab. No credentials stored, no API keys.</span
+            >Reads incident / RFS / problem / task tickets through your logged-in ServiceNow tab. No
+            credentials stored, no API keys.</span
           >
         </li>
         <li>
           <strong>Queue timelines &amp; SLA</strong>
           <span
-            >Reconstructs assign, acknowledge, suspend and resume moments from
-            audit history and derives SLA metrics on the instance clock.</span
+            >Reconstructs assign, acknowledge, suspend and resume moments from audit history and
+            derives SLA metrics on the instance clock.</span
           >
         </li>
         <li>
           <strong>Automatic classification</strong>
           <span
-            >Fills root-cause category and solution type from closure notes with
-            an offline scorer, plus an optional local ML model.</span
+            >Fills root-cause category and solution type from closure notes with an offline scorer,
+            plus an optional local ML model.</span
           >
         </li>
         <li>
           <strong>Data viewer</strong>
           <span
-            >Column-scoped search, a fast single-column bulk editor, CI split
-            preview, ticket stats, and Calclens explanations.</span
+            >Column-scoped search, a fast single-column bulk editor, CI split preview, ticket stats,
+            and Calclens explanations.</span
           >
         </li>
         <li>
           <strong>Excel export</strong>
           <span
-            >Fills a template workbook and offers Copy for MSR for pasting into
-            an existing sheet.</span
+            >Fills a template workbook and offers Copy for MSR for pasting into an existing
+            sheet.</span
           >
         </li>
         <li>
           <strong>Offline &amp; private</strong>
           <span
-            >Pulled data and settings stay local; the ML model runs entirely
-            offline after a one-time download.</span
+            >Pulled data and settings stay local; the ML model runs entirely offline after a
+            one-time download.</span
           >
         </li>
       </ul>
 
       <!-- ─────────────── How to read the mockups ──────────────── -->
       <div class="note">
-        <strong>How to read the UI mockups:</strong> each surface page shows the
-        real interface with numbered
-        <span aria-hidden="true">①②③</span> callout markers. Click a marker (or
-        tab to it and press Enter) to read what that control does, or scroll to
-        the “Every control, explained” reference list at the bottom of the page.
-        Use the <em>Hide callouts</em> toggle to see the clean interface.
+        <strong>How to read the UI mockups:</strong> each surface page shows the real interface with
+        numbered <span aria-hidden="true">①②③</span> callout markers. Click a marker (or tab to it
+        and press Enter) to read what that control does, or scroll to the “Every control, explained”
+        reference list at the bottom of the page. Use the <em>Hide callouts</em> toggle to see the
+        clean interface.
       </div>
 
       <!-- ───────────────────── Documentation ──────────────────── -->
       <h2 class="section-title">Documentation</h2>
       <p class="section-sub">
-        The complete wiki — user guide and developer guide — rendered here with
-        live diagrams.
+        The complete wiki — user guide and developer guide — rendered here with live diagrams.
       </p>
       <div class="card-grid">
         <a class="info-card" href="docs.html?p=Quick-Start">
@@ -217,8 +209,8 @@ flowchart LR
               clusterBorder: "#45475a",
               edgeLabelBackground: "#181825",
               fontFamily:
-                'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            },
+                'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+            }
           });
           var nodes = document.querySelectorAll(".mermaid");
           if (nodes.length && typeof mermaid.run === "function") {
