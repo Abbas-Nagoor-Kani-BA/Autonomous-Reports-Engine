@@ -220,14 +220,15 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (msg.type === MSG.sctaskList) {
-      container
-        .resolve(SCTASK_BULK_SERVICE)
-        .listAssigned({
-          instanceUrl: msg.instanceUrl,
-          scope: msg.scope,
-          currentUserId: msg.currentUserId,
-          onDiagnostic
-        })
+      resolveCurrentUserId(msg.instanceUrl, msg.currentUserId)
+        .then((currentUserId) =>
+          container.resolve(SCTASK_BULK_SERVICE).listAssigned({
+            instanceUrl: msg.instanceUrl,
+            scope: msg.scope,
+            currentUserId,
+            onDiagnostic
+          })
+        )
         .then((rows) => sendResponse({ ok: true, rows }))
         .catch((err) => {
           progress("diag", `${MSG.sctaskList} failed: ${err.message}`);

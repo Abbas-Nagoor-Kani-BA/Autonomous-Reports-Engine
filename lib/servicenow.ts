@@ -298,7 +298,8 @@ class ServiceNowClient {
     try {
       const res = await this.#request("/api/now/ui/user/current_user");
       const data = await res.json();
-      const id = data?.result?.userID ?? data?.userID ?? null;
+      const r = data?.result ?? data ?? {};
+      const id = r.userID ?? r.user_sys_id ?? r.sys_id ?? data?.userID ?? null;
       return typeof id === "string" && id ? id : null;
     } catch {
       return null;

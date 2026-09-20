@@ -104,3 +104,26 @@ test("updateRecord surfaces a 4xx as a clear error", async () => {
   const client = new ServiceNowClient("https://x.service-now.com", { transport });
   await assert.rejects(() => client.updateRecord("sc_task", "abc", { work_notes: "x" }), /403/);
 });
+
+test("currentUserId reads result.user_sys_id (real current_user payload shape)", async () => {
+  const { transport } = fakeTransport(() => ({
+    json: {
+      result: {
+        user_avatar: null,
+        user_sys_id: "43a3c7713bdfe610d5d5232a85e45a0b",
+        user_name: "abbas.nagoor.kani@ba.com",
+        user_display_name: "Abbas Nagoor Kani",
+        user_initials: "AK"
+      }
+    }
+  }));
+  const client = new ServiceNowClient("https://x.service-now.com", { transport });
+  const id = await client.currentUserId();
+  assert.equal(id, "43a3c7713bdfe610d5d5232a85e45a0b");
+});
+
+test("currentUserId still reads the legacy result.userID shape", async () => {
+  const { transport } = fakeTransport(() => ({ json: { result: { userID: "legacy123" } } }));
+  const client = new ServiceNowClient("https://x.service-now.com", { transport });
+  assert.equal(await client.currentUserId(), "legacy123");
+});
