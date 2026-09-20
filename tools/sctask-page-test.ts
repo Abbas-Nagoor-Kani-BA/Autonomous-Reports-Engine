@@ -209,6 +209,19 @@ test("flag then 'select flagged' adds flagged rows to the current selection (uni
   assert.deepEqual(view.getSelected(), ["s1", "s2", "s3"]);
 });
 
+test("data columns truncate and expose their full text as a tooltip", () => {
+  const { view, table } = freshView();
+  view.render(ROWS);
+  const row = table.querySelector('tbody tr[data-sys-id="s1"]') as unknown as HTMLElement;
+  const cells = [...row.querySelectorAll("td")] as unknown as HTMLElement[];
+  // Column order: [checkbox, number, shortDescription, state, group, assignedTo, updated, ...]
+  const shortDesc = cells[2];
+  assert.ok(shortDesc.className.includes("truncate"));
+  assert.equal(shortDesc.getAttribute("data-tip"), "Reset VPN access");
+  // The number cell is a link and must NOT be truncated (badges must show).
+  assert.ok(!cells[1].className.includes("truncate"));
+});
+
 test("setOverrideText renders the Comments/Work notes columns with the override text", () => {
   const { view, table } = freshView();
   view.render(ROWS);

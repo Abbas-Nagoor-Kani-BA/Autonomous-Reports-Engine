@@ -260,7 +260,16 @@ export class SctaskListView {
             );
           }
         } else {
-          td.textContent = String(row[key] ?? "");
+          const value = String(row[key] ?? "");
+          td.textContent = value;
+          // Long values (notably the short description) are truncated to keep
+          // the table tidy; hovering the cell reveals the full text.
+          if (key === "shortDescription") {
+            td.className = "px-2 py-1.5 align-top max-w-[320px] truncate";
+          } else {
+            td.className = "px-2 py-1.5 align-top max-w-[200px] truncate";
+          }
+          if (value) setTip(td, value);
         }
         tr.appendChild(td);
       }
