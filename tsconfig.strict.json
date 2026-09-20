@@ -18,6 +18,7 @@
     "platform/**/*.ts",
     "panel/**/*.ts",
     "settings/**/*.ts",
+    "sctask/**/*.ts",
     "viewer/**/*.ts",
     "worker/**/*.ts"
   ],
