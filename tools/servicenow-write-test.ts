@@ -173,3 +173,24 @@ test("fetchLastWorkNote reads work_notes off the record with display value", asy
   assert.match(calls[0].url, /sysparm_fields=work_notes/);
   assert.equal(note, "the latest note");
 });
+
+test("parseLastWorkNote extracts newest entry from the real DD-MM-YYYY format", async () => {
+  const { parseLastWorkNote } = await import("../lib/servicenow.ts");
+  const value = [
+    "20-09-2026 12:03:07 - Abbas Nagoor Kani (Work notes)",
+    "Newest update: deployed to UAT, testing in progress.",
+    "",
+    "18-09-2026 14:45:00 - Abbas Nagoor Kani (Work notes)",
+    "Older note that must not be included.",
+    "",
+    "25-08-2026 12:35:57 - Jagan Shrinivasan (Work notes)",
+    "Reassigning internally."
+  ].join("\n");
+  assert.equal(parseLastWorkNote(value), "Newest update: deployed to UAT, testing in progress.");
+});
+
+test("parseLastWorkNote handles DD-MM-YYYY single entry", async () => {
+  const { parseLastWorkNote } = await import("../lib/servicenow.ts");
+  const value = "24-08-2026 12:14:45 - Challa Sai Krishna (Work notes)\nAssigning to the team";
+  assert.equal(parseLastWorkNote(value), "Assigning to the team");
+});

@@ -36,11 +36,13 @@ export function parseLastWorkNote(displayValue: string | null | undefined): stri
   const text = String(displayValue ?? "").replace(/\r\n/g, "\n");
   if (!text.trim()) return null;
   const lines = text.split("\n");
-  // Header line: "<datetime> - <author> (<label>)" — match the leading
-  // timestamp + " - " + a trailing parenthetical. Locale-independent on the
-  // timestamp; tolerant of the author/label text.
+  // Header line: "<datetime> - <author> (<label>)". ServiceNow's journal
+  // display value formats the datetime per the user's locale, so match a
+  // leading date in either DD-MM-YYYY / MM-DD-YYYY / YYYY-MM-DD (with - or /)
+  // followed by a time, then " - ", then a trailing "(...)" parenthetical
+  // (e.g. "(Work notes)"). The parenthetical is the reliable marker.
   const isHeader = (line: string): boolean =>
-    /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}\s-\s.*\(.*\)\s*$/.test(line);
+    /^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}[ T]\d{1,2}:\d{2}(:\d{2})?\s-\s.*\(.*\)\s*$/.test(line.trim());
 
   const firstHeader = lines.findIndex(isHeader);
   if (firstHeader === -1) {
