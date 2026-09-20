@@ -95,5 +95,26 @@
     </div>
 
     <script type="module" src="./index.js"></script>
+    <!-- Confirm + progress + summary modal (Task 8). -->
+    <div
+      id="confirmModal"
+      class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
+    >
+      <div class="w-[min(640px,94vw)] max-h-[85vh] bg-card border border-line rounded-xl p-4 flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between mb-2">
+          <div id="confirmTitle" class="font-semibold text-muted text-[13px]">Confirm bulk update</div>
+          <button id="confirmClose" type="button" class="linklike" aria-label="Close">&#10005;</button>
+        </div>
+        <div id="confirmIntro" class="text-dim text-[12px] mb-2"></div>
+        <div id="confirmList" class="overflow-y-auto text-[12px] flex-1 border border-line rounded-lg p-2"></div>
+        <div id="confirmSummary" class="hidden text-[12.5px] font-semibold mt-2"></div>
+        <div class="flex gap-2 justify-end mt-3">
+          <button id="retryFailedBtn" type="button" class="btn-ghost hidden">Retry failed</button>
+          <button id="confirmCancel" type="button" class="linklike">Cancel</button>
+          <button id="confirmPost" type="button" class="btn-primary">Post</button>
+          <button id="confirmDone" type="button" class="btn-primary hidden">Done</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

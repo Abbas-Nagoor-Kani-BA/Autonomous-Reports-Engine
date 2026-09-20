@@ -252,3 +252,55 @@ test("checkWorkNotes requires an instance URL", async () => {
   const svc = harness(new FakeSnRemote());
   await assert.rejects(svc.checkWorkNotes({ instanceUrl: "", sysIds: ["s1"] }), /instance URL/i);
 });
+
+test("bulkUpdate items-path writes each ticket's OWN text", async () => {
+  const remote = new FakeSnRemote();
+  const svc = harness(remote);
+  await svc.bulkUpdate({
+    instanceUrl: INSTANCE,
+    sysIds: [],
+    items: [
+      { sysId: "s1", comments: "c1", workNotes: "w1" },
+      { sysId: "s2", workNotes: "w2only" }
+    ]
+  });
+  assert.deepEqual(remote.writes, [
+    { table: "sc_task", sysId: "s1", fields: { comments: "c1", work_notes: "w1" } },
+    { table: "sc_task", sysId: "s2", fields: { work_notes: "w2only" } }
+  ]);
+});
+
+test("bulkUpdate items-path reports partial failure and continues", async () => {
+  const remote = new FakeSnRemote();
+  remote.writeErrors["s2"] = new Error("Auth error 403");
+  const svc = harness(remote);
+  const summary = await svc.bulkUpdate({
+    instanceUrl: INSTANCE,
+    sysIds: [],
+    items: [
+      { sysId: "s1", comments: "a" },
+      { sysId: "s2", comments: "b" },
+      { sysId: "s3", comments: "c" }
+    ]
+  });
+  assert.equal(summary.succeeded, 2);
+  assert.equal(summary.failed, 1);
+  assert.deepEqual(
+    remote.writes.map((w) => w.sysId),
+    ["s1", "s3"]
+  );
+});
+
+test("bulkUpdate items-path drops items with no text and rejects when all empty", async () => {
+  const remote = new FakeSnRemote();
+  const svc = harness(remote);
+  await assert.rejects(
+    svc.bulkUpdate({
+      instanceUrl: INSTANCE,
+      sysIds: [],
+      items: [{ sysId: "s1", comments: "  ", workNotes: "" }]
+    }),
+    /nothing to post/i
+  );
+  assert.equal(remote.writes.length, 0);
+});

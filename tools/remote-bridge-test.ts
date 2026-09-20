@@ -247,3 +247,20 @@ test("checkWorkNotes sends SCTASK_CHECK_WORKNOTES with the sysIds", async () => 
     sysIds: ["s1", "s2", "s3"]
   });
 });
+
+test("bulkUpdateSctasks carries per-ticket items through the message", async () => {
+  const bridge = new RemoteBridge();
+  const items = [{ sysId: "s1", comments: "c" }];
+  const res = await bridge.bulkUpdateSctasks({
+    instanceUrl: "https://x.service-now.com",
+    sysIds: [],
+    items
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.sctaskBulkUpdate,
+    instanceUrl: "https://x.service-now.com",
+    sysIds: [],
+    items
+  });
+});

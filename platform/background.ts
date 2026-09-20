@@ -277,6 +277,7 @@ chrome.runtime.onMessage.addListener(
           sysIds: msg.sysIds,
           comments: msg.comments,
           workNotes: msg.workNotes,
+          items: msg.items,
           onRow: (r) =>
             broadcast({ type: MSG.progress, stage: "sctaskRow", detail: r.sysId, ...r }),
           onDiagnostic

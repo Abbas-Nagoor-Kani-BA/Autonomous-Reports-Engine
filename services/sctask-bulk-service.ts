@@ -49,11 +49,21 @@ export type BulkSummary = {
   results: RowResult[];
 };
 
+/** One per-ticket write target (used when posting resolved per-ticket text). */
+export type BulkUpdateItem = { sysId: string; comments?: string; workNotes?: string };
+
 export type BulkUpdateRequest = {
   instanceUrl: string;
   sysIds: string[];
   comments?: string;
   workNotes?: string;
+  /**
+   * Per-ticket text. When present it takes precedence over the shared
+   * comments/workNotes: each item is written with its OWN text. The page builds
+   * this via `resolveItems` (shared-vs-override already applied), so the service
+   * just writes what it is given.
+   */
+  items?: BulkUpdateItem[];
   /** Called as each row settles, in order, for live per-row UI. */
   onRow?: (result: RowResult) => void;
   onDiagnostic?: (d: any) => void;
@@ -143,6 +153,33 @@ export class SctaskBulkService {
    */
   async bulkUpdate(req: BulkUpdateRequest): Promise<BulkSummary> {
     if (!req.instanceUrl) throw new Error(NO_INSTANCE);
+    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
+
+    // Per-ticket path: each item carries its own already-resolved text.
+    if (req.items && req.items.length) {
+      const items = req.items
+        .map((i) => ({
+          sysId: String(i.sysId ?? "").trim(),
+          comments: String(i.comments ?? "").trim(),
+          workNotes: String(i.workNotes ?? "").trim()
+        }))
+        .filter((i) => i.sysId && (i.comments || i.workNotes));
+      if (!items.length) throw new Error("Nothing to post — enter a comment or a work note.");
+      const byId = new Map(items.map((i) => [i.sysId, i]));
+      return this.#runSequential(
+        items.map((i) => i.sysId),
+        req.onRow,
+        (sysId) => {
+          const item = byId.get(sysId);
+          return remote.updateSctaskJournals(sysId, {
+            comments: item?.comments,
+            workNotes: item?.workNotes
+          });
+        }
+      );
+    }
+
+    // Shared path: the same text for every selected ticket.
     const sysIds = (req.sysIds || []).map((s) => String(s ?? "").trim()).filter(Boolean);
     if (!sysIds.length) throw new Error("Select at least one SCTASK to update.");
     const comments = String(req.comments ?? "").trim();
@@ -151,7 +188,6 @@ export class SctaskBulkService {
       throw new Error("Enter a comment or a work note to post.");
     }
 
-    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
     return this.#runSequential(sysIds, req.onRow, (sysId) =>
       remote.updateSctaskJournals(sysId, { comments, workNotes })
     );

@@ -91,6 +91,8 @@ export type MsgSctaskBulkUpdate = {
   sysIds: string[];
   comments?: string;
   workNotes?: string;
+  /** Per-ticket resolved text; when present it takes precedence over shared. */
+  items?: { sysId: string; comments?: string; workNotes?: string }[];
 };
 export type MsgSctaskLastWorkNote = {
   type: "SCTASK_LAST_WORKNOTE";

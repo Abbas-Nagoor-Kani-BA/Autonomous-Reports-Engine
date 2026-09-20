@@ -3,7 +3,10 @@ import { registerCoreRepositories } from "../di/register-core.ts";
 import { SETTINGS_REPO, REMOTE_BRIDGE } from "../di/tokens.ts";
 import { RemoteBridge } from "../common/services/remote-bridge.ts";
 import { SctaskListView } from "./list-view.ts";
-import { OverrideStore } from "./overrides.ts";
+import { OverrideStore, resolveItems } from "./overrides.ts";
+import type { ResolvedItem } from "./overrides.ts";
+import { ConfirmModal } from "./confirm-modal.ts";
+import { showToast } from "../lib/toast.ts";
 import type { SctaskScope } from "../services/sctask-bulk-service.ts";
 
 /*
@@ -113,6 +116,65 @@ export async function bootSctaskPage(): Promise<void> {
   $("overrideCancel").addEventListener("click", closeOverride);
   $("overrideClose").addEventListener("click", closeOverride);
 
+  // Confirm/progress/summary modal.
+  const confirm = new ConfirmModal(
+    {
+      root: $("confirmModal"),
+      intro: $("confirmIntro"),
+      list: $("confirmList"),
+      summary: $("confirmSummary"),
+      postBtn: $("confirmPost") as HTMLButtonElement,
+      cancelBtn: $("confirmCancel") as HTMLButtonElement,
+      doneBtn: $("confirmDone") as HTMLButtonElement,
+      retryBtn: $("retryFailedBtn") as HTMLButtonElement,
+      closeBtn: $("confirmClose") as HTMLButtonElement
+    },
+    {
+      onPost: (items) => void postItems(items),
+      onRetry: (items) => void postItems(items)
+    }
+  );
+
+  /** Streams a bulk write, flipping per-row status live via onProgress. */
+  async function postItems(items: ResolvedItem[]): Promise<void> {
+    if (!items.length || !instanceUrl) return;
+    confirm.startPosting();
+    const off = bridge.onProgress((msg) => {
+      if (msg.stage !== "sctaskRow") return;
+      const r = msg as unknown as { detail: string; ok: boolean; error?: string };
+      confirm.markRow(String(msg.detail ?? ""), !!r.ok, r.error);
+    });
+    try {
+      const reply = await bridge.bulkUpdateSctasks({ instanceUrl, sysIds: [], items });
+      const summary = reply.summary;
+      const succeeded = summary?.succeeded ?? 0;
+      const failed = summary?.failed ?? (reply.ok ? 0 : items.length);
+      confirm.finish(succeeded, failed);
+      showToast(
+        `Bulk update: ${succeeded} succeeded, ${failed} failed`,
+        failed ? "error" : "success"
+      );
+    } catch (err) {
+      confirm.finish(0, items.length);
+      showToast(`Bulk update failed: ${(err as Error).message}`, "error");
+    } finally {
+      off();
+    }
+  }
+
+  function openConfirm(): void {
+    const items = resolveItems(
+      view.getSelected(),
+      { comments: commentsBox.value, workNotes: workNotesBox.value },
+      overrides
+    );
+    if (!items.length) {
+      showToast("Nothing to post — select tickets and enter a comment or work note.", "info");
+      return;
+    }
+    confirm.open(items, view.getRows());
+  }
+
   const loaded = await settings.load();
   const instanceUrl = String(loaded?.instanceUrl ?? "").trim();
   connState.textContent = instanceUrl || "No instance configured";
@@ -184,6 +246,7 @@ export async function bootSctaskPage(): Promise<void> {
   copyLastBtn.addEventListener("click", copyLastWorkNote);
   flagBtn.addEventListener("click", flagMissingWorkNotes);
   selectFlaggedBtn.addEventListener("click", selectFlagged);
+  updateBtn.addEventListener("click", openConfirm);
 
   await load();
   refreshControls();
