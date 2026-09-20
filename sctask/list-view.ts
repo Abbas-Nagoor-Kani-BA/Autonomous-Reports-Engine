@@ -1,7 +1,7 @@
 import { el } from "../common/components/component.ts";
 import type { SctaskRow } from "../services/sctask-bulk-service.ts";
 
-/** Column headers for the SCTASK list. Checkbox column is added in Task 7. */
+/** Data columns (the checkbox column is rendered separately, first). */
 const COLUMNS: [keyof SctaskRow, string][] = [
   ["number", "Number"],
   ["shortDescription", "Short description"],
@@ -11,21 +11,37 @@ const COLUMNS: [keyof SctaskRow, string][] = [
   ["updatedOn", "Updated"]
 ];
 
+export type SctaskListEvents = {
+  /** Fires whenever the selection changes, with live counts. */
+  selectionChange?: (info: { selected: number; total: number }) => void;
+};
+
 /**
- * Renders the SCTASK list into a plain table and owns its status line.
+ * Renders the SCTASK list with per-row checkboxes, a header select-all, and an
+ * all-column search filter. Owns its status line.
  *
- * Deliberately framework-free and DOM-only (no chrome, no messaging) so it can
- * be unit-tested under happy-dom. The bootstrap feeds it rows/status; selection
- * and inputs layer on in later tasks.
+ * Selection is tracked in a `Set<sysId>` that is INDEPENDENT of the rendered
+ * DOM, so it persists across filter changes: search "VPN", select all visible,
+ * clear the search, search "SAP", select all visible — both sets remain
+ * selected. Select-all only ever toggles the currently VISIBLE (filtered) rows.
+ *
+ * Framework-free and DOM-only so it is unit-testable under happy-dom.
  */
 export class SctaskListView {
   private readonly table: HTMLTableElement;
   private readonly status: HTMLElement;
-  private rows: SctaskRow[] = [];
+  private readonly events: SctaskListEvents;
 
-  constructor(deps: { table: HTMLTableElement; status: HTMLElement }) {
+  private rows: SctaskRow[] = [];
+  private filterText = "";
+  private readonly selected = new Set<string>();
+  /** sysIds carrying a "no work note" flag (set in Task 13). */
+  private readonly flagged = new Set<string>();
+
+  constructor(deps: { table: HTMLTableElement; status: HTMLElement }, events: SctaskListEvents = {}) {
     this.table = deps.table;
     this.status = deps.status;
+    this.events = events;
   }
 
   /** Shows a status message and hides the table (loading / empty / error). */
@@ -35,41 +51,143 @@ export class SctaskListView {
     this.table.classList.add("hidden");
   }
 
-  /** Replaces the table body with the given rows, or shows an empty message. */
+  /** Replaces the list with new rows. Clears selection/flags/filter (fresh load). */
   render(rows: SctaskRow[]): void {
     this.rows = rows;
-    if (!rows.length) {
-      this.setStatus("No SCTASKs found for this scope.");
-      return;
-    }
-    this.status.classList.add("hidden");
-    this.table.classList.remove("hidden");
-    this.table.replaceChildren(this.#head(), this.#body(rows));
+    this.selected.clear();
+    this.flagged.clear();
+    this.filterText = "";
+    this.#draw();
   }
 
-  /** Current rows (for later selection wiring). */
+  /** Filters the visible rows across ALL columns (case-insensitive substring). */
+  setFilter(text: string): void {
+    this.filterText = String(text ?? "")
+      .trim()
+      .toLowerCase();
+    this.#draw();
+  }
+
+  /** Rows currently matching the filter. */
+  visibleRows(): SctaskRow[] {
+    if (!this.filterText) return this.rows;
+    const q = this.filterText;
+    return this.rows.filter((r) =>
+      COLUMNS.some(([key]) => String(r[key] ?? "").toLowerCase().includes(q))
+    );
+  }
+
+  /** All loaded rows. */
   getRows(): SctaskRow[] {
     return this.rows;
   }
 
-  #head(): HTMLTableSectionElement {
+  /** Selected sysIds (persisted across filtering), in original row order. */
+  getSelected(): string[] {
+    return this.rows.map((r) => r.sysId).filter((id) => this.selected.has(id));
+  }
+
+  /** Adds the given sysIds to the current selection (union). Used by "select flagged". */
+  selectSysIds(sysIds: string[]): void {
+    for (const id of sysIds) if (id) this.selected.add(id);
+    this.#draw();
+  }
+
+  /** Marks sysIds as flagged (no work note) so their rows show a badge. */
+  setFlagged(sysIds: string[]): void {
+    this.flagged.clear();
+    for (const id of sysIds) if (id) this.flagged.add(id);
+    this.#draw();
+  }
+
+  /** Currently flagged sysIds. */
+  getFlagged(): string[] {
+    return this.rows.map((r) => r.sysId).filter((id) => this.flagged.has(id));
+  }
+
+  #emitSelection(): void {
+    this.events.selectionChange?.({ selected: this.selected.size, total: this.rows.length });
+  }
+
+  #draw(): void {
+    const visible = this.visibleRows();
+    if (!this.rows.length) {
+      this.setStatus("No SCTASKs found for this scope.");
+      this.#emitSelection();
+      return;
+    }
+    if (!visible.length) {
+      this.setStatus("No SCTASKs match the search.");
+      this.#emitSelection();
+      return;
+    }
+    this.status.classList.add("hidden");
+    this.table.classList.remove("hidden");
+    this.table.replaceChildren(this.#head(visible), this.#body(visible));
+    this.#emitSelection();
+  }
+
+  #head(visible: SctaskRow[]): HTMLTableSectionElement {
     const thead = document.createElement("thead");
     const tr = document.createElement("tr");
+
+    const selectAll = el("input") as HTMLInputElement;
+    selectAll.type = "checkbox";
+    selectAll.className = "accent-accent";
+    // Checked only when EVERY visible row is already selected.
+    selectAll.checked = visible.every((r) => this.selected.has(r.sysId));
+    selectAll.addEventListener("change", () => {
+      for (const r of visible) {
+        if (selectAll.checked) this.selected.add(r.sysId);
+        else this.selected.delete(r.sysId);
+      }
+      this.#draw();
+    });
+    const thCheck = el("th", "px-2 py-1.5 border-b border-line w-8");
+    thCheck.appendChild(selectAll);
+    tr.appendChild(thCheck);
+
     for (const [, label] of COLUMNS) {
-      const th = el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", label);
-      tr.appendChild(th);
+      tr.appendChild(
+        el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", label)
+      );
     }
     thead.appendChild(tr);
     return thead;
   }
 
-  #body(rows: SctaskRow[]): HTMLTableSectionElement {
+  #body(visible: SctaskRow[]): HTMLTableSectionElement {
     const tbody = document.createElement("tbody");
-    for (const row of rows) {
+    for (const row of visible) {
       const tr = el("tr", "border-b border-line/50");
       tr.dataset.sysId = row.sysId;
+
+      const box = el("input") as HTMLInputElement;
+      box.type = "checkbox";
+      box.className = "accent-accent rowCheck";
+      box.checked = this.selected.has(row.sysId);
+      box.addEventListener("change", () => {
+        if (box.checked) this.selected.add(row.sysId);
+        else this.selected.delete(row.sysId);
+        this.#emitSelection();
+      });
+      const tdCheck = el("td", "px-2 py-1.5 align-top");
+      tdCheck.appendChild(box);
+      tr.appendChild(tdCheck);
+
       for (const [key] of COLUMNS) {
-        tr.appendChild(el("td", "px-2 py-1.5 align-top", String(row[key] ?? "")));
+        const td = el("td", "px-2 py-1.5 align-top", String(row[key] ?? ""));
+        // "No work note" badge in the Number cell when flagged.
+        if (key === "number" && this.flagged.has(row.sysId)) {
+          td.appendChild(
+            el(
+              "span",
+              "ml-2 text-[10px] uppercase tracking-wide bg-bad/20 text-[#f5e0dc] rounded px-1 py-0.5",
+              "No work note"
+            )
+          );
+        }
+        tr.appendChild(td);
       }
       tbody.appendChild(tr);
     }

@@ -27,12 +27,21 @@ export async function bootSctaskPage(): Promise<void> {
   const bridge = container.resolve<RemoteBridge>(REMOTE_BRIDGE);
   const settings = container.resolve(SETTINGS_REPO);
 
-  const view = new SctaskListView({
-    table: $("sctaskTable") as HTMLTableElement,
-    status: $("listStatus")
-  });
+  const view = new SctaskListView(
+    {
+      table: $("sctaskTable") as HTMLTableElement,
+      status: $("listStatus")
+    },
+    {
+      selectionChange: ({ selected, total }) => {
+        selCount.textContent = total ? `${selected} of ${total} selected` : "";
+      }
+    }
+  );
   const scopeSel = $("scope") as HTMLSelectElement;
   const refreshBtn = $("refreshBtn") as HTMLButtonElement;
+  const searchInput = $("search") as HTMLInputElement;
+  const selCount = $("selCount");
   const connState = $("connState");
 
   const loaded = await settings.load();
@@ -63,6 +72,7 @@ export async function bootSctaskPage(): Promise<void> {
 
   scopeSel.addEventListener("change", load);
   refreshBtn.addEventListener("click", load);
+  searchInput.addEventListener("input", () => view.setFilter(searchInput.value));
   await load();
 }
 
