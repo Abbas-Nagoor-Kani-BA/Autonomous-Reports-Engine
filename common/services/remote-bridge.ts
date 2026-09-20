@@ -6,8 +6,15 @@ import type {
   MsgResolveScope,
   MsgResolveGroupMembers,
   MsgResolveGroupCis,
-  MsgRun
+  MsgRun,
+  MsgSctaskList,
+  MsgSctaskBulkUpdate,
+  MsgSctaskLastWorkNote
 } from "../../types/global.d.ts";
+import type {
+  SctaskRow,
+  BulkSummary
+} from "../../services/sctask-bulk-service.ts";
 
 /*
  * Page-side proxy for the service worker's message API.
@@ -55,6 +62,24 @@ export type ResolveGroupCisReply = {
   error?: string;
 };
 
+export type SctaskListReply = {
+  ok: boolean;
+  rows?: SctaskRow[];
+  error?: string;
+};
+
+export type SctaskBulkUpdateReply = {
+  ok: boolean;
+  summary?: BulkSummary;
+  error?: string;
+};
+
+export type SctaskLastWorkNoteReply = {
+  ok: boolean;
+  workNote?: string;
+  error?: string;
+};
+
 export type BridgeMsg = {
   type?: unknown;
   [key: string]: unknown;
@@ -69,7 +94,15 @@ export class RemoteBridge {
    * place; pages that awaited a raw sendMessage would miss it.
    */
   private request(
-    msg: MsgCount | MsgRun | MsgResolveScope | MsgResolveGroupMembers | MsgResolveGroupCis
+    msg:
+      | MsgCount
+      | MsgRun
+      | MsgResolveScope
+      | MsgResolveGroupMembers
+      | MsgResolveGroupCis
+      | MsgSctaskList
+      | MsgSctaskBulkUpdate
+      | MsgSctaskLastWorkNote
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(msg, (res: unknown) => {
@@ -119,6 +152,28 @@ export class RemoteBridge {
    */
   resolveGroupCis(req: Omit<MsgResolveGroupCis, "type">): Promise<ResolveGroupCisReply> {
     return this.request({ type: MSG.resolveGroupCis, ...req }) as Promise<ResolveGroupCisReply>;
+  }
+
+  /** Lists the current user's SCTASKs for the bulk-update page. */
+  listSctasks(req: Omit<MsgSctaskList, "type">): Promise<SctaskListReply> {
+    return this.request({ type: MSG.sctaskList, ...req }) as Promise<SctaskListReply>;
+  }
+
+  /**
+   * Appends the same comment/work note to each selected SCTASK. Per-row results
+   * stream via `onProgress` (stage "sctaskRow"); this resolves with the final
+   * summary.
+   */
+  bulkUpdateSctasks(req: Omit<MsgSctaskBulkUpdate, "type">): Promise<SctaskBulkUpdateReply> {
+    return this.request({ type: MSG.sctaskBulkUpdate, ...req }) as Promise<SctaskBulkUpdateReply>;
+  }
+
+  /** Reads the newest work note on one SCTASK, for the copy-last-work-note button. */
+  copyLastWorkNote(req: Omit<MsgSctaskLastWorkNote, "type">): Promise<SctaskLastWorkNoteReply> {
+    return this.request({
+      type: MSG.sctaskLastWorkNote,
+      ...req
+    }) as Promise<SctaskLastWorkNoteReply>;
   }
 
   /** Broadcasts that the dataset changed (e.g. a clear-cache, an export view). */

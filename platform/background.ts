@@ -11,6 +11,7 @@ import {
   PULL_SERVICE,
   CONNECTION_SERVICE,
   SCOPE_RESOLVE_SERVICE,
+  SCTASK_BULK_SERVICE,
   SETTINGS_REPO,
   SN_REMOTE_FACTORY
 } from "../di/tokens.ts";
@@ -18,12 +19,16 @@ import { createBackgroundContainer } from "../di/register-background.ts";
 import { ConnectionService } from "../services/connection-service.ts";
 import { PullService } from "../services/pull-service.ts";
 import { ScopeResolveService } from "../services/scope-resolve-service.ts";
+import { SctaskBulkService } from "../services/sctask-bulk-service.ts";
 import type {
   MsgRun,
   MsgCount,
   MsgResolveScope,
   MsgResolveGroupMembers,
-  MsgResolveGroupCis
+  MsgResolveGroupCis,
+  MsgSctaskList,
+  MsgSctaskBulkUpdate,
+  MsgSctaskLastWorkNote
 } from "../types/global.d.ts";
 
 type WorkerRequest =
@@ -32,6 +37,9 @@ type WorkerRequest =
   | MsgResolveScope
   | MsgResolveGroupMembers
   | MsgResolveGroupCis
+  | MsgSctaskList
+  | MsgSctaskBulkUpdate
+  | MsgSctaskLastWorkNote
   | { type: typeof MSG.ping };
 type SendResponse = (response: unknown) => void;
 
@@ -61,6 +69,7 @@ container.registerValue(SN_REMOTE_FACTORY, async (instanceUrl, onDiagnostic) => 
 container.registerClass(PULL_SERVICE, PullService, { singleton: true });
 container.registerClass(CONNECTION_SERVICE, ConnectionService, { singleton: true });
 container.registerClass(SCOPE_RESOLVE_SERVICE, ScopeResolveService, { singleton: true });
+container.registerClass(SCTASK_BULK_SERVICE, SctaskBulkService, { singleton: true });
 
 let running = false;
 
@@ -203,6 +212,58 @@ chrome.runtime.onMessage.addListener(
         .then((res) => sendResponse({ ok: true, items: res.items, truncated: res.truncated }))
         .catch((err) => {
           progress("diag", `${MSG.resolveGroupCis} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (msg.type === MSG.sctaskList) {
+      container
+        .resolve(SCTASK_BULK_SERVICE)
+        .listAssigned({
+          instanceUrl: msg.instanceUrl,
+          scope: msg.scope,
+          currentUserId: msg.currentUserId,
+          onDiagnostic
+        })
+        .then((rows) => sendResponse({ ok: true, rows }))
+        .catch((err) => {
+          progress("diag", `${MSG.sctaskList} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (msg.type === MSG.sctaskLastWorkNote) {
+      container
+        .resolve(SCTASK_BULK_SERVICE)
+        .copyLastWorkNote({ instanceUrl: msg.instanceUrl, sysId: msg.sysId, onDiagnostic })
+        .then((workNote) => sendResponse({ ok: true, workNote }))
+        .catch((err) => {
+          progress("diag", `${MSG.sctaskLastWorkNote} failed: ${err.message}`);
+          sendResponse({ ok: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (msg.type === MSG.sctaskBulkUpdate) {
+      // Per-row results stream to the page via PROGRESS broadcasts (stage
+      // "sctaskRow") so the UI can flip each row pending -> ok/failed live; the
+      // final summary comes back in the response.
+      container
+        .resolve(SCTASK_BULK_SERVICE)
+        .bulkUpdate({
+          instanceUrl: msg.instanceUrl,
+          sysIds: msg.sysIds,
+          comments: msg.comments,
+          workNotes: msg.workNotes,
+          onRow: (r) =>
+            broadcast({ type: MSG.progress, stage: "sctaskRow", detail: r.sysId, ...r }),
+          onDiagnostic
+        })
+        .then((summary) => sendResponse({ ok: true, summary }))
+        .catch((err) => {
+          progress("diag", `${MSG.sctaskBulkUpdate} failed: ${err.message}`);
           sendResponse({ ok: false, error: err.message });
         });
       return true;

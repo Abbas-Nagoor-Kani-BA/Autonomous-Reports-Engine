@@ -79,6 +79,24 @@ export type MsgResolveGroupCis = {
   instanceUrl: string;
   group: string;
 };
+export type MsgSctaskList = {
+  type: "SCTASK_LIST";
+  instanceUrl: string;
+  scope: "me" | "groups";
+  currentUserId?: string | null;
+};
+export type MsgSctaskBulkUpdate = {
+  type: "SCTASK_BULK_UPDATE";
+  instanceUrl: string;
+  sysIds: string[];
+  comments?: string;
+  workNotes?: string;
+};
+export type MsgSctaskLastWorkNote = {
+  type: "SCTASK_LAST_WORKNOTE";
+  instanceUrl: string;
+  sysId: string;
+};
 export type BackgroundMessage =
   | MsgRun
   | MsgCount
@@ -87,4 +105,7 @@ export type BackgroundMessage =
   | MsgSnFetch
   | MsgResolveScope
   | MsgResolveGroupMembers
-  | MsgResolveGroupCis;
+  | MsgResolveGroupCis
+  | MsgSctaskList
+  | MsgSctaskBulkUpdate
+  | MsgSctaskLastWorkNote;
