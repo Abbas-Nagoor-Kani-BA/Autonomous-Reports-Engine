@@ -17,6 +17,45 @@ export type Diagnostic = { [k: string]: unknown };
 
 type ListHistoryPayload = { entries: unknown[] };
 
+/**
+ * Extracts the newest work-note body from a record's `work_notes` display
+ * value. ServiceNow returns every journal entry concatenated newest-first, each
+ * introduced by a header line like:
+ *
+ *   2026-09-20 08:00:00 - Abbas Nagoor Kani (Work notes)
+ *   the actual note text
+ *   (blank line)
+ *   2026-09-19 ... - ... (Work notes)
+ *   older note
+ *
+ * We take everything after the first header up to the next header (or end),
+ * trimmed. Returns null when there is no work note. Pure so it is unit-testable
+ * against captured fixtures.
+ */
+export function parseLastWorkNote(displayValue: string | null | undefined): string | null {
+  const text = String(displayValue ?? "").replace(/\r\n/g, "\n");
+  if (!text.trim()) return null;
+  const lines = text.split("\n");
+  // Header line: "<datetime> - <author> (<label>)" — match the leading
+  // timestamp + " - " + a trailing parenthetical. Locale-independent on the
+  // timestamp; tolerant of the author/label text.
+  const isHeader = (line: string): boolean =>
+    /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}\s-\s.*\(.*\)\s*$/.test(line);
+
+  const firstHeader = lines.findIndex(isHeader);
+  if (firstHeader === -1) {
+    // No recognizable headers — treat the whole value as a single note.
+    return text.trim() || null;
+  }
+  // Body = lines after the first header, up to the next header (or end).
+  const body: string[] = [];
+  for (let i = firstHeader + 1; i < lines.length; i++) {
+    if (isHeader(lines[i])) break;
+    body.push(lines[i]);
+  }
+  return body.join("\n").trim() || null;
+}
+
 class ServiceNowClient {
   baseUrl: string;
   transport: TransportLike | null;
@@ -266,24 +305,25 @@ class ServiceNowClient {
   }
 
   /**
-   * The most recent work note text for a record, read from `sys_journal_field`.
+   * The most recent work note text for a record.
    *
-   * The journal field on the record concatenates every entry, so to get just
-   * the newest one we query the journal table directly, ordered by creation
-   * time descending and limited to one. Returns null when there is no work note.
+   * NOTE: the `sys_journal_field` table is ACL-restricted on many instances (a
+   * Table API read returns an empty array even when notes exist), so instead we
+   * read the record's own `work_notes` with `sysparm_display_value=true`. That
+   * returns every entry concatenated newest-first, each under a
+   * "timestamp - Author (Work notes)" header; `parseLastWorkNote` extracts the
+   * body of the first (newest) entry. Returns null when there is no work note.
    */
-  async fetchLastWorkNote(sysId: string): Promise<string | null> {
+  async fetchLastWorkNote(sysId: string, table = "sc_task"): Promise<string | null> {
     const id = String(sysId ?? "").trim();
     if (!id) return null;
-    const res = await this.#request("/api/now/table/sys_journal_field", {
-      sysparm_query: `element=work_notes^element_id=${id}^ORDERBYDESCsys_created_on`,
-      sysparm_fields: "value,sys_created_on",
-      sysparm_limit: 1
+    const res = await this.#request(`/api/now/table/${table}/${encodeURIComponent(id)}`, {
+      sysparm_fields: "work_notes",
+      sysparm_display_value: "true"
     });
     const data = await res.json().catch(() => ({}));
-    const row = (data.result || [])[0] as { value?: string } | undefined;
-    const value = String(row?.value ?? "").trim();
-    return value || null;
+    const raw = (data.result as { work_notes?: string } | undefined)?.work_notes ?? "";
+    return parseLastWorkNote(raw);
   }
 
   /**

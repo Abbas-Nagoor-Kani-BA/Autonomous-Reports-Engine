@@ -77,24 +77,22 @@ test("updateSctaskJournals rejects when neither field is provided", async () => 
   assert.equal(calls.length, 0);
 });
 
-test("fetchLastWorkNote queries sys_journal_field ordered desc, limit 1", async () => {
+test("fetchLastWorkNote reads work_notes off the record (sys_journal_field is ACL-blocked)", async () => {
   const { transport, calls } = fakeTransport(() => ({
-    json: { result: [{ value: "the latest note", sys_created_on: "2026-01-01 00:00:00" }] }
+    json: { result: { work_notes: "2026-01-01 00:00:00 - A B (Work notes)\nthe latest note" } }
   }));
   const client = new ServiceNowClient("https://x.service-now.com", { transport });
   const note = await client.fetchLastWorkNote("abc123");
 
   assert.equal(calls[0].method, "GET");
-  assert.match(calls[0].url, /sys_journal_field/);
-  assert.match(calls[0].url, /element%3Dwork_notes/);
-  assert.match(calls[0].url, /element_id%3Dabc123/);
-  assert.match(calls[0].url, /ORDERBYDESCsys_created_on/);
-  assert.match(calls[0].url, /sysparm_limit=1/);
+  assert.match(calls[0].url, /\/api\/now\/table\/sc_task\/abc123/);
+  assert.match(calls[0].url, /sysparm_fields=work_notes/);
+  assert.match(calls[0].url, /sysparm_display_value=true/);
   assert.equal(note, "the latest note");
 });
 
-test("fetchLastWorkNote returns null when there is no work note", async () => {
-  const { transport } = fakeTransport(() => ({ json: { result: [] } }));
+test("fetchLastWorkNote returns null when the record has no work note", async () => {
+  const { transport } = fakeTransport(() => ({ json: { result: { work_notes: "" } } }));
   const client = new ServiceNowClient("https://x.service-now.com", { transport });
   assert.equal(await client.fetchLastWorkNote("abc123"), null);
 });
@@ -126,4 +124,52 @@ test("currentUserId still reads the legacy result.userID shape", async () => {
   const { transport } = fakeTransport(() => ({ json: { result: { userID: "legacy123" } } }));
   const client = new ServiceNowClient("https://x.service-now.com", { transport });
   assert.equal(await client.currentUserId(), "legacy123");
+});
+
+test("parseLastWorkNote extracts the newest entry from a concatenated work_notes value", async () => {
+  const { parseLastWorkNote } = await import("../lib/servicenow.ts");
+  const value = [
+    "2026-09-20 08:00:00 - Abbas Nagoor Kani (Work notes)",
+    "newest note line one",
+    "newest note line two",
+    "",
+    "2026-09-19 09:30:00 - Someone Else (Work notes)",
+    "older note"
+  ].join("\n");
+  assert.equal(parseLastWorkNote(value), "newest note line one\nnewest note line two");
+});
+
+test("parseLastWorkNote handles a single entry", async () => {
+  const { parseLastWorkNote } = await import("../lib/servicenow.ts");
+  const value = "2026-09-20 08:00:00 - A B (Work notes)\njust one note";
+  assert.equal(parseLastWorkNote(value), "just one note");
+});
+
+test("parseLastWorkNote returns null for empty/whitespace", async () => {
+  const { parseLastWorkNote } = await import("../lib/servicenow.ts");
+  assert.equal(parseLastWorkNote(""), null);
+  assert.equal(parseLastWorkNote("   \n  "), null);
+  assert.equal(parseLastWorkNote(null), null);
+});
+
+test("parseLastWorkNote treats an unheadered value as a single note", async () => {
+  const { parseLastWorkNote } = await import("../lib/servicenow.ts");
+  assert.equal(parseLastWorkNote("plain text with no header"), "plain text with no header");
+});
+
+test("fetchLastWorkNote reads work_notes off the record with display value", async () => {
+  const { transport, calls } = fakeTransport(() => ({
+    json: {
+      result: {
+        work_notes: "2026-09-20 08:00:00 - A B (Work notes)\nthe latest note"
+      }
+    }
+  }));
+  const client = new ServiceNowClient("https://x.service-now.com", { transport });
+  const note = await client.fetchLastWorkNote("6d3753833b7ac3100a41910f23e45afe");
+  assert.equal(calls[0].method, "GET");
+  assert.match(calls[0].url, /\/api\/now\/table\/sc_task\/6d3753833b7ac3100a41910f23e45afe/);
+  assert.match(calls[0].url, /sysparm_display_value=true/);
+  assert.match(calls[0].url, /sysparm_fields=work_notes/);
+  assert.equal(note, "the latest note");
 });
