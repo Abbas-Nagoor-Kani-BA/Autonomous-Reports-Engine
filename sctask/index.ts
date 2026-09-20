@@ -121,27 +121,37 @@ export async function bootSctaskPage(): Promise<void> {
     }
     overrideDetails.appendChild(grid);
 
-    // Full work-notes history (newest first).
+    // Full work-notes history (newest first), collapsed into an accordion.
     const history = row.workNotesHistory ?? [];
-    const heading = el(
-      "div",
-      "text-dim mt-3 mb-1 font-semibold",
-      `Work notes history${history.length ? ` (${history.length})` : ""}`
-    );
-    overrideDetails.appendChild(heading);
     if (!history.length) {
+      overrideDetails.appendChild(
+        el("div", "text-dim mt-3 mb-1 font-semibold", "Work notes history")
+      );
       overrideDetails.appendChild(el("div", "text-faint italic", "No work notes yet."));
       return;
     }
-    const list = el("div", "flex flex-col gap-2 max-h-[240px] overflow-y-auto pr-1");
+
+    const acc = el("details", "mt-3 border border-line rounded-lg") as HTMLDetailsElement;
+    const summary = el(
+      "summary",
+      "cursor-pointer select-none px-2 py-1.5 text-dim font-semibold",
+      `Work notes history (${history.length})`
+    );
+    acc.appendChild(summary);
+
+    const list = el(
+      "div",
+      "flex flex-col gap-2 max-h-[240px] overflow-y-auto px-2 pb-2 pr-1 border-t border-line"
+    );
     for (const entry of history) {
-      const item = el("div", "border-l-2 border-line pl-2");
+      const item = el("div", "border-l-2 border-line pl-2 pt-2");
       const meta = [entry.when, entry.author].filter(Boolean).join(" · ");
       if (meta) item.appendChild(el("div", "text-faint text-[11px]", meta));
       item.appendChild(el("div", "text-text whitespace-pre-line break-words", entry.body));
       list.appendChild(item);
     }
-    overrideDetails.appendChild(list);
+    acc.appendChild(list);
+    overrideDetails.appendChild(acc);
   }
 
   function closeOverride(): void {
