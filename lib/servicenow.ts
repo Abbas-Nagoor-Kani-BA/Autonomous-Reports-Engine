@@ -51,12 +51,19 @@ class ServiceNowClient {
     await new Promise((r) => setTimeout(r, ms));
   }
 
-  async #request(path: string, params: Record<string, unknown> = {}): Promise<Response> {
+  async #request(
+    path: string,
+    params: Record<string, unknown> = {},
+    opts: { method?: "GET" | "PATCH" | "POST"; body?: unknown } = {}
+  ): Promise<Response> {
     const url = new URL(this.baseUrl + path);
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
     }
     const target = url.toString();
+    const method = opts.method || "GET";
+    const bodyJson =
+      opts.body !== undefined && opts.body !== null ? JSON.stringify(opts.body) : undefined;
     const started = Date.now();
     const q = String(params.sysparm_query || "");
     const shortQuery = q.length > 100 ? q.slice(0, 100) + "…" : q;
@@ -78,17 +85,20 @@ class ServiceNowClient {
       try {
         let res: Response;
         if (this.transport) {
-          const raw = await this.transport(target);
+          const raw = await this.transport(target, { method, body: bodyJson });
           if (!raw || raw.ok === false) throw new TypeError(raw?.error || "Transport failed");
           res = new Response(raw.text || "", { status: raw.status, headers: raw.headers || {} });
           res.snVia = raw.via;
           res.snHadToken = raw.hadToken;
           res.snTokenSource = raw.tokenSource || null;
         } else {
+          const directHeaders: Record<string, string> = { Accept: "application/json" };
+          if (bodyJson !== undefined) directHeaders["Content-Type"] = "application/json";
           res = await fetch(target, {
-            method: "GET",
+            method,
             credentials: "include",
-            headers: { Accept: "application/json" }
+            headers: directHeaders,
+            ...(bodyJson !== undefined ? { body: bodyJson } : {})
           });
           res.snVia = "direct";
           res.snHadToken = null;
@@ -204,6 +214,76 @@ class ServiceNowClient {
     });
     const data = await res.json();
     return (data.result || []) as Record<string, any>[];
+  }
+
+  /**
+   * PATCH a single record's fields via the Table API. Table- and field-agnostic
+   * so it serves any write (journal appends here; assignment fields later).
+   *
+   * Journal fields (`work_notes`, `comments`) always APPEND on ServiceNow — a
+   * PATCH adds a new journal entry and never overwrites history. Returns the
+   * updated record's `sys_id`/`number` (via `sysparm_fields`) so the caller can
+   * confirm the write. The CSRF token and login-page/retry handling come from
+   * `#request`.
+   */
+  async updateRecord(
+    table: string,
+    sysId: string,
+    fields: Record<string, unknown>
+  ): Promise<Record<string, any>> {
+    const id = String(sysId ?? "").trim();
+    if (!id) throw new Error("updateRecord: sysId is required");
+    if (!fields || !Object.keys(fields).length) {
+      throw new Error("updateRecord: at least one field is required");
+    }
+    const res = await this.#request(
+      `/api/now/table/${table}/${encodeURIComponent(id)}`,
+      { sysparm_fields: "sys_id,number" },
+      { method: "PATCH", body: fields }
+    );
+    const data = await res.json().catch(() => ({}));
+    return (data.result || {}) as Record<string, any>;
+  }
+
+  /**
+   * Append a comment and/or a work note to one `sc_task`. Both are optional but
+   * at least one must be non-empty. Written in a single PATCH so the two journal
+   * entries post together. Thin SCTASK-specific wrapper over `updateRecord`.
+   */
+  async updateSctaskJournals(
+    sysId: string,
+    journals: { comments?: string; workNotes?: string }
+  ): Promise<Record<string, any>> {
+    const fields: Record<string, string> = {};
+    const comments = String(journals.comments ?? "").trim();
+    const workNotes = String(journals.workNotes ?? "").trim();
+    if (comments) fields.comments = comments;
+    if (workNotes) fields.work_notes = workNotes;
+    if (!Object.keys(fields).length) {
+      throw new Error("updateSctaskJournals: provide a comment or a work note");
+    }
+    return this.updateRecord("sc_task", sysId, fields);
+  }
+
+  /**
+   * The most recent work note text for a record, read from `sys_journal_field`.
+   *
+   * The journal field on the record concatenates every entry, so to get just
+   * the newest one we query the journal table directly, ordered by creation
+   * time descending and limited to one. Returns null when there is no work note.
+   */
+  async fetchLastWorkNote(sysId: string): Promise<string | null> {
+    const id = String(sysId ?? "").trim();
+    if (!id) return null;
+    const res = await this.#request("/api/now/table/sys_journal_field", {
+      sysparm_query: `element=work_notes^element_id=${id}^ORDERBYDESCsys_created_on`,
+      sysparm_fields: "value,sys_created_on",
+      sysparm_limit: 1
+    });
+    const data = await res.json().catch(() => ({}));
+    const row = (data.result || [])[0] as { value?: string } | undefined;
+    const value = String(row?.value ?? "").trim();
+    return value || null;
   }
 
   /**
