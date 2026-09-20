@@ -114,10 +114,24 @@ export async function bootSctaskPage(): Promise<void> {
       ["Assigned to", row.assignedTo],
       ["Updated", row.updatedOn]
     ];
-    const grid = el("div", "grid grid-cols-[auto_1fr] gap-x-3 gap-y-1");
+    const grid = el("div", "grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 items-start");
     for (const [label, value] of fields) {
-      grid.appendChild(el("div", "text-dim", label));
-      grid.appendChild(el("div", "text-text whitespace-pre-line break-words", String(value ?? "")));
+      grid.appendChild(el("div", "text-faint text-[10.5px] uppercase tracking-wide pt-0.5", label));
+      if (label === "State") {
+        const wrap = el("div");
+        wrap.appendChild(
+          el(
+            "span",
+            "inline-block text-[11px] font-medium bg-accent/15 text-accent rounded px-1.5 py-0.5",
+            String(value ?? "")
+          )
+        );
+        grid.appendChild(wrap);
+      } else {
+        grid.appendChild(
+          el("div", "text-text whitespace-pre-line break-words", String(value ?? ""))
+        );
+      }
     }
     overrideDetails.appendChild(grid);
 
@@ -131,25 +145,40 @@ export async function bootSctaskPage(): Promise<void> {
       return;
     }
 
-    const acc = el("details", "mt-3 border border-line rounded-lg") as HTMLDetailsElement;
+    const acc = el(
+      "details",
+      "mt-3 border border-line rounded-lg overflow-hidden"
+    ) as HTMLDetailsElement;
     const summary = el(
       "summary",
-      "cursor-pointer select-none px-2 py-1.5 text-dim font-semibold",
-      `Work notes history (${history.length})`
+      "cursor-pointer select-none px-3 py-2 bg-card2/60 text-muted font-semibold flex items-center gap-2 hover:text-accent"
+    );
+    summary.appendChild(document.createTextNode("Work notes history"));
+    summary.appendChild(
+      el(
+        "span",
+        "text-[11px] font-semibold bg-accent/20 text-accent rounded-full px-2 py-0.5",
+        String(history.length)
+      )
     );
     acc.appendChild(summary);
 
     const list = el(
       "div",
-      "flex flex-col gap-2 max-h-[240px] overflow-y-auto px-2 pb-2 pr-1 border-t border-line"
+      "flex flex-col gap-2 max-h-[240px] overflow-y-auto p-2 border-t border-line"
     );
-    for (const entry of history) {
-      const item = el("div", "border-l-2 border-line pl-2 pt-2");
+    history.forEach((entry, idx) => {
+      // Newest entry gets an accent highlight; older ones are muted.
+      const accentBorder = idx === 0 ? "border-accent/60" : "border-line2";
+      const item = el(
+        "div",
+        `border-l-2 ${accentBorder} bg-card2/40 rounded-r-md pl-2.5 pr-2 py-1.5`
+      );
       const meta = [entry.when, entry.author].filter(Boolean).join(" · ");
-      if (meta) item.appendChild(el("div", "text-faint text-[11px]", meta));
+      if (meta) item.appendChild(el("div", "text-accent2 text-[11px] font-medium mb-0.5", meta));
       item.appendChild(el("div", "text-text whitespace-pre-line break-words", entry.body));
       list.appendChild(item);
-    }
+    });
     acc.appendChild(list);
     overrideDetails.appendChild(acc);
   }
