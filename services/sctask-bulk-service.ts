@@ -39,6 +39,32 @@ export const SCTASK_LIST_FIELDS = [
 const NO_INSTANCE =
   "No instance URL configured \u2014 set your ServiceNow instance URL in Settings first.";
 
+/** Per-row outcome reported to `onRow` as each write settles. */
+export type RowResult = { sysId: string; ok: boolean; error?: string };
+
+/** Final tally after a bulk run. `results` preserves input order. */
+export type BulkSummary = {
+  succeeded: number;
+  failed: number;
+  results: RowResult[];
+};
+
+export type BulkUpdateRequest = {
+  instanceUrl: string;
+  sysIds: string[];
+  comments?: string;
+  workNotes?: string;
+  /** Called as each row settles, in order, for live per-row UI. */
+  onRow?: (result: RowResult) => void;
+  onDiagnostic?: (d: any) => void;
+};
+
+export type CopyLastWorkNoteRequest = {
+  instanceUrl: string;
+  sysId: string;
+  onDiagnostic?: (d: any) => void;
+};
+
 /** The display label of a reference/plain cell, trimmed. */
 function displayOf(cell: unknown): string {
   if (cell && typeof cell === "object") {
@@ -84,6 +110,76 @@ export class SctaskBulkService {
     if (query === null) return [];
     const rows = await remote.listSctasks(query, SCTASK_LIST_FIELDS);
     return rows.map(normalizeRow);
+  }
+
+  /**
+   * Appends the same comment and/or work note to each selected SCTASK.
+   *
+   * Writes are SEQUENTIAL (not parallel): ServiceNow rate-limits, and the
+   * shared client already backs off on 429, so one-at-a-time keeps the run
+   * polite and the per-row order deterministic for the UI. A failed row does
+   * NOT abort the run — every row is attempted and its outcome reported via
+   * `onRow`, then tallied in the returned summary.
+   *
+   * Rejects (before any write) when nothing is selected or both fields are
+   * empty, so the confirm UI can guard cheaply and we never issue a no-op PATCH.
+   */
+  async bulkUpdate(req: BulkUpdateRequest): Promise<BulkSummary> {
+    if (!req.instanceUrl) throw new Error(NO_INSTANCE);
+    const sysIds = (req.sysIds || []).map((s) => String(s ?? "").trim()).filter(Boolean);
+    if (!sysIds.length) throw new Error("Select at least one SCTASK to update.");
+    const comments = String(req.comments ?? "").trim();
+    const workNotes = String(req.workNotes ?? "").trim();
+    if (!comments && !workNotes) {
+      throw new Error("Enter a comment or a work note to post.");
+    }
+
+    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
+    return this.#runSequential(sysIds, req.onRow, (sysId) =>
+      remote.updateSctaskJournals(sysId, { comments, workNotes })
+    );
+  }
+
+  /**
+   * The most recent work note on one SCTASK, for the "copy last work note"
+   * button that pre-fills the work-notes box. Returns "" when there is none.
+   */
+  async copyLastWorkNote(req: CopyLastWorkNoteRequest): Promise<string> {
+    if (!req.instanceUrl) throw new Error(NO_INSTANCE);
+    const sysId = String(req.sysId ?? "").trim();
+    if (!sysId) throw new Error("No SCTASK selected.");
+    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
+    return (await remote.fetchLastWorkNote(sysId)) ?? "";
+  }
+
+  /**
+   * The reusable sequential-write engine: runs `write` for each id in order,
+   * continues past failures, reports each outcome to `onRow`, and returns the
+   * ordered summary. Kept generic (a plain write callback) so a future
+   * bulk-assignment action can reuse it unchanged.
+   */
+  async #runSequential(
+    sysIds: string[],
+    onRow: ((result: RowResult) => void) | undefined,
+    write: (sysId: string) => Promise<unknown>
+  ): Promise<BulkSummary> {
+    const results: RowResult[] = [];
+    for (const sysId of sysIds) {
+      let result: RowResult;
+      try {
+        await write(sysId);
+        result = { sysId, ok: true };
+      } catch (err) {
+        result = { sysId, ok: false, error: String((err as Error)?.message || err) };
+      }
+      results.push(result);
+      onRow?.(result);
+    }
+    return {
+      succeeded: results.filter((r) => r.ok).length,
+      failed: results.filter((r) => !r.ok).length,
+      results
+    };
   }
 
   /**

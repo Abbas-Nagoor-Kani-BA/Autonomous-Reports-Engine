@@ -110,3 +110,104 @@ test("listAssigned requires an instance URL", async () => {
   const svc = harness(new FakeSnRemote());
   await assert.rejects(svc.listAssigned({ instanceUrl: "", scope: "me" }), /instance URL/i);
 });
+
+test("bulkUpdate writes each selected SCTASK sequentially and summarizes success", async () => {
+  const remote = new FakeSnRemote();
+  const svc = harness(remote);
+  const seen: { sysId: string; ok: boolean }[] = [];
+
+  const summary = await svc.bulkUpdate({
+    instanceUrl: INSTANCE,
+    sysIds: ["s1", "s2", "s3"],
+    workNotes: "bulk note",
+    onRow: (r) => seen.push({ sysId: r.sysId, ok: r.ok })
+  });
+
+  assert.equal(summary.succeeded, 3);
+  assert.equal(summary.failed, 0);
+  // per-row callback fired in input order
+  assert.deepEqual(
+    seen.map((s) => s.sysId),
+    ["s1", "s2", "s3"]
+  );
+  // each write appended the work note to sc_task
+  assert.deepEqual(
+    remote.writes.map((w) => ({ sysId: w.sysId, fields: w.fields })),
+    [
+      { sysId: "s1", fields: { work_notes: "bulk note" } },
+      { sysId: "s2", fields: { work_notes: "bulk note" } },
+      { sysId: "s3", fields: { work_notes: "bulk note" } }
+    ]
+  );
+});
+
+test("bulkUpdate continues past a failed row and reports it in the summary", async () => {
+  const remote = new FakeSnRemote();
+  remote.writeErrors["s2"] = new Error("Auth error 403");
+  const svc = harness(remote);
+  const seen: string[] = [];
+
+  const summary = await svc.bulkUpdate({
+    instanceUrl: INSTANCE,
+    sysIds: ["s1", "s2", "s3"],
+    comments: "hi",
+    onRow: (r) => seen.push(`${r.sysId}:${r.ok ? "ok" : "fail"}`)
+  });
+
+  assert.equal(summary.succeeded, 2);
+  assert.equal(summary.failed, 1);
+  assert.deepEqual(seen, ["s1:ok", "s2:fail", "s3:ok"]);
+  const failed = summary.results.find((r) => r.sysId === "s2");
+  assert.equal(failed?.ok, false);
+  assert.match(failed?.error ?? "", /403/);
+  // s1 and s3 were still written despite s2 failing
+  assert.deepEqual(
+    remote.writes.map((w) => w.sysId),
+    ["s1", "s3"]
+  );
+});
+
+test("bulkUpdate sends both comment and work note when both provided", async () => {
+  const remote = new FakeSnRemote();
+  const svc = harness(remote);
+  await svc.bulkUpdate({
+    instanceUrl: INSTANCE,
+    sysIds: ["s1"],
+    comments: "cust",
+    workNotes: "internal"
+  });
+  assert.deepEqual(remote.writes[0].fields, { comments: "cust", work_notes: "internal" });
+});
+
+test("bulkUpdate rejects when no SCTASK is selected", async () => {
+  const svc = harness(new FakeSnRemote());
+  await assert.rejects(
+    svc.bulkUpdate({ instanceUrl: INSTANCE, sysIds: [], workNotes: "x" }),
+    /at least one sctask/i
+  );
+});
+
+test("bulkUpdate rejects when both comment and work note are empty", async () => {
+  const remote = new FakeSnRemote();
+  const svc = harness(remote);
+  await assert.rejects(
+    svc.bulkUpdate({ instanceUrl: INSTANCE, sysIds: ["s1"], comments: "  ", workNotes: "" }),
+    /comment or a work note/i
+  );
+  assert.equal(remote.writes.length, 0);
+});
+
+test("copyLastWorkNote returns the newest work note for the task", async () => {
+  const remote = new FakeSnRemote();
+  remote.lastWorkNotes["s1"] = "previously posted note";
+  const svc = harness(remote);
+  const note = await svc.copyLastWorkNote({ instanceUrl: INSTANCE, sysId: "s1" });
+  assert.equal(note, "previously posted note");
+});
+
+test("copyLastWorkNote returns empty string when the task has no work note", async () => {
+  const remote = new FakeSnRemote();
+  const svc = harness(remote);
+  const note = await svc.copyLastWorkNote({ instanceUrl: INSTANCE, sysId: "s1" });
+  assert.equal(note, "");
+});
