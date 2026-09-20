@@ -225,6 +225,9 @@ export class SctaskListView {
       for (const [key] of COLUMNS) {
         const td = el("td", "px-2 py-1.5 align-top");
         if (key === "number") {
+          // Keep the number + its badges on one line so they are never clipped
+          // by the neighbouring truncating override columns.
+          td.className = "px-2 py-1.5 align-top whitespace-nowrap";
           // The number opens the SCTASK in ServiceNow in a new tab.
           const link = el(
             "a",
