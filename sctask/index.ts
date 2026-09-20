@@ -8,6 +8,7 @@ import type { ResolvedItem } from "./overrides.ts";
 import { ConfirmModal } from "./confirm-modal.ts";
 import { showToast } from "../lib/toast.ts";
 import { initTooltips } from "../lib/tooltip.ts";
+import { el } from "../common/components/component.ts";
 import type { SctaskScope, SctaskRow } from "../services/sctask-bulk-service.ts";
 
 /*
@@ -46,6 +47,7 @@ export async function bootSctaskPage(): Promise<void> {
   // Override popup elements.
   const overrideModal = $("overrideModal");
   const overrideTitle = $("overrideTitle");
+  const overrideDetails = $("overrideDetails");
   const ovComments = $("ovComments") as HTMLTextAreaElement;
   const ovWorkNotes = $("ovWorkNotes") as HTMLTextAreaElement;
 
@@ -93,10 +95,32 @@ export async function bootSctaskPage(): Promise<void> {
     editingSysId = sysId;
     const row = view.getRows().find((r) => r.sysId === sysId);
     overrideTitle.textContent = `Edit ${row?.number ?? "SCTASK"}`;
+    renderOverrideDetails(row);
     const ov = overrides.get(sysId);
     ovComments.value = ov?.comments ?? "";
     ovWorkNotes.value = ov?.workNotes ?? "";
     overrideModal.classList.remove("hidden");
+  }
+
+  /** Fills the read-only details grid in the edit popup from a loaded row. */
+  function renderOverrideDetails(row?: SctaskRow): void {
+    overrideDetails.textContent = "";
+    if (!row) return;
+    const fields: Array<[string, string]> = [
+      ["Number", row.number],
+      ["Short description", row.shortDescription],
+      ["State", row.state],
+      ["Assignment group", row.assignmentGroup],
+      ["Assigned to", row.assignedTo],
+      ["Updated", row.updatedOn],
+      ["Last work note", row.lastWorkNote || "— none —"]
+    ];
+    for (const [label, value] of fields) {
+      overrideDetails.appendChild(el("div", "text-dim", label));
+      overrideDetails.appendChild(
+        el("div", "text-text whitespace-pre-line break-words", String(value ?? ""))
+      );
+    }
   }
 
   function closeOverride(): void {

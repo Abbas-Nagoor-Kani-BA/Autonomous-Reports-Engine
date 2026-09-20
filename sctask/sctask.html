@@ -59,17 +59,29 @@
       id="overrideModal"
       class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-card2/70"
     >
-      <div class="w-[min(520px,94vw)] bg-card border border-line rounded-xl p-4">
+      <div
+        class="w-[min(760px,94vw)] max-h-[88vh] bg-card border border-line rounded-xl p-4 flex flex-col overflow-hidden"
+      >
         <div class="flex items-center justify-between mb-2">
-          <div id="overrideTitle" class="font-semibold text-muted text-[12.5px]">Edit SCTASK</div>
+          <div id="overrideTitle" class="font-semibold text-muted text-[13px]">Edit SCTASK</div>
           <button id="overrideClose" type="button" class="linklike" aria-label="Close">
             &#10005;
           </button>
         </div>
-        <label class="pnLabel" for="ovComments">Comments (customer-visible)</label>
-        <textarea id="ovComments" class="textarea w-full" rows="3"></textarea>
-        <label class="pnLabel" for="ovWorkNotes">Work notes (internal)</label>
-        <textarea id="ovWorkNotes" class="textarea w-full" rows="3"></textarea>
+
+        <div class="overflow-y-auto flex-1 pr-1">
+          <!-- Read-only ticket details, filled in openOverride(). -->
+          <div
+            id="overrideDetails"
+            class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12px] mb-3 border border-line rounded-lg p-3 bg-card2/40"
+          ></div>
+
+          <label class="pnLabel" for="ovComments">Comments (customer-visible)</label>
+          <textarea id="ovComments" class="textarea w-full" rows="4"></textarea>
+          <label class="pnLabel" for="ovWorkNotes">Work notes (internal)</label>
+          <textarea id="ovWorkNotes" class="textarea w-full" rows="4"></textarea>
+        </div>
+
         <div class="flex gap-2 justify-end mt-3">
           <button id="overrideClear" type="button" class="linklike">Clear override</button>
           <button id="overrideCancel" type="button" class="linklike">Cancel</button>
