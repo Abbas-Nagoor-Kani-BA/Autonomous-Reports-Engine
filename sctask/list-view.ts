@@ -45,7 +45,10 @@ export class SctaskListView {
   /** Per-ticket override text shown in the Comments/Work notes columns. */
   private overrideText = new Map<string, { comments: string; workNotes: string }>();
 
-  constructor(deps: { table: HTMLTableElement; status: HTMLElement }, events: SctaskListEvents = {}) {
+  constructor(
+    deps: { table: HTMLTableElement; status: HTMLElement },
+    events: SctaskListEvents = {}
+  ) {
     this.table = deps.table;
     this.status = deps.status;
     this.events = events;
@@ -82,7 +85,11 @@ export class SctaskListView {
     if (!this.filterText) return this.rows;
     const q = this.filterText;
     return this.rows.filter((r) =>
-      COLUMNS.some(([key]) => String(r[key] ?? "").toLowerCase().includes(q))
+      COLUMNS.some(([key]) =>
+        String(r[key] ?? "")
+          .toLowerCase()
+          .includes(q)
+      )
     );
   }
 
@@ -181,9 +188,7 @@ export class SctaskListView {
     tr.appendChild(thCheck);
 
     for (const [, label] of COLUMNS) {
-      tr.appendChild(
-        el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", label)
-      );
+      tr.appendChild(el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", label));
     }
     tr.appendChild(
       el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", "Comments")

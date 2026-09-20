@@ -220,34 +220,6 @@ test("bulkUpdateSctasks sends SCTASK_BULK_UPDATE with sysIds and text", async ()
   });
 });
 
-test("copyLastWorkNote sends SCTASK_LAST_WORKNOTE with the sysId", async () => {
-  const bridge = new RemoteBridge();
-  const res = await bridge.copyLastWorkNote({
-    instanceUrl: "https://x.service-now.com",
-    sysId: "s1"
-  });
-  assert.equal(res.ok, true);
-  assert.deepEqual(sent[sent.length - 1], {
-    type: MSG.sctaskLastWorkNote,
-    instanceUrl: "https://x.service-now.com",
-    sysId: "s1"
-  });
-});
-
-test("checkWorkNotes sends SCTASK_CHECK_WORKNOTES with the sysIds", async () => {
-  const bridge = new RemoteBridge();
-  const res = await bridge.checkWorkNotes({
-    instanceUrl: "https://x.service-now.com",
-    sysIds: ["s1", "s2", "s3"]
-  });
-  assert.equal(res.ok, true);
-  assert.deepEqual(sent[sent.length - 1], {
-    type: MSG.sctaskCheckWorkNotes,
-    instanceUrl: "https://x.service-now.com",
-    sysIds: ["s1", "s2", "s3"]
-  });
-});
-
 test("bulkUpdateSctasks carries per-ticket items through the message", async () => {
   const bridge = new RemoteBridge();
   const items = [{ sysId: "s1", comments: "c" }];

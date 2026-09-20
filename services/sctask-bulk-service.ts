@@ -2,6 +2,7 @@ import { SN_REMOTE_FACTORY } from "../di/tokens.ts";
 import type { SnRemoteFactory } from "../di/tokens.ts";
 import type { SnRemote, TicketRecord } from "../data/datasource/sn-remote.ts";
 import { valueOf } from "../core/scope/resolve-scope.ts";
+import { parseLastWorkNote } from "../lib/servicenow.ts";
 
 /** Which SCTASKs to list. */
 export type SctaskScope = "me" | "groups";
@@ -23,6 +24,10 @@ export type SctaskRow = {
   assignmentGroup: string;
   assignedTo: string;
   updatedOn: string;
+  /** Newest work note parsed from the record's work_notes (empty when none). */
+  lastWorkNote: string;
+  /** True when the record has at least one work note. */
+  hasWorkNote: boolean;
 };
 
 /** Fields fetched for the list (display + value via sysparm_display_value=all). */
@@ -33,7 +38,8 @@ export const SCTASK_LIST_FIELDS = [
   "state",
   "assignment_group",
   "assigned_to",
-  "sys_updated_on"
+  "sys_updated_on",
+  "work_notes"
 ];
 
 const NO_INSTANCE =
@@ -66,29 +72,6 @@ export type BulkUpdateRequest = {
   items?: BulkUpdateItem[];
   /** Called as each row settles, in order, for live per-row UI. */
   onRow?: (result: RowResult) => void;
-  onDiagnostic?: (d: any) => void;
-};
-
-export type CopyLastWorkNoteRequest = {
-  instanceUrl: string;
-  sysId: string;
-  onDiagnostic?: (d: any) => void;
-};
-
-/** Per-row work-note presence, reported to `onRow` as each check settles. */
-export type WorkNoteCheck = { sysId: string; hasWorkNote: boolean };
-
-/** Result of a work-note check across a set of SCTASKs. */
-export type CheckWorkNotesSummary = {
-  /** sysIds that have NO work note (the ones to flag). */
-  missing: string[];
-  results: WorkNoteCheck[];
-};
-
-export type CheckWorkNotesRequest = {
-  instanceUrl: string;
-  sysIds: string[];
-  onRow?: (check: WorkNoteCheck) => void;
   onDiagnostic?: (d: any) => void;
 };
 
@@ -194,48 +177,6 @@ export class SctaskBulkService {
   }
 
   /**
-   * The most recent work note on one SCTASK, for the "copy last work note"
-   * button that pre-fills the work-notes box. Returns "" when there is none.
-   */
-  async copyLastWorkNote(req: CopyLastWorkNoteRequest): Promise<string> {
-    if (!req.instanceUrl) throw new Error(NO_INSTANCE);
-    const sysId = String(req.sysId ?? "").trim();
-    if (!sysId) throw new Error("No SCTASK selected.");
-    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
-    return (await remote.fetchLastWorkNote(sysId)) ?? "";
-  }
-
-  /**
-   * Checks each SCTASK for an existing work note (sequentially, rate-limit
-   * friendly). Reports each result via `onRow` for live progress and returns
-   * the `missing` sysIds (no work note) plus the full per-row results.
-   *
-   * A read failure is treated as "has a work note" (conservative: we don't flag
-   * a ticket as missing when we simply couldn't read it), so flagging never
-   * produces false positives from transient errors.
-   */
-  async checkWorkNotes(req: CheckWorkNotesRequest): Promise<CheckWorkNotesSummary> {
-    if (!req.instanceUrl) throw new Error(NO_INSTANCE);
-    const sysIds = (req.sysIds || []).map((s) => String(s ?? "").trim()).filter(Boolean);
-    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
-
-    const results: WorkNoteCheck[] = [];
-    for (const sysId of sysIds) {
-      let hasWorkNote: boolean;
-      try {
-        const note = await remote.fetchLastWorkNote(sysId);
-        hasWorkNote = !!(note && note.trim());
-      } catch {
-        hasWorkNote = true; // don't flag on a read error
-      }
-      const check: WorkNoteCheck = { sysId, hasWorkNote };
-      results.push(check);
-      req.onRow?.(check);
-    }
-    return { missing: results.filter((r) => !r.hasWorkNote).map((r) => r.sysId), results };
-  }
-
-  /**
    * The reusable sequential-write engine: runs `write` for each id in order,
    * continues past failures, reports each outcome to `onRow`, and returns the
    * ordered summary. Kept generic (a plain write callback) so a future
@@ -282,6 +223,10 @@ export class SctaskBulkService {
 
 /** Flattens a raw sc_task record (display+value cells) to an `SctaskRow`. */
 function normalizeRow(rec: TicketRecord): SctaskRow {
+  // work_notes under sysparm_display_value=all arrives as {display_value,value};
+  // the display value is the concatenated journal text (newest first).
+  const workNotesDisplay = displayOf(rec.work_notes);
+  const lastWorkNote = parseLastWorkNote(workNotesDisplay) ?? "";
   return {
     sysId: valueOf(rec.sys_id as never),
     number: displayOf(rec.number),
@@ -289,6 +234,8 @@ function normalizeRow(rec: TicketRecord): SctaskRow {
     state: displayOf(rec.state),
     assignmentGroup: displayOf(rec.assignment_group),
     assignedTo: displayOf(rec.assigned_to),
-    updatedOn: displayOf(rec.sys_updated_on)
+    updatedOn: displayOf(rec.sys_updated_on),
+    lastWorkNote,
+    hasWorkNote: !!lastWorkNote
   };
 }

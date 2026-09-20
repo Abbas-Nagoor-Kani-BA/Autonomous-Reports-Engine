@@ -8,16 +8,17 @@ import type { ResolvedItem } from "./overrides.ts";
 import { ConfirmModal } from "./confirm-modal.ts";
 import { showToast } from "../lib/toast.ts";
 import { initTooltips } from "../lib/tooltip.ts";
-import type { SctaskScope } from "../services/sctask-bulk-service.ts";
+import type { SctaskScope, SctaskRow } from "../services/sctask-bulk-service.ts";
 
 /*
  * Composition root for the Bulk SCTASK Update page.
  *
  * The only place that knows both the concrete repositories and the DOM. Loads
- * the configured instance URL from settings, lists SCTASKs via the bridge, and
- * wires selection, the shared comment/work-note inputs, the per-ticket override
- * popup, and the copy-last-work-note helper. The confirm/write modal lands in a
- * later task; the resolution rule (shared vs override) lives in overrides.ts.
+ * the configured instance URL from settings, lists SCTASKs (the list call also
+ * returns each row's work_notes, so the newest note + "has a note" are known
+ * up front with NO per-ticket reads). All comment/work-note text is per-ticket,
+ * entered via the row popup and shown in the Comments/Work notes columns; there
+ * is no shared box. The write posts each ticket's own text.
  */
 
 function $(id: string): HTMLElement {
@@ -37,8 +38,6 @@ export async function bootSctaskPage(): Promise<void> {
   const searchInput = $("search") as HTMLInputElement;
   const selCount = $("selCount");
   const connState = $("connState");
-  const commentsBox = $("comments") as HTMLTextAreaElement;
-  const workNotesBox = $("workNotes") as HTMLTextAreaElement;
   const copyLastBtn = $("copyLastBtn") as HTMLButtonElement;
   const updateBtn = $("updateBtn") as HTMLButtonElement;
   const flagBtn = $("flagBtn") as HTMLButtonElement;
@@ -56,16 +55,12 @@ export async function bootSctaskPage(): Promise<void> {
   /** Enable/disable the action buttons from the current selection + inputs. */
   function refreshControls(): void {
     const selected = view.getSelected();
-    // Pull last work notes applies to every selected ticket.
+    // Pull last work notes + Preview & Update apply to the selected tickets.
     copyLastBtn.disabled = selected.length === 0;
-    // Postable if something is selected and there is shared text OR at least one
-    // selected ticket carries an override.
-    const hasShared = !!(commentsBox.value.trim() || workNotesBox.value.trim());
-    const hasOverride = selected.some((id) => overrides.has(id));
-    updateBtn.disabled = selected.length === 0 || (!hasShared && !hasOverride);
+    updateBtn.disabled = selected.length === 0;
   }
 
-  /** Pushes the current override text into the list's Comments/Work notes columns. */
+  /** Pushes the current per-ticket text into the Comments/Work notes columns. */
   function syncOverrides(): void {
     const map = new Map<string, { comments: string; workNotes: string }>();
     for (const id of overrides.keys()) {
@@ -173,15 +168,35 @@ export async function bootSctaskPage(): Promise<void> {
     }
   }
 
+  /**
+   * Opens the confirm modal for the selected tickets. All text is per-ticket
+   * (no shared box), so resolveItems is called with an empty shared value and
+   * only tickets that have their own text are postable. If some selected
+   * tickets have NO text, warn and let the user proceed (posting only the ones
+   * with text) or cancel.
+   */
   function openConfirm(): void {
-    const items = resolveItems(
-      view.getSelected(),
-      { comments: commentsBox.value, workNotes: workNotesBox.value },
-      overrides
-    );
-    if (!items.length) {
-      showToast("Nothing to post — select tickets and enter a comment or work note.", "info");
+    const selected = view.getSelected();
+    if (!selected.length) {
+      showToast("Select at least one SCTASK.", "info");
       return;
+    }
+    const items = resolveItems(selected, { comments: "", workNotes: "" }, overrides);
+    if (!items.length) {
+      showToast(
+        "None of the selected tickets have text — click a ticket's Comments or Work notes cell to add some.",
+        "info"
+      );
+      return;
+    }
+    const withText = new Set(items.map((i) => i.sysId));
+    const emptyCount = selected.filter((id) => !withText.has(id)).length;
+    if (emptyCount > 0) {
+      const ok = window.confirm(
+        `${emptyCount} selected ticket(s) have no text and will be skipped. ` +
+          `Post to the ${items.length} ticket(s) that do have text?`
+      );
+      if (!ok) return;
     }
     confirm.open(items, view.getRows());
   }
@@ -204,7 +219,9 @@ export async function bootSctaskPage(): Promise<void> {
         view.setStatus(reply.error || "Failed to load SCTASKs.");
         return;
       }
+      overrides.clearAll();
       view.render(reply.rows || []);
+      selectFlaggedBtn.disabled = true;
     } catch (err) {
       view.setStatus(`Failed to load SCTASKs: ${(err as Error).message}`);
     } finally {
@@ -212,51 +229,43 @@ export async function bootSctaskPage(): Promise<void> {
     }
   }
 
-  async function pullLastWorkNotes(): Promise<void> {
-    const selected = view.getSelected();
-    if (!selected.length || !instanceUrl) return;
-    copyLastBtn.disabled = true;
-    const original = copyLastBtn.textContent;
-    copyLastBtn.textContent = "Pulling…";
-    try {
-      for (const sysId of selected) {
-        try {
-          const reply = await bridge.copyLastWorkNote({ instanceUrl, sysId });
-          if (reply.ok && reply.workNote) {
-            const existing = overrides.get(sysId);
-            overrides.set(sysId, {
-              comments: existing?.comments ?? "",
-              workNotes: reply.workNote
-            });
-          }
-        } catch {
-          /* skip a ticket that fails; continue with the rest */
-        }
-      }
-      syncOverrides();
-    } finally {
-      copyLastBtn.textContent = original;
-      refreshControls();
+  /**
+   * Fills each selected ticket's Work notes override from the last work note
+   * ALREADY loaded with the list (row.lastWorkNote) — no extra API calls. A
+   * ticket's existing comments override is preserved.
+   */
+  function pullLastWorkNotes(): void {
+    const selected = new Set(view.getSelected());
+    if (!selected.size) return;
+    for (const row of view.getRows()) {
+      if (!selected.has(row.sysId) || !row.lastWorkNote) continue;
+      const existing = overrides.get(row.sysId);
+      overrides.set(row.sysId, {
+        comments: existing?.comments ?? "",
+        workNotes: row.lastWorkNote
+      });
     }
+    syncOverrides();
+    refreshControls();
   }
 
-  async function flagMissingWorkNotes(): Promise<void> {
-    const sysIds = view.getRows().map((r) => r.sysId);
-    if (!sysIds.length || !instanceUrl) return;
-    flagBtn.disabled = true;
-    const original = flagBtn.textContent;
-    flagBtn.textContent = "Checking…";
-    try {
-      const reply = await bridge.checkWorkNotes({ instanceUrl, sysIds });
-      if (reply.ok) {
-        const missing = reply.missing || [];
-        view.setFlagged(missing);
-        selectFlaggedBtn.disabled = missing.length === 0;
-      }
-    } finally {
-      flagBtn.disabled = false;
-      flagBtn.textContent = original;
-    }
+  /**
+   * Flags tickets that have no work note, using the data loaded with the list
+   * (row.hasWorkNote) — no extra API calls. Enables "Select flagged".
+   */
+  function flagMissingWorkNotes(): void {
+    const missing = view
+      .getRows()
+      .filter((r: SctaskRow) => !r.hasWorkNote)
+      .map((r) => r.sysId);
+    view.setFlagged(missing);
+    selectFlaggedBtn.disabled = missing.length === 0;
+    showToast(
+      missing.length
+        ? `${missing.length} ticket(s) have no work note.`
+        : "All listed tickets have a work note.",
+      "info"
+    );
   }
 
   function selectFlagged(): void {
@@ -268,8 +277,6 @@ export async function bootSctaskPage(): Promise<void> {
   scopeSel.addEventListener("change", load);
   refreshBtn.addEventListener("click", load);
   searchInput.addEventListener("input", () => view.setFilter(searchInput.value));
-  commentsBox.addEventListener("input", refreshControls);
-  workNotesBox.addEventListener("input", refreshControls);
   copyLastBtn.addEventListener("click", pullLastWorkNotes);
   flagBtn.addEventListener("click", flagMissingWorkNotes);
   selectFlaggedBtn.addEventListener("click", selectFlagged);

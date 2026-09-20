@@ -42,8 +42,24 @@ const ITEMS = [
   { sysId: "s2", comments: "", workNotes: "just a note" }
 ];
 const ROWS = [
-  { sysId: "s1", number: "SCTASK0001", shortDescription: "", state: "", assignmentGroup: "", assignedTo: "", updatedOn: "" },
-  { sysId: "s2", number: "SCTASK0002", shortDescription: "", state: "", assignmentGroup: "", assignedTo: "", updatedOn: "" }
+  {
+    sysId: "s1",
+    number: "SCTASK0001",
+    shortDescription: "",
+    state: "",
+    assignmentGroup: "",
+    assignedTo: "",
+    updatedOn: ""
+  },
+  {
+    sysId: "s2",
+    number: "SCTASK0002",
+    shortDescription: "",
+    state: "",
+    assignmentGroup: "",
+    assignedTo: "",
+    updatedOn: ""
+  }
 ];
 
 test("open shows resolved per-ticket text and the target count", () => {

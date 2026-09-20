@@ -27,9 +27,7 @@ import type {
   MsgResolveGroupMembers,
   MsgResolveGroupCis,
   MsgSctaskList,
-  MsgSctaskBulkUpdate,
-  MsgSctaskLastWorkNote,
-  MsgSctaskCheckWorkNotes
+  MsgSctaskBulkUpdate
 } from "../types/global.d.ts";
 
 type WorkerRequest =
@@ -40,8 +38,6 @@ type WorkerRequest =
   | MsgResolveGroupCis
   | MsgSctaskList
   | MsgSctaskBulkUpdate
-  | MsgSctaskLastWorkNote
-  | MsgSctaskCheckWorkNotes
   | { type: typeof MSG.ping };
 type SendResponse = (response: unknown) => void;
 
@@ -232,36 +228,6 @@ chrome.runtime.onMessage.addListener(
         .then((rows) => sendResponse({ ok: true, rows }))
         .catch((err) => {
           progress("diag", `${MSG.sctaskList} failed: ${err.message}`);
-          sendResponse({ ok: false, error: err.message });
-        });
-      return true;
-    }
-
-    if (msg.type === MSG.sctaskLastWorkNote) {
-      container
-        .resolve(SCTASK_BULK_SERVICE)
-        .copyLastWorkNote({ instanceUrl: msg.instanceUrl, sysId: msg.sysId, onDiagnostic })
-        .then((workNote) => sendResponse({ ok: true, workNote }))
-        .catch((err) => {
-          progress("diag", `${MSG.sctaskLastWorkNote} failed: ${err.message}`);
-          sendResponse({ ok: false, error: err.message });
-        });
-      return true;
-    }
-
-    if (msg.type === MSG.sctaskCheckWorkNotes) {
-      container
-        .resolve(SCTASK_BULK_SERVICE)
-        .checkWorkNotes({
-          instanceUrl: msg.instanceUrl,
-          sysIds: msg.sysIds,
-          onRow: (r) =>
-            broadcast({ type: MSG.progress, stage: "sctaskCheck", detail: r.sysId, ...r }),
-          onDiagnostic
-        })
-        .then((res) => sendResponse({ ok: true, missing: res.missing, results: res.results }))
-        .catch((err) => {
-          progress("diag", `${MSG.sctaskCheckWorkNotes} failed: ${err.message}`);
           sendResponse({ ok: false, error: err.message });
         });
       return true;

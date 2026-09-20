@@ -31,7 +31,5 @@ export const MSG = Object.freeze({
   resolveGroupMembers: "RESOLVE_GROUP_MEMBERS",
   resolveGroupCis: "RESOLVE_GROUP_CIS",
   sctaskList: "SCTASK_LIST",
-  sctaskBulkUpdate: "SCTASK_BULK_UPDATE",
-  sctaskLastWorkNote: "SCTASK_LAST_WORKNOTE",
-  sctaskCheckWorkNotes: "SCTASK_CHECK_WORKNOTES"
+  sctaskBulkUpdate: "SCTASK_BULK_UPDATE"
 } as const);

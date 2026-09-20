@@ -37,6 +37,11 @@ export class OverrideStore {
     this.map.delete(sysId);
   }
 
+  /** Removes every override (e.g. on a fresh list load). */
+  clearAll(): void {
+    this.map.clear();
+  }
+
   get(sysId: string): Override | undefined {
     return this.map.get(sysId);
   }

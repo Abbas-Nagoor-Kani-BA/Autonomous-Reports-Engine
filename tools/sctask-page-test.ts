@@ -193,9 +193,7 @@ test("flag then 'select flagged' adds flagged rows to the current selection (uni
 test("setOverrideText renders the Comments/Work notes columns with the override text", () => {
   const { view, table } = freshView();
   view.render(ROWS);
-  view.setOverrideText(
-    new Map([["s2", { comments: "cust text", workNotes: "internal text" }]])
-  );
+  view.setOverrideText(new Map([["s2", { comments: "cust text", workNotes: "internal text" }]]));
   const row = table.querySelector('tbody tr[data-sys-id="s2"]') as unknown as HTMLElement;
   const cells = [...row.querySelectorAll(".overrideCell")] as unknown as HTMLElement[];
   assert.equal(cells.length, 2);

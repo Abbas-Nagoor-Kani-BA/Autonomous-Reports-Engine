@@ -112,7 +112,13 @@ export class ConfirmModal {
     const dot = row.querySelector(".statusDot") as HTMLElement | null;
     if (dot) {
       dot.textContent =
-        status === "ok" ? "\u2714" : status === "failed" ? "\u2717" : status === "pending" ? "\u2026" : "\u2022";
+        status === "ok"
+          ? "\u2714"
+          : status === "failed"
+            ? "\u2717"
+            : status === "pending"
+              ? "\u2026"
+              : "\u2022";
       dot.className = `statusDot ${
         status === "ok" ? "text-good" : status === "failed" ? "text-bad" : "text-dim"
       }`;

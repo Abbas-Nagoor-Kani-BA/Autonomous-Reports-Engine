@@ -16,7 +16,7 @@ function harness(remote: FakeSnRemote): SctaskBulkService {
 }
 
 /** A raw sc_task record in the display+value shape the Table API returns. */
-function rawTask(sysId: string, number: string, short: string, state: string) {
+function rawTask(sysId: string, number: string, short: string, state: string, workNotes = "") {
   return {
     sys_id: { value: sysId, display_value: sysId },
     number: { value: number, display_value: number },
@@ -24,14 +24,23 @@ function rawTask(sysId: string, number: string, short: string, state: string) {
     state: { value: "1", display_value: state },
     assignment_group: { value: "g1", display_value: "Service Desk" },
     assigned_to: { value: "u1", display_value: "Alice" },
-    sys_updated_on: { value: "2026-09-01 10:00:00", display_value: "2026-09-01 10:00:00" }
+    sys_updated_on: { value: "2026-09-01 10:00:00", display_value: "2026-09-01 10:00:00" },
+    work_notes: { value: workNotes, display_value: workNotes }
   };
 }
 
 test('scope "me" queries assigned_to=<userId>^active=true and normalizes rows', async () => {
   const remote = new FakeSnRemote();
   const query = "assigned_to=u1^active=true";
-  remote.sctasks[query] = [rawTask("s1", "SCTASK0001", "Reset VPN", "Open")];
+  remote.sctasks[query] = [
+    rawTask(
+      "s1",
+      "SCTASK0001",
+      "Reset VPN",
+      "Open",
+      "20-09-2026 12:03:07 - Abbas Nagoor Kani (Work notes)\nlatest note here"
+    )
+  ];
   const svc = harness(remote);
 
   const rows = await svc.listAssigned({ instanceUrl: INSTANCE, scope: "me", currentUserId: "u1" });
@@ -44,12 +53,24 @@ test('scope "me" queries assigned_to=<userId>^active=true and normalizes rows', 
     state: "Open",
     assignmentGroup: "Service Desk",
     assignedTo: "Alice",
-    updatedOn: "2026-09-01 10:00:00"
+    updatedOn: "2026-09-01 10:00:00",
+    lastWorkNote: "latest note here",
+    hasWorkNote: true
   });
   assert.deepEqual(remote.calls.at(-1), {
     method: "listSctasks",
     args: [query, SCTASK_LIST_FIELDS]
   });
+});
+
+test("list parses work_notes: no note -> lastWorkNote empty, hasWorkNote false", async () => {
+  const remote = new FakeSnRemote();
+  const query = "assigned_to=u1^active=true";
+  remote.sctasks[query] = [rawTask("s1", "SCTASK0001", "x", "Open", "")];
+  const svc = harness(remote);
+  const rows = await svc.listAssigned({ instanceUrl: INSTANCE, scope: "me", currentUserId: "u1" });
+  assert.equal(rows[0].lastWorkNote, "");
+  assert.equal(rows[0].hasWorkNote, false);
 });
 
 test('scope "me" resolves the current user id from the remote when not provided', async () => {
@@ -195,62 +216,6 @@ test("bulkUpdate rejects when both comment and work note are empty", async () =>
     /comment or a work note/i
   );
   assert.equal(remote.writes.length, 0);
-});
-
-test("copyLastWorkNote returns the newest work note for the task", async () => {
-  const remote = new FakeSnRemote();
-  remote.lastWorkNotes["s1"] = "previously posted note";
-  const svc = harness(remote);
-  const note = await svc.copyLastWorkNote({ instanceUrl: INSTANCE, sysId: "s1" });
-  assert.equal(note, "previously posted note");
-});
-
-test("copyLastWorkNote returns empty string when the task has no work note", async () => {
-  const remote = new FakeSnRemote();
-  const svc = harness(remote);
-  const note = await svc.copyLastWorkNote({ instanceUrl: INSTANCE, sysId: "s1" });
-  assert.equal(note, "");
-});
-
-test("checkWorkNotes flags only tickets with no work note", async () => {
-  const remote = new FakeSnRemote();
-  remote.lastWorkNotes["s1"] = "has a note";
-  remote.lastWorkNotes["s2"] = null; // missing
-  remote.lastWorkNotes["s3"] = "   "; // blank counts as missing
-  const svc = harness(remote);
-  const seen: { sysId: string; hasWorkNote: boolean }[] = [];
-
-  const res = await svc.checkWorkNotes({
-    instanceUrl: INSTANCE,
-    sysIds: ["s1", "s2", "s3"],
-    onRow: (r) => seen.push(r)
-  });
-
-  assert.deepEqual(res.missing, ["s2", "s3"]);
-  assert.deepEqual(
-    seen.map((r) => `${r.sysId}:${r.hasWorkNote ? "y" : "n"}`),
-    ["s1:y", "s2:n", "s3:n"]
-  );
-});
-
-test("checkWorkNotes does not flag on a read error (conservative)", async () => {
-  const remote = new FakeSnRemote();
-  remote.lastWorkNotes["s1"] = null;
-  // Override fetchLastWorkNote to throw for s2.
-  const original = remote.fetchLastWorkNote.bind(remote);
-  remote.fetchLastWorkNote = async (sysId: string) => {
-    if (sysId === "s2") throw new Error("read failed");
-    return original(sysId);
-  };
-  const svc = harness(remote);
-
-  const res = await svc.checkWorkNotes({ instanceUrl: INSTANCE, sysIds: ["s1", "s2"] });
-  assert.deepEqual(res.missing, ["s1"]); // s2 not flagged despite no note (errored)
-});
-
-test("checkWorkNotes requires an instance URL", async () => {
-  const svc = harness(new FakeSnRemote());
-  await assert.rejects(svc.checkWorkNotes({ instanceUrl: "", sysIds: ["s1"] }), /instance URL/i);
 });
 
 test("bulkUpdate items-path writes each ticket's OWN text", async () => {

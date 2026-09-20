@@ -94,16 +94,6 @@ export type MsgSctaskBulkUpdate = {
   /** Per-ticket resolved text; when present it takes precedence over shared. */
   items?: { sysId: string; comments?: string; workNotes?: string }[];
 };
-export type MsgSctaskLastWorkNote = {
-  type: "SCTASK_LAST_WORKNOTE";
-  instanceUrl: string;
-  sysId: string;
-};
-export type MsgSctaskCheckWorkNotes = {
-  type: "SCTASK_CHECK_WORKNOTES";
-  instanceUrl: string;
-  sysIds: string[];
-};
 export type BackgroundMessage =
   | MsgRun
   | MsgCount
@@ -114,6 +104,4 @@ export type BackgroundMessage =
   | MsgResolveGroupMembers
   | MsgResolveGroupCis
   | MsgSctaskList
-  | MsgSctaskBulkUpdate
-  | MsgSctaskLastWorkNote
-  | MsgSctaskCheckWorkNotes;
+  | MsgSctaskBulkUpdate;
