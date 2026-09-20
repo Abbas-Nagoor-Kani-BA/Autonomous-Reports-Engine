@@ -58,6 +58,61 @@ export function parseLastWorkNote(displayValue: string | null | undefined): stri
   return body.join("\n").trim() || null;
 }
 
+/** A single parsed journal entry from a record's `work_notes` display value. */
+export type WorkNoteEntry = {
+  /** The raw header line, e.g. "20-09-2026 08:00:00 - Abbas (Work notes)". */
+  header: string;
+  /** Author name parsed from the header (best-effort, may be ""). */
+  author: string;
+  /** Datetime text parsed from the header (best-effort, may be ""). */
+  when: string;
+  /** The note body text (may be multi-line, trimmed). */
+  body: string;
+};
+
+/**
+ * Parses ALL journal entries from a record's `work_notes` display value,
+ * newest-first (ServiceNow's natural order). Each entry is introduced by a
+ * header line like "20-09-2026 08:00:00 - Abbas Nagoor Kani (Work notes)".
+ * Returns [] when there is no work note. Pure, so it is unit-testable against
+ * captured fixtures.
+ */
+export function parseWorkNotes(displayValue: string | null | undefined): WorkNoteEntry[] {
+  const text = String(displayValue ?? "").replace(/\r\n/g, "\n");
+  if (!text.trim()) return [];
+  const lines = text.split("\n");
+  const isHeader = (line: string): boolean =>
+    /^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}[ T]\d{1,2}:\d{2}(:\d{2})?\s-\s.*\(.*\)\s*$/.test(line.trim());
+
+  const headerIdx: number[] = [];
+  for (let i = 0; i < lines.length; i++) if (isHeader(lines[i])) headerIdx.push(i);
+
+  // No recognizable headers — treat the whole value as one unheadered entry.
+  if (headerIdx.length === 0) {
+    return [{ header: "", author: "", when: "", body: text.trim() }];
+  }
+
+  const entries: WorkNoteEntry[] = [];
+  for (let h = 0; h < headerIdx.length; h++) {
+    const start = headerIdx[h];
+    const end = h + 1 < headerIdx.length ? headerIdx[h + 1] : lines.length;
+    const header = lines[start].trim();
+    const body = lines
+      .slice(start + 1, end)
+      .join("\n")
+      .trim();
+    // Header shape: "<when> - <author> (<label>)".
+    const m = header.match(/^(.*?)\s-\s(.*?)\s*\(.*\)\s*$/);
+    entries.push({
+      header,
+      when: m ? m[1].trim() : "",
+      author: m ? m[2].trim() : "",
+      body
+    });
+  }
+  return entries;
+}
+
 class ServiceNowClient {
   baseUrl: string;
   transport: TransportLike | null;

@@ -157,6 +157,38 @@ test("parseLastWorkNote treats an unheadered value as a single note", async () =
   assert.equal(parseLastWorkNote("plain text with no header"), "plain text with no header");
 });
 
+test("parseWorkNotes returns every entry newest-first with parsed when/author", async () => {
+  const { parseWorkNotes } = await import("../lib/servicenow.ts");
+  const value = [
+    "20-09-2026 08:00:00 - Abbas Nagoor Kani (Work notes)",
+    "newest note line one",
+    "newest note line two",
+    "",
+    "19-09-2026 09:30:00 - Someone Else (Work notes)",
+    "older note"
+  ].join("\n");
+  const entries = parseWorkNotes(value);
+  assert.equal(entries.length, 2);
+  assert.deepEqual(entries[0], {
+    header: "20-09-2026 08:00:00 - Abbas Nagoor Kani (Work notes)",
+    when: "20-09-2026 08:00:00",
+    author: "Abbas Nagoor Kani",
+    body: "newest note line one\nnewest note line two"
+  });
+  assert.equal(entries[1].author, "Someone Else");
+  assert.equal(entries[1].body, "older note");
+});
+
+test("parseWorkNotes returns [] for empty and one entry for unheadered text", async () => {
+  const { parseWorkNotes } = await import("../lib/servicenow.ts");
+  assert.deepEqual(parseWorkNotes(""), []);
+  assert.deepEqual(parseWorkNotes(null), []);
+  const one = parseWorkNotes("plain text with no header");
+  assert.equal(one.length, 1);
+  assert.equal(one[0].body, "plain text with no header");
+  assert.equal(one[0].author, "");
+});
+
 test("fetchLastWorkNote reads work_notes off the record with display value", async () => {
   const { transport, calls } = fakeTransport(() => ({
     json: {

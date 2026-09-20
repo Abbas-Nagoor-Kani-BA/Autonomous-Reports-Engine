@@ -55,6 +55,14 @@ test('scope "me" queries assigned_to=<userId>^active=true and normalizes rows', 
     assignedTo: "Alice",
     updatedOn: "2026-09-01 10:00:00",
     lastWorkNote: "latest note here",
+    workNotesHistory: [
+      {
+        header: "20-09-2026 12:03:07 - Abbas Nagoor Kani (Work notes)",
+        when: "20-09-2026 12:03:07",
+        author: "Abbas Nagoor Kani",
+        body: "latest note here"
+      }
+    ],
     hasWorkNote: true
   });
   assert.deepEqual(remote.calls.at(-1), {

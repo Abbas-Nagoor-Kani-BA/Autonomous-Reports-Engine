@@ -2,7 +2,8 @@ import { SN_REMOTE_FACTORY } from "../di/tokens.ts";
 import type { SnRemoteFactory } from "../di/tokens.ts";
 import type { SnRemote, TicketRecord } from "../data/datasource/sn-remote.ts";
 import { valueOf } from "../core/scope/resolve-scope.ts";
-import { parseLastWorkNote } from "../lib/servicenow.ts";
+import { parseLastWorkNote, parseWorkNotes } from "../lib/servicenow.ts";
+import type { WorkNoteEntry } from "../lib/servicenow.ts";
 
 /** Which SCTASKs to list. */
 export type SctaskScope = "me" | "groups";
@@ -26,6 +27,8 @@ export type SctaskRow = {
   updatedOn: string;
   /** Newest work note parsed from the record's work_notes (empty when none). */
   lastWorkNote: string;
+  /** All work-note journal entries, newest-first (empty when none). */
+  workNotesHistory: WorkNoteEntry[];
   /** True when the record has at least one work note. */
   hasWorkNote: boolean;
 };
@@ -226,6 +229,7 @@ function normalizeRow(rec: TicketRecord): SctaskRow {
   // work_notes under sysparm_display_value=all arrives as {display_value,value};
   // the display value is the concatenated journal text (newest first).
   const workNotesDisplay = displayOf(rec.work_notes);
+  const workNotesHistory = parseWorkNotes(workNotesDisplay);
   const lastWorkNote = parseLastWorkNote(workNotesDisplay) ?? "";
   return {
     sysId: valueOf(rec.sys_id as never),
@@ -236,6 +240,7 @@ function normalizeRow(rec: TicketRecord): SctaskRow {
     assignedTo: displayOf(rec.assigned_to),
     updatedOn: displayOf(rec.sys_updated_on),
     lastWorkNote,
+    workNotesHistory,
     hasWorkNote: !!lastWorkNote
   };
 }

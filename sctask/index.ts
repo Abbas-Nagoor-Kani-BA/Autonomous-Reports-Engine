@@ -112,15 +112,36 @@ export async function bootSctaskPage(): Promise<void> {
       ["State", row.state],
       ["Assignment group", row.assignmentGroup],
       ["Assigned to", row.assignedTo],
-      ["Updated", row.updatedOn],
-      ["Last work note", row.lastWorkNote || "— none —"]
+      ["Updated", row.updatedOn]
     ];
+    const grid = el("div", "grid grid-cols-[auto_1fr] gap-x-3 gap-y-1");
     for (const [label, value] of fields) {
-      overrideDetails.appendChild(el("div", "text-dim", label));
-      overrideDetails.appendChild(
-        el("div", "text-text whitespace-pre-line break-words", String(value ?? ""))
-      );
+      grid.appendChild(el("div", "text-dim", label));
+      grid.appendChild(el("div", "text-text whitespace-pre-line break-words", String(value ?? "")));
     }
+    overrideDetails.appendChild(grid);
+
+    // Full work-notes history (newest first).
+    const history = row.workNotesHistory ?? [];
+    const heading = el(
+      "div",
+      "text-dim mt-3 mb-1 font-semibold",
+      `Work notes history${history.length ? ` (${history.length})` : ""}`
+    );
+    overrideDetails.appendChild(heading);
+    if (!history.length) {
+      overrideDetails.appendChild(el("div", "text-faint italic", "No work notes yet."));
+      return;
+    }
+    const list = el("div", "flex flex-col gap-2");
+    for (const entry of history) {
+      const item = el("div", "border-l-2 border-line pl-2");
+      const meta = [entry.when, entry.author].filter(Boolean).join(" · ");
+      if (meta) item.appendChild(el("div", "text-faint text-[11px]", meta));
+      item.appendChild(el("div", "text-text whitespace-pre-line break-words", entry.body));
+      list.appendChild(item);
+    }
+    overrideDetails.appendChild(list);
   }
 
   function closeOverride(): void {
