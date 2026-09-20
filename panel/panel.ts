@@ -37,6 +37,7 @@ const els = {
   preview: $("previewBtn"),
   runBtn: $("runBtn"),
   viewBtn: $("viewBtn"),
+  bulkSctaskBtn: $("bulkSctaskBtn"),
   lastRun: $("lastRun"),
   includeSummary: $("includeSummary"),
   summaryFilterBox: $("summaryFilterBox"),
@@ -709,6 +710,30 @@ async function openViewer(): Promise<void> {
   }
   const tab = await chrome.tabs.create({ url });
   viewerTabId = tab.id;
+}
+
+$("bulkSctaskBtn").addEventListener("click", () => {
+  void openSctaskPage();
+});
+let sctaskTabId: number | null = null;
+chrome.tabs.onRemoved.addListener((tabId: number) => {
+  if (tabId === sctaskTabId) sctaskTabId = null;
+});
+/** Opens (or refocuses) the Bulk SCTASK Update page in a tab, mirroring openViewer. */
+async function openSctaskPage(): Promise<void> {
+  const url = chrome.runtime.getURL("sctask/sctask.html");
+  if (sctaskTabId !== null) {
+    try {
+      const existing = await chrome.tabs.get(sctaskTabId);
+      await chrome.tabs.update(existing.id, { active: true });
+      await chrome.windows.update(existing.windowId, { focused: true });
+      return;
+    } catch {
+      sctaskTabId = null;
+    }
+  }
+  const tab = await chrome.tabs.create({ url });
+  sctaskTabId = tab.id;
 }
 bridge.onProgress((msg: MsgProgress) => {
   const detail = String(msg.detail ?? "");
