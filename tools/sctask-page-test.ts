@@ -167,3 +167,25 @@ test("setOverridden badges the overridden rows with 'Edited'", () => {
   const other = table.querySelector('tbody tr[data-sys-id="s1"]') as unknown as HTMLElement;
   assert.ok(!/edited/i.test((other.querySelector(".editedBadge")?.textContent as string) || ""));
 });
+
+test("flag then 'select flagged' adds flagged rows to the current selection (union)", () => {
+  const { view, table } = freshView();
+  view.render(ROWS);
+
+  // User manually selects s1.
+  const boxes = bodyCheckboxes(table);
+  boxes[0].checked = true;
+  boxes[0].dispatchEvent(new win.Event("change"));
+
+  // Flag action marks s2 + s3 as missing a work note.
+  view.setFlagged(["s2", "s3"]);
+  // Both flagged rows show the badge.
+  assert.match(
+    (table.querySelector('tbody tr[data-sys-id="s2"]') as unknown as HTMLElement).textContent || "",
+    /no work note/i
+  );
+
+  // "Select flagged" = union of current selection and flagged rows.
+  view.selectSysIds(view.getFlagged());
+  assert.deepEqual(view.getSelected(), ["s1", "s2", "s3"]);
+});

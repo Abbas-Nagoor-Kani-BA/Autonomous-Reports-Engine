@@ -97,6 +97,11 @@ export type MsgSctaskLastWorkNote = {
   instanceUrl: string;
   sysId: string;
 };
+export type MsgSctaskCheckWorkNotes = {
+  type: "SCTASK_CHECK_WORKNOTES";
+  instanceUrl: string;
+  sysIds: string[];
+};
 export type BackgroundMessage =
   | MsgRun
   | MsgCount
@@ -108,4 +113,5 @@ export type BackgroundMessage =
   | MsgResolveGroupCis
   | MsgSctaskList
   | MsgSctaskBulkUpdate
-  | MsgSctaskLastWorkNote;
+  | MsgSctaskLastWorkNote
+  | MsgSctaskCheckWorkNotes;

@@ -211,3 +211,44 @@ test("copyLastWorkNote returns empty string when the task has no work note", asy
   const note = await svc.copyLastWorkNote({ instanceUrl: INSTANCE, sysId: "s1" });
   assert.equal(note, "");
 });
+
+test("checkWorkNotes flags only tickets with no work note", async () => {
+  const remote = new FakeSnRemote();
+  remote.lastWorkNotes["s1"] = "has a note";
+  remote.lastWorkNotes["s2"] = null; // missing
+  remote.lastWorkNotes["s3"] = "   "; // blank counts as missing
+  const svc = harness(remote);
+  const seen: { sysId: string; hasWorkNote: boolean }[] = [];
+
+  const res = await svc.checkWorkNotes({
+    instanceUrl: INSTANCE,
+    sysIds: ["s1", "s2", "s3"],
+    onRow: (r) => seen.push(r)
+  });
+
+  assert.deepEqual(res.missing, ["s2", "s3"]);
+  assert.deepEqual(
+    seen.map((r) => `${r.sysId}:${r.hasWorkNote ? "y" : "n"}`),
+    ["s1:y", "s2:n", "s3:n"]
+  );
+});
+
+test("checkWorkNotes does not flag on a read error (conservative)", async () => {
+  const remote = new FakeSnRemote();
+  remote.lastWorkNotes["s1"] = null;
+  // Override fetchLastWorkNote to throw for s2.
+  const original = remote.fetchLastWorkNote.bind(remote);
+  remote.fetchLastWorkNote = async (sysId: string) => {
+    if (sysId === "s2") throw new Error("read failed");
+    return original(sysId);
+  };
+  const svc = harness(remote);
+
+  const res = await svc.checkWorkNotes({ instanceUrl: INSTANCE, sysIds: ["s1", "s2"] });
+  assert.deepEqual(res.missing, ["s1"]); // s2 not flagged despite no note (errored)
+});
+
+test("checkWorkNotes requires an instance URL", async () => {
+  const svc = harness(new FakeSnRemote());
+  await assert.rejects(svc.checkWorkNotes({ instanceUrl: "", sysIds: ["s1"] }), /instance URL/i);
+});

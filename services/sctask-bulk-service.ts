@@ -65,6 +65,23 @@ export type CopyLastWorkNoteRequest = {
   onDiagnostic?: (d: any) => void;
 };
 
+/** Per-row work-note presence, reported to `onRow` as each check settles. */
+export type WorkNoteCheck = { sysId: string; hasWorkNote: boolean };
+
+/** Result of a work-note check across a set of SCTASKs. */
+export type CheckWorkNotesSummary = {
+  /** sysIds that have NO work note (the ones to flag). */
+  missing: string[];
+  results: WorkNoteCheck[];
+};
+
+export type CheckWorkNotesRequest = {
+  instanceUrl: string;
+  sysIds: string[];
+  onRow?: (check: WorkNoteCheck) => void;
+  onDiagnostic?: (d: any) => void;
+};
+
 /** The display label of a reference/plain cell, trimmed. */
 function displayOf(cell: unknown): string {
   if (cell && typeof cell === "object") {
@@ -150,6 +167,36 @@ export class SctaskBulkService {
     if (!sysId) throw new Error("No SCTASK selected.");
     const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
     return (await remote.fetchLastWorkNote(sysId)) ?? "";
+  }
+
+  /**
+   * Checks each SCTASK for an existing work note (sequentially, rate-limit
+   * friendly). Reports each result via `onRow` for live progress and returns
+   * the `missing` sysIds (no work note) plus the full per-row results.
+   *
+   * A read failure is treated as "has a work note" (conservative: we don't flag
+   * a ticket as missing when we simply couldn't read it), so flagging never
+   * produces false positives from transient errors.
+   */
+  async checkWorkNotes(req: CheckWorkNotesRequest): Promise<CheckWorkNotesSummary> {
+    if (!req.instanceUrl) throw new Error(NO_INSTANCE);
+    const sysIds = (req.sysIds || []).map((s) => String(s ?? "").trim()).filter(Boolean);
+    const remote = await this.remoteFactory(req.instanceUrl, req.onDiagnostic);
+
+    const results: WorkNoteCheck[] = [];
+    for (const sysId of sysIds) {
+      let hasWorkNote: boolean;
+      try {
+        const note = await remote.fetchLastWorkNote(sysId);
+        hasWorkNote = !!(note && note.trim());
+      } catch {
+        hasWorkNote = true; // don't flag on a read error
+      }
+      const check: WorkNoteCheck = { sysId, hasWorkNote };
+      results.push(check);
+      req.onRow?.(check);
+    }
+    return { missing: results.filter((r) => !r.hasWorkNote).map((r) => r.sysId), results };
   }
 
   /**

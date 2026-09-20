@@ -9,12 +9,10 @@ import type {
   MsgRun,
   MsgSctaskList,
   MsgSctaskBulkUpdate,
-  MsgSctaskLastWorkNote
+  MsgSctaskLastWorkNote,
+  MsgSctaskCheckWorkNotes
 } from "../../types/global.d.ts";
-import type {
-  SctaskRow,
-  BulkSummary
-} from "../../services/sctask-bulk-service.ts";
+import type { SctaskRow, BulkSummary, WorkNoteCheck } from "../../services/sctask-bulk-service.ts";
 
 /*
  * Page-side proxy for the service worker's message API.
@@ -80,6 +78,13 @@ export type SctaskLastWorkNoteReply = {
   error?: string;
 };
 
+export type SctaskCheckReply = {
+  ok: boolean;
+  missing?: string[];
+  results?: WorkNoteCheck[];
+  error?: string;
+};
+
 export type BridgeMsg = {
   type?: unknown;
   [key: string]: unknown;
@@ -103,6 +108,7 @@ export class RemoteBridge {
       | MsgSctaskList
       | MsgSctaskBulkUpdate
       | MsgSctaskLastWorkNote
+      | MsgSctaskCheckWorkNotes
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(msg, (res: unknown) => {
@@ -174,6 +180,18 @@ export class RemoteBridge {
       type: MSG.sctaskLastWorkNote,
       ...req
     }) as Promise<SctaskLastWorkNoteReply>;
+  }
+
+  /**
+   * Checks each SCTASK for an existing work note (for the "flag tasks with no
+   * work note" action). Per-row progress streams via `onProgress` (stage
+   * "sctaskCheck"); resolves with the `missing` sysIds + full results.
+   */
+  checkWorkNotes(req: Omit<MsgSctaskCheckWorkNotes, "type">): Promise<SctaskCheckReply> {
+    return this.request({
+      type: MSG.sctaskCheckWorkNotes,
+      ...req
+    }) as Promise<SctaskCheckReply>;
   }
 
   /** Broadcasts that the dataset changed (e.g. a clear-cache, an export view). */

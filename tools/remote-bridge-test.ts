@@ -233,3 +233,17 @@ test("copyLastWorkNote sends SCTASK_LAST_WORKNOTE with the sysId", async () => {
     sysId: "s1"
   });
 });
+
+test("checkWorkNotes sends SCTASK_CHECK_WORKNOTES with the sysIds", async () => {
+  const bridge = new RemoteBridge();
+  const res = await bridge.checkWorkNotes({
+    instanceUrl: "https://x.service-now.com",
+    sysIds: ["s1", "s2", "s3"]
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.sctaskCheckWorkNotes,
+    instanceUrl: "https://x.service-now.com",
+    sysIds: ["s1", "s2", "s3"]
+  });
+});

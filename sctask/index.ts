@@ -37,6 +37,8 @@ export async function bootSctaskPage(): Promise<void> {
   const workNotesBox = $("workNotes") as HTMLTextAreaElement;
   const copyLastBtn = $("copyLastBtn") as HTMLButtonElement;
   const updateBtn = $("updateBtn") as HTMLButtonElement;
+  const flagBtn = $("flagBtn") as HTMLButtonElement;
+  const selectFlaggedBtn = $("selectFlaggedBtn") as HTMLButtonElement;
 
   // Override popup elements.
   const overrideModal = $("overrideModal");
@@ -149,12 +151,39 @@ export async function bootSctaskPage(): Promise<void> {
     }
   }
 
+  async function flagMissingWorkNotes(): Promise<void> {
+    const sysIds = view.getRows().map((r) => r.sysId);
+    if (!sysIds.length || !instanceUrl) return;
+    flagBtn.disabled = true;
+    const original = flagBtn.textContent;
+    flagBtn.textContent = "Checking…";
+    try {
+      const reply = await bridge.checkWorkNotes({ instanceUrl, sysIds });
+      if (reply.ok) {
+        const missing = reply.missing || [];
+        view.setFlagged(missing);
+        selectFlaggedBtn.disabled = missing.length === 0;
+      }
+    } finally {
+      flagBtn.disabled = false;
+      flagBtn.textContent = original;
+    }
+  }
+
+  function selectFlagged(): void {
+    // "Add to" (union) the current selection, per the agreed behavior.
+    view.selectSysIds(view.getFlagged());
+    refreshControls();
+  }
+
   scopeSel.addEventListener("change", load);
   refreshBtn.addEventListener("click", load);
   searchInput.addEventListener("input", () => view.setFilter(searchInput.value));
   commentsBox.addEventListener("input", refreshControls);
   workNotesBox.addEventListener("input", refreshControls);
   copyLastBtn.addEventListener("click", copyLastWorkNote);
+  flagBtn.addEventListener("click", flagMissingWorkNotes);
+  selectFlaggedBtn.addEventListener("click", selectFlagged);
 
   await load();
   refreshControls();
