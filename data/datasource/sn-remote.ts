@@ -80,6 +80,12 @@ export interface SnRemote {
   ): Promise<Record<string, any>>;
   /** The most recent work note text for a record, or null when there is none. */
   fetchLastWorkNote(sysId: string): Promise<string | null>;
+  /** The current session user's sys_id (UI current-user endpoint), or null. */
+  currentUserId(): Promise<string | null>;
+  /** Active group sys_ids the given user belongs to (for the "my groups" scope). */
+  fetchUserGroupIds(userId: string): Promise<string[]>;
+  /** Read sc_task rows for an encoded query with display+value fields. */
+  listSctasks(encodedQuery: string, fields: string[]): Promise<TicketRecord[]>;
 }
 
 /** Structural type for the still-Javascript ServiceNowClient. */
@@ -234,6 +240,25 @@ export class ServiceNowRemote implements SnRemote {
   fetchLastWorkNote(sysId: string): Promise<string | null> {
     return this.client.fetchLastWorkNote(sysId);
   }
+
+  currentUserId(): Promise<string | null> {
+    return this.client.currentUserId();
+  }
+
+  async fetchUserGroupIds(userId: string): Promise<string[]> {
+    const id = String(userId ?? "").trim();
+    if (!id) return [];
+    const rows = await this.client.fetchRecords(
+      "sys_user_grmember",
+      `user=${id}^group.active=true`,
+      ["group", "group.name"]
+    );
+    return groupIdsFromMemberships(rows);
+  }
+
+  listSctasks(encodedQuery: string, fields: string[]): Promise<TicketRecord[]> {
+    return this.client.fetchRecords("sc_task", encodedQuery, fields);
+  }
 }
 
 export type ClientOptions = {
@@ -274,6 +299,12 @@ export class FakeSnRemote implements SnRemote {
   writeErrors: Record<string, Error> = {};
   /** Scripted last-work-note text keyed by sys_id. */
   lastWorkNotes: Record<string, string | null> = {};
+  /** Scripted current-user sys_id. */
+  userId: string | null = null;
+  /** Scripted active group ids keyed by user sys_id. */
+  userGroupIds: Record<string, string[]> = {};
+  /** Scripted sc_task rows keyed by the encoded query passed to listSctasks. */
+  sctasks: Record<string, TicketRecord[]> = {};
 
   async count(table: string, encodedQuery: string): Promise<number> {
     this.calls.push({ method: "count", args: [table, encodedQuery] });
@@ -356,5 +387,20 @@ export class FakeSnRemote implements SnRemote {
   async fetchLastWorkNote(sysId: string): Promise<string | null> {
     this.calls.push({ method: "fetchLastWorkNote", args: [sysId] });
     return this.lastWorkNotes[sysId] ?? null;
+  }
+
+  async currentUserId(): Promise<string | null> {
+    this.calls.push({ method: "currentUserId", args: [] });
+    return this.userId;
+  }
+
+  async fetchUserGroupIds(userId: string): Promise<string[]> {
+    this.calls.push({ method: "fetchUserGroupIds", args: [userId] });
+    return this.userGroupIds[userId] ?? [];
+  }
+
+  async listSctasks(encodedQuery: string, fields: string[]): Promise<TicketRecord[]> {
+    this.calls.push({ method: "listSctasks", args: [encodedQuery, fields] });
+    return this.sctasks[encodedQuery] ?? [];
   }
 }
