@@ -7,6 +7,7 @@ import { OverrideStore, resolveItems } from "./overrides.ts";
 import type { ResolvedItem } from "./overrides.ts";
 import { ConfirmModal } from "./confirm-modal.ts";
 import { showToast } from "../lib/toast.ts";
+import { initTooltips } from "../lib/tooltip.ts";
 import type { SctaskScope } from "../services/sctask-bulk-service.ts";
 
 /*
@@ -55,13 +56,23 @@ export async function bootSctaskPage(): Promise<void> {
   /** Enable/disable the action buttons from the current selection + inputs. */
   function refreshControls(): void {
     const selected = view.getSelected();
-    // Copy last work note only makes sense for exactly one selected ticket.
-    copyLastBtn.disabled = selected.length !== 1;
+    // Pull last work notes applies to every selected ticket.
+    copyLastBtn.disabled = selected.length === 0;
     // Postable if something is selected and there is shared text OR at least one
     // selected ticket carries an override.
     const hasShared = !!(commentsBox.value.trim() || workNotesBox.value.trim());
     const hasOverride = selected.some((id) => overrides.has(id));
     updateBtn.disabled = selected.length === 0 || (!hasShared && !hasOverride);
+  }
+
+  /** Pushes the current override text into the list's Comments/Work notes columns. */
+  function syncOverrides(): void {
+    const map = new Map<string, { comments: string; workNotes: string }>();
+    for (const id of overrides.keys()) {
+      const ov = overrides.get(id);
+      map.set(id, { comments: ov?.comments ?? "", workNotes: ov?.workNotes ?? "" });
+    }
+    view.setOverrideText(map);
   }
 
   const view = new SctaskListView(
@@ -96,7 +107,7 @@ export async function bootSctaskPage(): Promise<void> {
   function saveOverride(): void {
     if (editingSysId) {
       overrides.set(editingSysId, { comments: ovComments.value, workNotes: ovWorkNotes.value });
-      view.setOverridden(overrides.keys());
+      syncOverrides();
       refreshControls();
     }
     closeOverride();
@@ -105,7 +116,7 @@ export async function bootSctaskPage(): Promise<void> {
   function clearOverride(): void {
     if (editingSysId) {
       overrides.clear(editingSysId);
-      view.setOverridden(overrides.keys());
+      syncOverrides();
       refreshControls();
     }
     closeOverride();
@@ -201,14 +212,30 @@ export async function bootSctaskPage(): Promise<void> {
     }
   }
 
-  async function copyLastWorkNote(): Promise<void> {
+  async function pullLastWorkNotes(): Promise<void> {
     const selected = view.getSelected();
-    if (selected.length !== 1 || !instanceUrl) return;
+    if (!selected.length || !instanceUrl) return;
     copyLastBtn.disabled = true;
+    const original = copyLastBtn.textContent;
+    copyLastBtn.textContent = "Pulling…";
     try {
-      const reply = await bridge.copyLastWorkNote({ instanceUrl, sysId: selected[0] });
-      if (reply.ok) workNotesBox.value = reply.workNote || "";
+      for (const sysId of selected) {
+        try {
+          const reply = await bridge.copyLastWorkNote({ instanceUrl, sysId });
+          if (reply.ok && reply.workNote) {
+            const existing = overrides.get(sysId);
+            overrides.set(sysId, {
+              comments: existing?.comments ?? "",
+              workNotes: reply.workNote
+            });
+          }
+        } catch {
+          /* skip a ticket that fails; continue with the rest */
+        }
+      }
+      syncOverrides();
     } finally {
+      copyLastBtn.textContent = original;
       refreshControls();
     }
   }
@@ -243,10 +270,12 @@ export async function bootSctaskPage(): Promise<void> {
   searchInput.addEventListener("input", () => view.setFilter(searchInput.value));
   commentsBox.addEventListener("input", refreshControls);
   workNotesBox.addEventListener("input", refreshControls);
-  copyLastBtn.addEventListener("click", copyLastWorkNote);
+  copyLastBtn.addEventListener("click", pullLastWorkNotes);
   flagBtn.addEventListener("click", flagMissingWorkNotes);
   selectFlaggedBtn.addEventListener("click", selectFlagged);
   updateBtn.addEventListener("click", openConfirm);
+
+  initTooltips();
 
   await load();
   refreshControls();

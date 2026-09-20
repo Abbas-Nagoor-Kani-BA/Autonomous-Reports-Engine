@@ -189,3 +189,34 @@ test("flag then 'select flagged' adds flagged rows to the current selection (uni
   view.selectSysIds(view.getFlagged());
   assert.deepEqual(view.getSelected(), ["s1", "s2", "s3"]);
 });
+
+test("setOverrideText renders the Comments/Work notes columns with the override text", () => {
+  const { view, table } = freshView();
+  view.render(ROWS);
+  view.setOverrideText(
+    new Map([["s2", { comments: "cust text", workNotes: "internal text" }]])
+  );
+  const row = table.querySelector('tbody tr[data-sys-id="s2"]') as unknown as HTMLElement;
+  const cells = [...row.querySelectorAll(".overrideCell")] as unknown as HTMLElement[];
+  assert.equal(cells.length, 2);
+  assert.equal(cells[0].textContent, "cust text");
+  assert.equal(cells[1].textContent, "internal text");
+  // full text available as a tooltip (data-tip) since cells truncate
+  assert.equal(cells[0].getAttribute("data-tip"), "cust text");
+  assert.equal(cells[1].getAttribute("data-tip"), "internal text");
+  // a row without an override shows the placeholder
+  const other = table.querySelector('tbody tr[data-sys-id="s1"]') as unknown as HTMLElement;
+  const otherCells = [...other.querySelectorAll(".overrideCell")] as unknown as HTMLElement[];
+  assert.equal(otherCells[0].textContent, "\u2014");
+});
+
+test("clicking an override cell opens the popup (fires onEdit)", () => {
+  const edited: string[] = [];
+  const { view, table } = freshView({ onEdit: (id: never) => edited.push(id) });
+  view.render(ROWS);
+  view.setOverrideText(new Map([["s1", { comments: "x", workNotes: "" }]]));
+  const row = table.querySelector('tbody tr[data-sys-id="s1"]') as unknown as HTMLElement;
+  const cell = row.querySelector(".overrideCell") as unknown as HTMLElement;
+  cell.dispatchEvent(new win.Event("click"));
+  assert.deepEqual(edited, ["s1"]);
+});

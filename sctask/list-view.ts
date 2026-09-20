@@ -1,4 +1,5 @@
 import { el } from "../common/components/component.ts";
+import { setTip } from "../lib/tooltip.ts";
 import type { SctaskRow } from "../services/sctask-bulk-service.ts";
 
 /** Data columns (the checkbox column is rendered separately, first). */
@@ -41,6 +42,8 @@ export class SctaskListView {
   private readonly flagged = new Set<string>();
   /** sysIds that have a per-ticket override (edited via the popup). */
   private readonly overridden = new Set<string>();
+  /** Per-ticket override text shown in the Comments/Work notes columns. */
+  private overrideText = new Map<string, { comments: string; workNotes: string }>();
 
   constructor(deps: { table: HTMLTableElement; status: HTMLElement }, events: SctaskListEvents = {}) {
     this.table = deps.table;
@@ -61,6 +64,7 @@ export class SctaskListView {
     this.selected.clear();
     this.flagged.clear();
     this.overridden.clear();
+    this.overrideText = new Map();
     this.filterText = "";
     this.#draw();
   }
@@ -117,6 +121,18 @@ export class SctaskListView {
     this.#draw();
   }
 
+  /**
+   * Supplies the per-ticket override text to display in the Comments / Work
+   * notes columns (the resolved override, i.e. what that ticket will post).
+   * Also refreshes the "overridden" set from the map keys.
+   */
+  setOverrideText(map: Map<string, { comments: string; workNotes: string }>): void {
+    this.overrideText = new Map(map);
+    this.overridden.clear();
+    for (const id of map.keys()) this.overridden.add(id);
+    this.#draw();
+  }
+
   /** sysIds that currently have an override. */
   getOverridden(): string[] {
     return this.rows.map((r) => r.sysId).filter((id) => this.overridden.has(id));
@@ -169,6 +185,12 @@ export class SctaskListView {
         el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", label)
       );
     }
+    tr.appendChild(
+      el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", "Comments")
+    );
+    tr.appendChild(
+      el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", "Work notes")
+    );
     tr.appendChild(el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold w-16", ""));
     thead.appendChild(tr);
     return thead;
@@ -208,6 +230,10 @@ export class SctaskListView {
         tr.appendChild(td);
       }
 
+      const ov = this.overrideText.get(row.sysId);
+      tr.appendChild(this.#overrideCell(row.sysId, ov?.comments ?? ""));
+      tr.appendChild(this.#overrideCell(row.sysId, ov?.workNotes ?? ""));
+
       const tdEdit = el("td", "px-2 py-1.5 align-top");
       const editLink = el("button", "linklike editLink", "Edit") as HTMLButtonElement;
       editLink.type = "button";
@@ -227,5 +253,21 @@ export class SctaskListView {
       tbody.appendChild(tr);
     }
     return tbody;
+  }
+
+  /**
+   * A Comments/Work notes column cell: shows the override text truncated to one
+   * line, with the full text as a hover tooltip, and opens the override popup
+   * when clicked (so the user edits per-ticket text there, not inline).
+   */
+  #overrideCell(sysId: string, text: string): HTMLTableCellElement {
+    const td = el(
+      "td",
+      "px-2 py-1.5 align-top max-w-[220px] truncate cursor-pointer hover:text-accent overrideCell"
+    ) as HTMLTableCellElement;
+    td.textContent = text || "—";
+    if (text) setTip(td, text);
+    td.addEventListener("click", () => this.events.onEdit?.(sysId));
+    return td;
   }
 }
