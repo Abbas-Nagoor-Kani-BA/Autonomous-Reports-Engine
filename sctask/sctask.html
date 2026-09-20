@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Bulk SCTASK Update</title>
+    <link href="../styles/output.css" rel="stylesheet" />
+  </head>
+  <body class="m-0 p-4 text-[13px] leading-normal font-sans bg-bg text-text">
+    <header class="flex items-center justify-between mb-4">
+      <h1 class="text-[16px] m-0 text-accent font-semibold">Bulk SCTASK Update</h1>
+      <span id="connState" class="badge">&nbsp;</span>
+    </header>
+
+    <section class="flex items-center gap-3 mb-3">
+      <label class="pnLabel m-0" for="scope">Scope</label>
+      <select id="scope" class="select w-auto">
+        <option value="me">Assigned to me</option>
+        <option value="groups">Assigned to my groups</option>
+      </select>
+      <button id="refreshBtn" type="button" class="btn-ghost">Refresh</button>
+      <span id="selCount" class="text-dim ml-auto"></span>
+    </section>
+
+    <section id="listWrap" class="bg-card2 rounded-lg p-2 min-h-[120px]">
+      <div id="listStatus" class="text-dim p-3">Loading…</div>
+      <table id="sctaskTable" class="hidden w-full border-collapse text-left"></table>
+    </section>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>

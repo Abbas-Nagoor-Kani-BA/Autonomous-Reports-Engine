@@ -21,6 +21,7 @@ const ENTRIES = [
   "viewer/index.ts",
   "panel/panel.ts",
   "settings/settings.ts",
+  "sctask/index.ts",
   "content/content.js",
   "worker/classifier-worker.ts"
 ].map((p) => path.join(ROOT, p));
@@ -30,6 +31,7 @@ const STATIC_COPY = [
   "viewer/viewer.html",
   "panel/panel.html",
   "settings/settings.html",
+  "sctask/sctask.html",
   "styles/output.css",
   ["lib/vendor/fflate.min.js", "lib/vendor/fflate.min.js"],
   [
