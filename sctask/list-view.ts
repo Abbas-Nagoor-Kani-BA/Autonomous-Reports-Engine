@@ -34,6 +34,8 @@ export class SctaskListView {
   private readonly table: HTMLTableElement;
   private readonly status: HTMLElement;
   private readonly events: SctaskListEvents;
+  /** Instance base URL, for building "open in ServiceNow" links on the number. */
+  private readonly instanceUrl: string;
 
   private rows: SctaskRow[] = [];
   private filterText = "";
@@ -46,11 +48,12 @@ export class SctaskListView {
   private overrideText = new Map<string, { comments: string; workNotes: string }>();
 
   constructor(
-    deps: { table: HTMLTableElement; status: HTMLElement },
+    deps: { table: HTMLTableElement; status: HTMLElement; instanceUrl?: string },
     events: SctaskListEvents = {}
   ) {
     this.table = deps.table;
     this.status = deps.status;
+    this.instanceUrl = String(deps.instanceUrl ?? "").replace(/\/+$/, "");
     this.events = events;
   }
 
@@ -196,7 +199,6 @@ export class SctaskListView {
     tr.appendChild(
       el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", "Work notes")
     );
-    tr.appendChild(el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold w-16", ""));
     thead.appendChild(tr);
     return thead;
   }
@@ -221,16 +223,41 @@ export class SctaskListView {
       tr.appendChild(tdCheck);
 
       for (const [key] of COLUMNS) {
-        const td = el("td", "px-2 py-1.5 align-top", String(row[key] ?? ""));
-        // "No work note" badge in the Number cell when flagged.
-        if (key === "number" && this.flagged.has(row.sysId)) {
-          td.appendChild(
-            el(
-              "span",
-              "ml-2 text-[10px] uppercase tracking-wide bg-bad/20 text-[#f5e0dc] rounded px-1 py-0.5",
-              "No work note"
-            )
-          );
+        const td = el("td", "px-2 py-1.5 align-top");
+        if (key === "number") {
+          // The number opens the SCTASK in ServiceNow in a new tab.
+          const link = el(
+            "a",
+            "linklike numberLink",
+            String(row.number ?? "")
+          ) as HTMLAnchorElement;
+          const href = this.#ticketUrl(row.sysId);
+          if (href) {
+            link.href = href;
+            link.target = "_blank";
+            link.rel = "noopener";
+          }
+          td.appendChild(link);
+          if (this.flagged.has(row.sysId)) {
+            td.appendChild(
+              el(
+                "span",
+                "ml-2 text-[10px] uppercase tracking-wide bg-bad/20 text-[#f5e0dc] rounded px-1 py-0.5",
+                "No work note"
+              )
+            );
+          }
+          if (this.overridden.has(row.sysId)) {
+            td.appendChild(
+              el(
+                "span",
+                "ml-2 text-[10px] uppercase tracking-wide bg-accent/20 text-accent rounded px-1 py-0.5 editedBadge",
+                "Edited"
+              )
+            );
+          }
+        } else {
+          td.textContent = String(row[key] ?? "");
         }
         tr.appendChild(td);
       }
@@ -239,25 +266,15 @@ export class SctaskListView {
       tr.appendChild(this.#overrideCell(row.sysId, ov?.comments ?? ""));
       tr.appendChild(this.#overrideCell(row.sysId, ov?.workNotes ?? ""));
 
-      const tdEdit = el("td", "px-2 py-1.5 align-top");
-      const editLink = el("button", "linklike editLink", "Edit") as HTMLButtonElement;
-      editLink.type = "button";
-      editLink.addEventListener("click", () => this.events.onEdit?.(row.sysId));
-      tdEdit.appendChild(editLink);
-      if (this.overridden.has(row.sysId)) {
-        tdEdit.appendChild(
-          el(
-            "span",
-            "ml-1 text-[10px] uppercase tracking-wide bg-accent/20 text-accent rounded px-1 py-0.5 editedBadge",
-            "Edited"
-          )
-        );
-      }
-      tr.appendChild(tdEdit);
-
       tbody.appendChild(tr);
     }
     return tbody;
+  }
+
+  /** Builds the "open in ServiceNow" URL for a task, or "" without an instance. */
+  #ticketUrl(sysId: string): string {
+    if (!this.instanceUrl || !sysId) return "";
+    return `${this.instanceUrl}/nav_to.do?uri=${encodeURIComponent(`sc_task.do?sys_id=${sysId}`)}`;
   }
 
   /**

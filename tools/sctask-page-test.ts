@@ -146,14 +146,33 @@ test("setFlagged badges the flagged rows", () => {
   assert.deepEqual(view.getFlagged(), ["s2"]);
 });
 
-test("clicking a row's Edit link fires onEdit with the sysId", () => {
+test("clicking an override cell fires onEdit (Edit column removed)", () => {
   const edited: string[] = [];
   const { view, table } = freshView({ onEdit: (id: never) => edited.push(id) });
   view.render(ROWS);
-  const editLinks = [...table.querySelectorAll("tbody .editLink")] as unknown as HTMLElement[];
-  assert.equal(editLinks.length, 3);
-  editLinks[1].dispatchEvent(new win.Event("click"));
-  assert.deepEqual(edited, ["s2"]);
+  // The Edit column is gone; the override cells open the popup instead.
+  const cells = [...table.querySelectorAll("tbody .overrideCell")] as unknown as HTMLElement[];
+  assert.ok(cells.length >= 2);
+  cells[0].dispatchEvent(new win.Event("click"));
+  assert.ok(edited.length >= 1);
+});
+
+test("the number cell is a link that opens the SCTASK in ServiceNow", () => {
+  const table = win.document.getElementById("sctaskTable") as unknown as HTMLTableElement;
+  const status = win.document.getElementById("listStatus") as unknown as HTMLElement;
+  const view = new SctaskListView({
+    table,
+    status,
+    instanceUrl: "https://dev.service-now.com"
+  });
+  view.render(ROWS);
+  const row = table.querySelector('tbody tr[data-sys-id="s1"]') as unknown as HTMLElement;
+  const link = row.querySelector(".numberLink") as unknown as HTMLAnchorElement;
+  assert.equal(link.textContent, "SCTASK0001");
+  assert.match(link.getAttribute("href") || "", /dev\.service-now\.com\/nav_to\.do/);
+  assert.match(link.getAttribute("href") || "", /sc_task\.do/);
+  assert.match(link.getAttribute("href") || "", /s1/);
+  assert.equal(link.getAttribute("target"), "_blank");
 });
 
 test("setOverridden badges the overridden rows with 'Edited'", () => {

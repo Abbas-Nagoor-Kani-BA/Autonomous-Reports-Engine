@@ -70,10 +70,15 @@ export async function bootSctaskPage(): Promise<void> {
     view.setOverrideText(map);
   }
 
+  const loaded = await settings.load();
+  const instanceUrl = String(loaded?.instanceUrl ?? "").trim();
+  connState.textContent = instanceUrl || "No instance configured";
+
   const view = new SctaskListView(
     {
       table: $("sctaskTable") as HTMLTableElement,
-      status: $("listStatus")
+      status: $("listStatus"),
+      instanceUrl
     },
     {
       selectionChange: ({ selected, total }) => {
@@ -200,10 +205,6 @@ export async function bootSctaskPage(): Promise<void> {
     }
     confirm.open(items, view.getRows());
   }
-
-  const loaded = await settings.load();
-  const instanceUrl = String(loaded?.instanceUrl ?? "").trim();
-  connState.textContent = instanceUrl || "No instance configured";
 
   async function load(): Promise<void> {
     if (!instanceUrl) {
