@@ -235,20 +235,18 @@ async function classifyCached(
 }
 
 /** True when a cached outcome records the raw per-cell picks (ml + det). */
-function hasEnginePicks(r: {
-  solutionType?: { ml?: unknown; det?: unknown };
-  rootCause?: { ml?: unknown; det?: unknown };
-}): boolean {
+function hasEnginePicks(r: unknown): r is { solutionType: CellPicks; rootCause: CellPicks } {
+  if (!r || typeof r !== "object") return false;
+  const o = r as { solutionType?: unknown; rootCause?: unknown };
   return !!(
-    r &&
-    typeof r.rootCause === "object" &&
-    r.rootCause &&
-    "ml" in r.rootCause &&
-    "det" in r.rootCause &&
-    typeof r.solutionType === "object" &&
-    r.solutionType &&
-    "ml" in r.solutionType &&
-    "det" in r.solutionType
+    typeof o.rootCause === "object" &&
+    o.rootCause &&
+    "ml" in o.rootCause &&
+    "det" in o.rootCause &&
+    typeof o.solutionType === "object" &&
+    o.solutionType &&
+    "ml" in o.solutionType &&
+    "det" in o.solutionType
   );
 }
 
