@@ -193,6 +193,7 @@ export async function bootSctaskPage(): Promise<void> {
       overrides.set(editingSysId, { comments: ovComments.value, workNotes: ovWorkNotes.value });
       syncOverrides();
       refreshControls();
+      refreshConfirmRow(editingSysId);
     }
     closeOverride();
   }
@@ -202,8 +203,19 @@ export async function bootSctaskPage(): Promise<void> {
       overrides.clear(editingSysId);
       syncOverrides();
       refreshControls();
+      refreshConfirmRow(editingSysId);
     }
     closeOverride();
+  }
+
+  /**
+   * When the confirm/preview modal is open, push a ticket's freshly-edited text
+   * into its preview row so the preview stays in sync with the table.
+   */
+  function refreshConfirmRow(sysId: string): void {
+    if (!confirm.isOpen()) return;
+    const [item] = resolveItems([sysId], { comments: "", workNotes: "" }, overrides);
+    confirm.updateItem(item ?? { sysId, comments: "", workNotes: "" });
   }
 
   $("overrideSave").addEventListener("click", saveOverride);
@@ -226,7 +238,8 @@ export async function bootSctaskPage(): Promise<void> {
     },
     {
       onPost: (items) => void postItems(items),
-      onRetry: (items) => void postItems(items)
+      onRetry: (items) => void postItems(items),
+      onEditItem: (sysId) => openOverride(sysId)
     }
   );
 

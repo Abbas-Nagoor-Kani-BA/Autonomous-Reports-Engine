@@ -128,3 +128,47 @@ test("finish with no failures hides Retry and shows Done only", () => {
   assert.ok($("retryFailedBtn").classList.contains("hidden"));
   assert.ok(!$("confirmDone").classList.contains("hidden"));
 });
+
+test("clicking a preview number fires onEditItem in the confirm phase", () => {
+  const edited: string[] = [];
+  const { modal, $ } = mount({ onEditItem: (id: never) => edited.push(id) });
+  modal.open(ITEMS, ROWS);
+  const s1 = $("confirmList").querySelector(
+    '[data-sys-id="s1"] .numberLink'
+  ) as unknown as HTMLElement;
+  s1.dispatchEvent(new win.Event("click"));
+  assert.deepEqual(edited, ["s1"]);
+});
+
+test("clicking a preview number does NOT fire onEditItem once posting has started", () => {
+  const edited: string[] = [];
+  const { modal, $ } = mount({ onEditItem: (id: never) => edited.push(id) });
+  modal.open(ITEMS, ROWS);
+  modal.startPosting();
+  const s1 = $("confirmList").querySelector(
+    '[data-sys-id="s1"] .numberLink'
+  ) as unknown as HTMLElement;
+  s1.dispatchEvent(new win.Event("click"));
+  assert.deepEqual(edited, []);
+});
+
+test("updateItem re-renders a preview row's text in place", () => {
+  const { modal, $ } = mount();
+  modal.open(ITEMS, ROWS);
+  modal.updateItem({ sysId: "s1", comments: "EDITED comment", workNotes: "EDITED note" });
+  const s1 = $("confirmList").querySelector('[data-sys-id="s1"]') as unknown as HTMLElement;
+  assert.match(s1.textContent || "", /EDITED comment/);
+  assert.match(s1.textContent || "", /EDITED note/);
+  assert.ok(!/hello cust/.test(s1.textContent || ""));
+  // Posting the (updated) items reflects the edit.
+  const posted: unknown[] = [];
+  modal.close();
+  const { modal: m2, $: $2 } = mount({ onPost: (items: never) => posted.push(items) });
+  m2.open(ITEMS, ROWS);
+  m2.updateItem({ sysId: "s1", comments: "NEW", workNotes: "" });
+  ($2("confirmPost") as unknown as HTMLButtonElement).dispatchEvent(new win.Event("click"));
+  const first = (posted[0] as Array<{ sysId: string; comments: string }>).find(
+    (i) => i.sysId === "s1"
+  );
+  assert.equal(first?.comments, "NEW");
+});

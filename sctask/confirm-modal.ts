@@ -19,6 +19,8 @@ export type ConfirmModalEvents = {
   onPost?: (items: ResolvedItem[]) => void;
   /** User asked to retry only the failed items. */
   onRetry?: (items: ResolvedItem[]) => void;
+  /** User clicked a ticket number in the preview to edit its text. */
+  onEditItem?: (sysId: string) => void;
 };
 
 /**
@@ -36,6 +38,7 @@ export class ConfirmModal {
   private items: ResolvedItem[] = [];
   private numberBySysId = new Map<string, string>();
   private readonly rowEls = new Map<string, HTMLElement>();
+  private phase: "confirm" | "posting" | "retry" | "done" = "confirm";
 
   constructor(deps: ConfirmModalDeps, events: ConfirmModalEvents = {}) {
     this.d = deps;
@@ -52,7 +55,7 @@ export class ConfirmModal {
 
   /** Opens the dialog in confirm state for the given resolved items. */
   open(items: ResolvedItem[], rows: SctaskRow[]): void {
-    this.items = items;
+    this.items = items.map((i) => ({ ...i }));
     this.numberBySysId = new Map(rows.map((r) => [r.sysId, r.number]));
     this.rowEls.clear();
     this.d.intro.textContent = `You are about to post to ${items.length} SCTASK${
@@ -96,13 +99,44 @@ export class ConfirmModal {
     wrap.dataset.sysId = item.sysId;
     const number = this.numberBySysId.get(item.sysId) || item.sysId;
     const head = el("div", "flex items-center gap-2");
-    head.appendChild(el("span", "statusDot text-dim", "•"));
-    head.appendChild(el("span", "font-semibold", number));
+    head.appendChild(el("span", "statusDot text-dim", "\u2022"));
+    // The number is clickable (only while confirming) to edit this ticket's text.
+    const numEl = el("a", "font-semibold linklike numberLink", number) as HTMLAnchorElement;
+    numEl.setAttribute("role", "button");
+    numEl.title = "Edit this ticket's text";
+    numEl.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      if (this.phase === "confirm") this.events.onEditItem?.(item.sysId);
+    });
+    head.appendChild(numEl);
     wrap.appendChild(head);
-    if (item.comments) wrap.appendChild(el("div", "text-dim", `Comment: ${item.comments}`));
-    if (item.workNotes) wrap.appendChild(el("div", "text-dim", `Work note: ${item.workNotes}`));
+    this.#renderBody(wrap, item);
     this.rowEls.set(item.sysId, wrap);
     return wrap;
+  }
+
+  /** (Re)draws the comment/work-note preview lines for a row. */
+  #renderBody(wrap: HTMLElement, item: ResolvedItem): void {
+    wrap.querySelectorAll(".confirmText").forEach((n) => n.remove());
+    if (item.comments) {
+      wrap.appendChild(el("div", "confirmText text-dim", `Comment: ${item.comments}`));
+    }
+    if (item.workNotes) {
+      wrap.appendChild(el("div", "confirmText text-dim", `Work note: ${item.workNotes}`));
+    }
+  }
+
+  /**
+   * Replaces a preview item's resolved text and re-renders its row in place.
+   * Used when the user edits a ticket from the preview. Only meaningful in the
+   * confirm phase (before posting starts).
+   */
+  updateItem(item: ResolvedItem): void {
+    const idx = this.items.findIndex((i) => i.sysId === item.sysId);
+    if (idx === -1) return;
+    this.items[idx] = item;
+    const row = this.rowEls.get(item.sysId);
+    if (row) this.#renderBody(row, item);
   }
 
   #setStatus(sysId: string, status: string, error?: string): void {
@@ -140,6 +174,7 @@ export class ConfirmModal {
   }
 
   #setPhase(phase: "confirm" | "posting" | "retry" | "done"): void {
+    this.phase = phase;
     const showPost = phase === "confirm";
     const showPosting = phase === "posting";
     const showEnd = phase === "retry" || phase === "done";
