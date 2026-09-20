@@ -14,6 +14,8 @@ const COLUMNS: [keyof SctaskRow, string][] = [
 export type SctaskListEvents = {
   /** Fires whenever the selection changes, with live counts. */
   selectionChange?: (info: { selected: number; total: number }) => void;
+  /** Fires when a row's Edit affordance is clicked (per-ticket override popup). */
+  onEdit?: (sysId: string) => void;
 };
 
 /**
@@ -37,6 +39,8 @@ export class SctaskListView {
   private readonly selected = new Set<string>();
   /** sysIds carrying a "no work note" flag (set in Task 13). */
   private readonly flagged = new Set<string>();
+  /** sysIds that have a per-ticket override (edited via the popup). */
+  private readonly overridden = new Set<string>();
 
   constructor(deps: { table: HTMLTableElement; status: HTMLElement }, events: SctaskListEvents = {}) {
     this.table = deps.table;
@@ -56,6 +60,7 @@ export class SctaskListView {
     this.rows = rows;
     this.selected.clear();
     this.flagged.clear();
+    this.overridden.clear();
     this.filterText = "";
     this.#draw();
   }
@@ -105,6 +110,18 @@ export class SctaskListView {
     return this.rows.map((r) => r.sysId).filter((id) => this.flagged.has(id));
   }
 
+  /** Marks which sysIds have a per-ticket override so their rows show a badge. */
+  setOverridden(sysIds: string[]): void {
+    this.overridden.clear();
+    for (const id of sysIds) if (id) this.overridden.add(id);
+    this.#draw();
+  }
+
+  /** sysIds that currently have an override. */
+  getOverridden(): string[] {
+    return this.rows.map((r) => r.sysId).filter((id) => this.overridden.has(id));
+  }
+
   #emitSelection(): void {
     this.events.selectionChange?.({ selected: this.selected.size, total: this.rows.length });
   }
@@ -152,6 +169,7 @@ export class SctaskListView {
         el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold", label)
       );
     }
+    tr.appendChild(el("th", "px-2 py-1.5 border-b border-line text-muted font-semibold w-16", ""));
     thead.appendChild(tr);
     return thead;
   }
@@ -189,6 +207,23 @@ export class SctaskListView {
         }
         tr.appendChild(td);
       }
+
+      const tdEdit = el("td", "px-2 py-1.5 align-top");
+      const editLink = el("button", "linklike editLink", "Edit") as HTMLButtonElement;
+      editLink.type = "button";
+      editLink.addEventListener("click", () => this.events.onEdit?.(row.sysId));
+      tdEdit.appendChild(editLink);
+      if (this.overridden.has(row.sysId)) {
+        tdEdit.appendChild(
+          el(
+            "span",
+            "ml-1 text-[10px] uppercase tracking-wide bg-accent/20 text-accent rounded px-1 py-0.5 editedBadge",
+            "Edited"
+          )
+        );
+      }
+      tr.appendChild(tdEdit);
+
       tbody.appendChild(tr);
     }
     return tbody;

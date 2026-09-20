@@ -145,3 +145,25 @@ test("setFlagged badges the flagged rows", () => {
   assert.match(flaggedRow.textContent || "", /no work note/i);
   assert.deepEqual(view.getFlagged(), ["s2"]);
 });
+
+test("clicking a row's Edit link fires onEdit with the sysId", () => {
+  const edited: string[] = [];
+  const { view, table } = freshView({ onEdit: (id: never) => edited.push(id) });
+  view.render(ROWS);
+  const editLinks = [...table.querySelectorAll("tbody .editLink")] as unknown as HTMLElement[];
+  assert.equal(editLinks.length, 3);
+  editLinks[1].dispatchEvent(new win.Event("click"));
+  assert.deepEqual(edited, ["s2"]);
+});
+
+test("setOverridden badges the overridden rows with 'Edited'", () => {
+  const { view, table } = freshView();
+  view.render(ROWS);
+  view.setOverridden(["s3"]);
+  const row = table.querySelector('tbody tr[data-sys-id="s3"]') as unknown as HTMLElement;
+  assert.match(row.textContent || "", /edited/i);
+  assert.deepEqual(view.getOverridden(), ["s3"]);
+  // a non-overridden row has no Edited badge
+  const other = table.querySelector('tbody tr[data-sys-id="s1"]') as unknown as HTMLElement;
+  assert.ok(!/edited/i.test((other.querySelector(".editedBadge")?.textContent as string) || ""));
+});
