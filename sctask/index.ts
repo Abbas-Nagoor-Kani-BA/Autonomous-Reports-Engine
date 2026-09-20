@@ -133,7 +133,7 @@ export async function bootSctaskPage(): Promise<void> {
       overrideDetails.appendChild(el("div", "text-faint italic", "No work notes yet."));
       return;
     }
-    const list = el("div", "flex flex-col gap-2");
+    const list = el("div", "flex flex-col gap-2 max-h-[240px] overflow-y-auto pr-1");
     for (const entry of history) {
       const item = el("div", "border-l-2 border-line pl-2");
       const meta = [entry.when, entry.author].filter(Boolean).join(" · ");
