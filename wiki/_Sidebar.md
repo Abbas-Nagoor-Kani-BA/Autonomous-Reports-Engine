@@ -8,7 +8,6 @@
 - [Running a Pull](Running-a-Pull)
 - [Filters and Presets](Filters-and-Presets)
 - [Data Viewer](Data-Viewer)
-- [Bulk SCTASK Update](Bulk-SCTASK-Update)
 - [Calclens](Calclens)
 - [Why Time Conversions](Why-Time-Conversions)
 - [Classification](Classification)

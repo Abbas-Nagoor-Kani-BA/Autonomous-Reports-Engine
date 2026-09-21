@@ -23,10 +23,6 @@ ServiceNow browser session (no API keys).
   stats, and Calclens, which explains how each derived value was computed.
 - **Excel export** — fills a template MSR workbook and offers a Copy-for-MSR
   action for pasting into an existing sheet.
-- **Bulk SCTASK update** — the extension's only write path: list the SCTASKs
-  assigned to you (or your groups), enter per-ticket Comments and Work notes,
-  then preview and bulk-append them to ServiceNow with live per-row results and
-  retry. See [`wiki/Bulk-SCTASK-Update.md`](wiki/Bulk-SCTASK-Update.md).
 
 ## How it works
 

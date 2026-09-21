@@ -119,33 +119,6 @@ or the current-user REST endpoint. On any permission failure (401/403) it fails
 gracefully with an "add them manually" message and changes nothing. COUNT/RUN
 never call them, so restricted users who never press the buttons are unaffected.
 
-### The Bulk SCTASK write path (`sctask/`, the only write path)
-
-Everything else in the tool is read-only. The Bulk SCTASK page
-(`sctask/index.ts`, `list-view.ts`, `confirm-modal.ts`, `overrides.ts`;
-`services/sctask-bulk-service.ts`; routed through `platform/background.ts` +
-`common/services/remote-bridge.ts`) is the **only** code that writes to
-ServiceNow. Load-bearing facts:
-
-- **Writes are `PATCH` to `sc_task`** through the same auth chain as reads
-  (relay via the logged-in tab's content script with `X-UserToken`). The
-  transport (`data/datasource/sn-transport.ts`) and content relay carry
-  `method`/`body`/`Content-Type`.
-- **Journal fields append.** `comments` and `work_notes` always append on
-  ServiceNow — the write never overwrites. Each selected ticket posts its OWN
-  resolved text (per-ticket overrides; there are no shared text boxes).
-- **Writes are sequential**, one ticket at a time, for rate limits and per-row
-  progress (streamed as stage `sctaskRow` → `ConfirmModal.markRow`).
-- **`sys_journal_field` is ACL-blocked** for many users, so work notes are read
-  OFF the record: the list call fetches `work_notes` with
-  `sysparm_display_value=true` and `parseWorkNotes` / `parseLastWorkNote`
-  (`lib/servicenow.ts`) split the concatenated display value (headers look like
-  `DD-MM-YYYY HH:mm:ss - Author (Work notes)`, newest first) into the history +
-  newest note — **no per-ticket read round-trips**.
-- **`current_user` returns the id as `result.user_sys_id`** (not `sys_id`);
-  `currentUserId()` tolerates several shapes.
-- The layers are intentionally reusable for a future bulk-assignment feature.
-
 ### The four timeline rules (business requirements — never change semantics without asking)
 
 Computed in `core/phase2.ts` from timeline events (`assignment_group`,

@@ -3,7 +3,6 @@ import { token } from "./token.ts";
 import type { ConnectionService } from "../services/connection-service.ts";
 import type { PullService } from "../services/pull-service.ts";
 import type { ScopeResolveService } from "../services/scope-resolve-service.ts";
-import type { SctaskBulkService } from "../services/sctask-bulk-service.ts";
 import type { RemoteBridge } from "../common/services/remote-bridge.ts";
 
 import type { IdbDatabase } from "../data/idb.ts";
@@ -81,7 +80,6 @@ export const TIMELINE_REPO = token<TimelineRepository>("timeline-repo");
 export const PULL_SERVICE = token<PullService>("pull-service");
 export const CONNECTION_SERVICE = token<ConnectionService>("connection-service");
 export const SCOPE_RESOLVE_SERVICE = token<ScopeResolveService>("scope-resolve-service");
-export const SCTASK_BULK_SERVICE = token<SctaskBulkService>("sctask-bulk-service");
 export const REMOTE_BRIDGE = token<RemoteBridge>("remote-bridge");
 
 export type { TicketRow };

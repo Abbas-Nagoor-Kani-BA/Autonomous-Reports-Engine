@@ -463,10 +463,3 @@ test("legacy import is a no-op when the new store already has sets", async () =>
   assert.equal((await repo.load())[0].table, "problem", "existing sets win");
   assert.equal(globalThis.localStorage.getItem("snFilterList"), null);
 });
-
-test("panel exposes a 'Bulk update SCTASKs' button in a Bulk actions section", () => {
-  win.document.body.innerHTML = html;
-  const btn = win.document.getElementById("bulkSctaskBtn");
-  assert.ok(btn, "bulkSctaskBtn should exist");
-  assert.match(btn?.textContent || "", /bulk update sctasks/i);
-});

@@ -76,11 +76,8 @@ export type ClassifyServiceDeps = {
   modelId?: string;
 };
 
-/** Deterministic compute: root cause -> per-type list, solution type -> resolution.
- *  Typed as synchronous (returns `ClassifyOutcome`, not the `ClassifyFn` union) so
- *  direct callers can read the result without narrowing away a `Promise`. It stays
- *  assignable to `ClassifyFn` wherever a `ClassifyFn` is expected. */
-export const deterministicClassify = (input: ClassifyRowInput): ClassifyOutcome => {
+/** Deterministic compute: root cause -> per-type list, solution type -> resolution. */
+export const deterministicClassify: ClassifyFn = (input) => {
   const rootCause = categorizeField(
     input.notes,
     ["rootCauseCategory"],
