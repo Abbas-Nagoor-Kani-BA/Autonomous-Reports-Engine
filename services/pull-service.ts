@@ -79,7 +79,8 @@ export const DEFAULT_FIELDS = [
   "close_notes",
   "work_notes",
   "comments",
-  "request_item.number"
+  "request_item.number",
+  "request_item.request.number"
 ];
 
 const noProgress: ProgressFn = () => {};

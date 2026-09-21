@@ -141,20 +141,31 @@ check(
   "Incident"
 );
 
-console.log("== ExportService — sc_task shows RITM number and RFS priority ==");
+console.log("== ExportService — sc_task shows REQ number and RFS priority ==");
 // MSR: E (index 4) = number, G (index 6) = priority.
 const scTsv = svc
   .buildMsrTsv([
-    mkRow({ number: "SCTASK0001234", requestItem: "RITM0009999", priority: "3 - Moderate" })
+    mkRow({
+      number: "SCTASK0001234",
+      request: "REQ0007777",
+      requestItem: "RITM0009999",
+      priority: "3 - Moderate"
+    })
   ])
   .split("\t");
-check("MSR col E is the RITM number for sc_task", scTsv[4], "RITM0009999");
+check("MSR col E is the REQ number for sc_task", scTsv[4], "REQ0007777");
 check("MSR col G is RFS for sc_task", scTsv[6], "RFS");
+const scNoReq = svc
+  .buildMsrTsv([
+    mkRow({ number: "SCTASK0002468", requestItem: "RITM0009999", priority: "2 - High" })
+  ])
+  .split("\t");
+check("MSR col E falls back to RITM number when no REQ", scNoReq[4], "RITM0009999");
 const scNoRitm = svc
   .buildMsrTsv([mkRow({ number: "SCTASK0005678", priority: "2 - High" })])
   .split("\t");
-check("MSR col E falls back to SCTASK number when no RITM", scNoRitm[4], "SCTASK0005678");
-check("MSR col G still RFS when no RITM", scNoRitm[6], "RFS");
+check("MSR col E falls back to SCTASK number when no REQ or RITM", scNoRitm[4], "SCTASK0005678");
+check("MSR col G still RFS when no REQ", scNoRitm[6], "RFS");
 // Regression: REQ / RITM rows are RFS too. Their priority column must be "RFS",
 // not empty, even when the source priority is blank.
 const reqTsv = svc.buildMsrTsv([mkRow({ number: "REQ0001234", priority: "" })]).split("\t");

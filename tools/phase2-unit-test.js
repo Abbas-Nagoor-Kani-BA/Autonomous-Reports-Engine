@@ -317,7 +317,7 @@ console.log("== analyzeAll: suspend/resume only for closed/resolved incidents ==
   check("closed problem has no resumeTime", problem.resumeTimeUtcIso, "");
 })();
 
-console.log("== analyzeAll: request_item.number maps to row.requestItem ==");
+console.log("== analyzeAll: request_item fields map to row.requestItem/request ==");
 (() => {
   const stateMap = { 1: "Open", 2: "In progress", 3: "Closed Complete" };
   const queueCtx = { membersByQueue: {}, fallbackMembers: [], tableName: "sc_task" };
@@ -327,7 +327,8 @@ console.log("== analyzeAll: request_item.number maps to row.requestItem ==");
       number: "SCTASK0001",
       state: "In progress",
       opened_at: "2026-08-23 06:00:00",
-      "request_item.number": { display_value: "RITM0012345", value: "RITM0012345" }
+      "request_item.number": { display_value: "RITM0012345", value: "RITM0012345" },
+      "request_item.request.number": { display_value: "REQ0007777", value: "REQ0007777" }
     },
     { sys_id: "t2", number: "SCTASK0002", state: "In progress", opened_at: "2026-08-23 06:00:00" }
   ];
@@ -335,7 +336,9 @@ console.log("== analyzeAll: request_item.number maps to row.requestItem ==");
   const withRitm = res.rows.find((r) => r.number === "SCTASK0001");
   const noRitm = res.rows.find((r) => r.number === "SCTASK0002");
   check("sc_task maps request_item.number to requestItem", withRitm.requestItem, "RITM0012345");
+  check("sc_task maps request_item.request.number to request", withRitm.request, "REQ0007777");
   check("sc_task with no request_item has empty requestItem", noRitm.requestItem, "");
+  check("sc_task with no request has empty request", noRitm.request, "");
 })();
 
 console.log("== analyzeAll: state resolves to a text label ==");

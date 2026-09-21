@@ -406,6 +406,7 @@ export type AnalyzedRow = {
   sysId: string | null;
   number: string;
   requestItem: string;
+  request: string;
   shortDescription: string;
   state: string;
   stateValue: string;
@@ -511,6 +512,7 @@ function analyzeAll(
       sysId: sysIdStr,
       number: fieldValue(rec.number),
       requestItem: fieldValue((rec as Record<string, unknown>)["request_item.number"]),
+      request: fieldValue((rec as Record<string, unknown>)["request_item.request.number"]),
       shortDescription: fieldValue(rec.short_description),
       state: resolveStateLabel(rec[stateField], stateMap),
       stateValue: rawValue(rec[stateField]),

@@ -22,17 +22,30 @@ test("isRfs detects SCTASK, REQ and RITM numbers", () => {
   assert.equal(isRfs({}), false);
 });
 
-test("displayNumber returns the RITM number for sc_task", () => {
-  assert.equal(displayNumber({ number: "SCTASK0001", requestItem: "RITM0012345" }), "RITM0012345");
+test("displayNumber returns the REQ number for sc_task", () => {
+  assert.equal(
+    displayNumber({ number: "SCTASK0001", request: "REQ0012345", requestItem: "RITM0012345" }),
+    "REQ0012345"
+  );
 });
 
-test("displayNumber falls back to SCTASK number when no request item", () => {
-  assert.equal(displayNumber({ number: "SCTASK0001", requestItem: "" }), "SCTASK0001");
+test("displayNumber falls back to RITM number when no request", () => {
+  assert.equal(
+    displayNumber({ number: "SCTASK0001", request: "", requestItem: "RITM0012345" }),
+    "RITM0012345"
+  );
+});
+
+test("displayNumber falls back to SCTASK number when no request or request item", () => {
+  assert.equal(displayNumber({ number: "SCTASK0001", request: "", requestItem: "" }), "SCTASK0001");
   assert.equal(displayNumber({ number: "SCTASK0001" }), "SCTASK0001");
 });
 
 test("displayNumber leaves other ticket types unchanged", () => {
-  assert.equal(displayNumber({ number: "INC0001", requestItem: "RITM0009" }), "INC0001");
+  assert.equal(
+    displayNumber({ number: "INC0001", request: "REQ0009", requestItem: "RITM0009" }),
+    "INC0001"
+  );
   assert.equal(displayNumber({ number: "PRB0001" }), "PRB0001");
 });
 

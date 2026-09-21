@@ -20,11 +20,14 @@ export function isRfs(row: Row): boolean {
 
 /**
  * The ticket number to display/export. For catalog tasks this is the parent
- * RITM number (row.requestItem); if that is missing it falls back to the
- * SCTASK number. All other ticket types use their own number unchanged.
+ * REQUEST number (row.request); if that is missing it falls back to the parent
+ * RITM number (row.requestItem), and finally to the SCTASK number. All other
+ * ticket types use their own number unchanged.
  */
 export function displayNumber(row: Row): string {
   if (isScTask(row)) {
+    const req = String(row.request ?? "").trim();
+    if (req) return req;
     const ritm = String(row.requestItem ?? "").trim();
     if (ritm) return ritm;
   }
