@@ -189,3 +189,50 @@ test("notifyDataUpdated broadcasts DATA_UPDATED fire-and-forget", () => {
   assert.deepEqual(sent[sent.length - 1], { type: MSG.dataUpdated });
   assert.equal(sent.length - before, 1);
 });
+
+test("listSctasks sends SCTASK_LIST with scope and resolves", async () => {
+  const bridge = new RemoteBridge();
+  const res = await bridge.listSctasks({
+    instanceUrl: "https://x.service-now.com",
+    scope: "me"
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.sctaskList,
+    instanceUrl: "https://x.service-now.com",
+    scope: "me"
+  });
+});
+
+test("bulkUpdateSctasks sends SCTASK_BULK_UPDATE with sysIds and text", async () => {
+  const bridge = new RemoteBridge();
+  const res = await bridge.bulkUpdateSctasks({
+    instanceUrl: "https://x.service-now.com",
+    sysIds: ["s1", "s2"],
+    workNotes: "note"
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.sctaskBulkUpdate,
+    instanceUrl: "https://x.service-now.com",
+    sysIds: ["s1", "s2"],
+    workNotes: "note"
+  });
+});
+
+test("bulkUpdateSctasks carries per-ticket items through the message", async () => {
+  const bridge = new RemoteBridge();
+  const items = [{ sysId: "s1", comments: "c" }];
+  const res = await bridge.bulkUpdateSctasks({
+    instanceUrl: "https://x.service-now.com",
+    sysIds: [],
+    items
+  });
+  assert.equal(res.ok, true);
+  assert.deepEqual(sent[sent.length - 1], {
+    type: MSG.sctaskBulkUpdate,
+    instanceUrl: "https://x.service-now.com",
+    sysIds: [],
+    items
+  });
+});

@@ -222,7 +222,9 @@ async function loadMlClassifier(modelId: string): Promise<MlClassifier | null> {
   // it rejects the config as "both local and remote disabled".
   env.allowLocalModels = true;
   env.allowRemoteModels = false;
-  env.allowRemoteUrls = false;
+  // `allowRemoteUrls` is a valid runtime flag but is absent from the installed
+  // @huggingface/transformers type defs; cast to reach it (see other casts below).
+  (env as any).allowRemoteUrls = false;
 
   // Transformers.js caches the wasm factory to a Blob and imports it. MV3's
   // `script-src 'self'` blocks `blob:` scripts. Disable the wasm cache and the
@@ -257,7 +259,9 @@ async function loadMlClassifier(modelId: string): Promise<MlClassifier | null> {
     device: "wasm",
     // Single thread: the MV3 worker is not cross-origin-isolated, so
     // SharedArrayBuffer-backed multithreading would fail to initialise.
-    session_options: { executionProviders: ["wasm"], numThreads: 1 }
+    // `numThreads` is a valid onnxruntime-web option but is missing from the
+    // installed SessionOptions type, so cast to set it.
+    session_options: { executionProviders: ["wasm"], numThreads: 1 } as any
   });
 
   // The zero-shot pipeline tokenizes with { padding, truncation } but never sets

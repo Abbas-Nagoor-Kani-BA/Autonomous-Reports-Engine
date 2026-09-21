@@ -79,6 +79,21 @@ export type MsgResolveGroupCis = {
   instanceUrl: string;
   group: string;
 };
+export type MsgSctaskList = {
+  type: "SCTASK_LIST";
+  instanceUrl: string;
+  scope: "me" | "groups";
+  currentUserId?: string | null;
+};
+export type MsgSctaskBulkUpdate = {
+  type: "SCTASK_BULK_UPDATE";
+  instanceUrl: string;
+  sysIds: string[];
+  comments?: string;
+  workNotes?: string;
+  /** Per-ticket resolved text; when present it takes precedence over shared. */
+  items?: { sysId: string; comments?: string; workNotes?: string }[];
+};
 export type BackgroundMessage =
   | MsgRun
   | MsgCount
@@ -87,4 +102,6 @@ export type BackgroundMessage =
   | MsgSnFetch
   | MsgResolveScope
   | MsgResolveGroupMembers
-  | MsgResolveGroupCis;
+  | MsgResolveGroupCis
+  | MsgSctaskList
+  | MsgSctaskBulkUpdate;

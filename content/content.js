@@ -11,10 +11,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         source = "page-global";
       }
       if (token) headers["X-UserToken"] = token;
+      // Reads default to GET with no body; writes (PATCH) carry a JSON body and
+      // need the Content-Type header. `method`/`body` are absent for every
+      // existing read caller, so this stays backward-compatible.
+      const method = msg.method || "GET";
+      const body = msg.body;
+      if (body !== undefined && body !== null) headers["Content-Type"] = "application/json";
       const res = await fetch(msg.url, {
-        method: "GET",
+        method,
         credentials: "include",
-        headers
+        headers,
+        ...(body !== undefined && body !== null ? { body } : {})
       });
       const text = await res.text();
       const responseHeaders = {};

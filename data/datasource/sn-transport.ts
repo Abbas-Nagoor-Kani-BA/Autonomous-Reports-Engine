@@ -11,7 +11,21 @@ export type FetchResult = {
   error?: string;
 };
 
-export type Transport = (url: string, opts?: { attempt?: number }) => Promise<FetchResult>;
+/**
+ * A ServiceNow request. `method`/`body` default to a GET with no body, so every
+ * existing read caller keeps working unchanged. Writes (PATCH) pass a JSON
+ * `body`; the transport and the content-script relay both forward it along with
+ * the `Content-Type: application/json` and `X-UserToken` (CSRF) headers that
+ * ServiceNow requires for a write.
+ */
+export type RequestOpts = {
+  attempt?: number;
+  method?: "GET" | "PATCH" | "POST";
+  /** Pre-serialized JSON string for the request body (write requests only). */
+  body?: string;
+};
+
+export type Transport = (url: string, opts?: RequestOpts) => Promise<FetchResult>;
 
 const TOKEN_TTL_MS = 8 * 60 * 1000;
 const MAX_AUTH_RETRIES = 2;
@@ -79,6 +93,8 @@ export function createSmartTransport(relayTimeoutMs = RELAY_TIMEOUT_MS): Transpo
 
   const transport: Transport = async (url, opts = {}) => {
     const attempt = opts.attempt || 0;
+    const method = opts.method || "GET";
+    const body = opts.body;
     const origin = new URL(url).origin;
     const tab = await findServiceNowTab(origin);
     if (!tab) {
@@ -93,7 +109,7 @@ export function createSmartTransport(relayTimeoutMs = RELAY_TIMEOUT_MS): Transpo
     try {
       const resp = await sendMessageWithTimeout(
         tab.id,
-        { type: MSG.snFetch, url, token },
+        { type: MSG.snFetch, url, token, method, body },
         relayTimeoutMs
       );
       if (resp && resp.ok) {
@@ -118,9 +134,15 @@ export function createSmartTransport(relayTimeoutMs = RELAY_TIMEOUT_MS): Transpo
 
     const headers: Record<string, string> = { Accept: "application/json" };
     if (token) headers["X-UserToken"] = token;
+    if (body !== undefined) headers["Content-Type"] = "application/json";
 
     try {
-      const res = await fetch(url, { method: "GET", credentials: "include", headers });
+      const res = await fetch(url, {
+        method,
+        credentials: "include",
+        headers,
+        ...(body !== undefined ? { body } : {})
+      });
       const text = await res.text();
       const responseHeaders: Record<string, string> = {};
       res.headers.forEach((v, k) => {
